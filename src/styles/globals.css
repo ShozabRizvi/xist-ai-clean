@@ -47,37 +47,40 @@ html, body {
 }
 
 /* Dark mode support */
+/* ===== ENHANCED DARK MODE SUPPORT ===== */
+
 .dark {
   color-scheme: dark;
-}
-
-/* Dark mode title fixes */
-.dark h1,
-.dark h2,
-.dark h3,
-.dark h4,
-.dark h5,
-.dark h6 {
+  background-color: #0f172a !important;
   color: #f9fafb !important;
 }
 
+/* Override any conflicting styles */
+.dark body {
+  background-color: #0f172a !important;
+  color: #f9fafb !important;
+}
+
+/* Force visibility for all headings */
+.dark h1, .dark h2, .dark h3, .dark h4, .dark h5, .dark h6 {
+  color: #f9fafb !important;
+}
+
+/* Force visibility for all text elements */
 .dark .title,
 .dark .section-title,
 .dark .page-title,
-.dark .card-title {
-  color: #e5e7eb !important;
-}
-
-/* Ensure all text elements are visible in dark mode */
-.dark .text-gray-900 {
+.dark .card-title,
+.dark .text-gray-900,
+.dark .text-gray-800,
+.dark .text-gray-700,
+.dark .text-gray-600 {
   color: #f9fafb !important;
 }
 
-.dark .text-gray-800 {
-  color: #e5e7eb !important;
-}
-
-.dark .text-gray-700 {
+/* Ensure muted text is still visible */
+.dark .text-gray-500,
+.dark .text-gray-400 {
   color: #d1d5db !important;
 }
 

@@ -1136,7 +1136,7 @@ return `Thanks for your question, ${userName}! 😊 I'm here to help with digita
 
 // ✅ TOP NAVIGATION (NO CONTACT STRIP - AS ORIGINALLY DESIGNED)
 const renderTopNavigation = () => (
-<div className="bg-gradient-to-r from-slate-900 via-purple-900 to-slate-900 shadow-xl border-b border-purple-700/30 sticky top-0 z-50">
+<div className="bg-gradient-to-r from-slate-900 via-purple-900 to-slate-900 shadow-xl border-b border-purple-700/30 sticky top-0 z-50 sharp-nav">
 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 <div className="flex items-center justify-between h-16">
 {/* Left side - Brand & Navigation */}

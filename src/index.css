@@ -2,7 +2,110 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Enhanced animations */
+/* ===== DARK MODE TEXT VISIBILITY FIXES ===== */
+
+/* Root Variables for Dark Mode */
+:root {
+  --text-primary-light: #111827;
+  --text-secondary-light: #6b7280;
+  --text-primary-dark: #f9fafb;
+  --text-secondary-dark: #d1d5db;
+  --bg-primary-light: #ffffff;
+  --bg-primary-dark: #1f2937;
+}
+
+/* Force proper dark mode colors */
+.dark {
+  color-scheme: dark;
+  background-color: #0f172a;
+  color: #f9fafb;
+}
+
+/* CRITICAL: Fix all text elements in dark mode */
+.dark *,
+.dark h1, .dark h2, .dark h3, .dark h4, .dark h5, .dark h6,
+.dark p, .dark span, .dark div, .dark label, .dark button,
+.dark a, .dark li, .dark td, .dark th {
+  color: #f9fafb !important;
+}
+
+/* Fix specific text color classes */
+.dark .text-gray-900 { color: #f9fafb !important; }
+.dark .text-gray-800 { color: #e5e7eb !important; }
+.dark .text-gray-700 { color: #d1d5db !important; }
+.dark .text-gray-600 { color: #9ca3af !important; }
+.dark .text-gray-500 { color: #6b7280 !important; }
+.dark .text-gray-400 { color: #9ca3af !important; }
+.dark .text-black { color: #f9fafb !important; }
+
+/* Fix white backgrounds in dark mode */
+.dark .bg-white {
+  background-color: #1f2937 !important;
+  color: #f9fafb !important;
+}
+
+.dark .bg-gray-50 {
+  background-color: #374151 !important;
+  color: #f9fafb !important;
+}
+
+.dark .bg-gray-100 {
+  background-color: #4b5563 !important;
+  color: #f9fafb !important;
+}
+
+/* Fix card and component backgrounds */
+.dark .bg-white * {
+  color: #f9fafb !important;
+}
+
+.dark .bg-gray-50 * {
+  color: #f9fafb !important;
+}
+
+/* Fix form elements */
+.dark input,
+.dark textarea,
+.dark select {
+  background-color: #374151 !important;
+  color: #f9fafb !important;
+  border-color: #4b5563 !important;
+}
+
+.dark input::placeholder,
+.dark textarea::placeholder {
+  color: #9ca3af !important;
+}
+
+/* Fix buttons */
+.dark button {
+  color: inherit !important;
+}
+
+.dark .bg-white button {
+  color: #f9fafb !important;
+}
+
+/* Fix specific component text issues */
+.dark .font-semibold,
+.dark .font-bold,
+.dark .font-medium {
+  color: #f9fafb !important;
+}
+
+/* Fix hover states that hide text */
+.dark *:hover {
+  color: inherit !important;
+}
+
+/* Remove hover-only visibility */
+.dark * {
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+
+/* ===== ORIGINAL ANIMATIONS (PRESERVED) ===== */
+
 @keyframes pulse {
   0%, 100% { opacity: 1; }
   50% { opacity: 0.5; }
@@ -29,7 +132,8 @@
   animation: fade-in 0.5s ease-out;
 }
 
-/* Responsive font sizing */
+/* ===== RESPONSIVE FONT SIZING ===== */
+
 html {
   font-size: var(--base-font-size, 16px);
 }
@@ -40,7 +144,8 @@ html {
   }
 }
 
-/* Enhanced scrollbar */
+/* ===== ENHANCED SCROLLBAR ===== */
+
 ::-webkit-scrollbar {
   width: 8px;
 }
@@ -49,21 +154,29 @@ html {
   background: #f1f1f1;
 }
 
+.dark ::-webkit-scrollbar-track {
+  background: #374151;
+}
+
 ::-webkit-scrollbar-thumb {
   background: #888;
   border-radius: 4px;
+}
+
+.dark ::-webkit-scrollbar-thumb {
+  background: #6b7280;
 }
 
 ::-webkit-scrollbar-thumb:hover {
   background: #555;
 }
 
-/* Dark mode support */
-.dark {
-  color-scheme: dark;
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: #9ca3af;
 }
 
-/* Custom utilities */
+/* ===== CUSTOM UTILITIES ===== */
+
 .line-clamp-3 {
   display: -webkit-box;
   -webkit-line-clamp: 3;
@@ -71,47 +184,85 @@ html {
   overflow: hidden;
 }
 
-/* Add to your main CSS file */
-.dark-mode-text {
-  color: #374151; /* Default */
-}
+/* ===== MOBILE RESPONSIVE FIXES ===== */
 
-.dark .dark-mode-text {
-  color: #f3f4f6; /* Light for dark mode */
-}
-
-.dark-mode-text-muted {
-  color: #6b7280; /* Default muted */
-}
-
-.dark .dark-mode-text-muted {
-  color: #d1d5db; /* Light muted for dark mode */
-}
-
-/* ADD to your src/index.css file */
 @media (max-width: 768px) {
   .footer {
     padding: 20px 15px !important;
     font-size: 14px !important;
   }
-  
+
   .footer .grid {
     grid-template-columns: 1fr !important;
     gap: 1.5rem !important;
   }
-  
+
   .footer .text-2xl {
     font-size: 1.5rem !important;
   }
-  
+
   .footer .text-sm {
     font-size: 0.75rem !important;
   }
-  
+
   .footer .flex {
     flex-direction: column !important;
     text-align: center !important;
     gap: 0.5rem !important;
   }
+  
+  /* Ensure mobile dark mode text visibility */
+  .dark * {
+    color: #f9fafb !important;
+  }
 }
 
+/* ===== ACCESSIBILITY IMPROVEMENTS ===== */
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .dark {
+    color: #ffffff !important;
+  }
+  
+  .dark * {
+    color: #ffffff !important;
+  }
+}
+
+/* Focus indicators */
+.dark *:focus {
+  outline: 2px solid #60a5fa !important;
+  outline-offset: 2px;
+}
+
+/* Print styles */
+@media print {
+  .dark {
+    background: white !important;
+    color: black !important;
+  }
+  
+  .dark * {
+    background: white !important;
+    color: black !important;
+  }
+}
+
+.sharp-nav {
+  -webkit-font-smoothing: antialiased !important;
+  -moz-osx-font-smoothing: grayscale !important;
+  text-rendering: optimizeLegibility !important;
+  transform: translateZ(0) !important;
+  backface-visibility: hidden !important;
+}
+
+.sharp-nav * {
+  -webkit-font-smoothing: antialiased !important;
+  -moz-osx-font-smoothing: grayscale !important;
+}
+
+.sharp-nav img {
+  image-rendering: -webkit-optimize-contrast !important;
+  image-rendering: crisp-edges !important;
+}
