@@ -1498,19 +1498,23 @@ case 'community':
       <div className="grid md:grid-cols-4 gap-6">
         <div className="bg-white rounded-xl p-6 text-center shadow-sm border hover:shadow-md transition-all duration-300">
           <div className="text-3xl font-bold text-blue-600 mb-2">12,847</div>
-          <div className="text-sm ${theme === 'dark' ? 'text-gray-400' : '${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}'}">Active Members</div>
+          <div className={`text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}
+>Active Members</div>
         </div>
         <div className="bg-white rounded-xl p-6 text-center shadow-sm border hover:shadow-md transition-all duration-300">
           <div className="text-3xl font-bold text-red-600 mb-2">3,521</div>
-          <div className="text-sm ${theme === 'dark' ? 'text-gray-400' : '${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}'}">Threats Reported</div>
+          <div className={`text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}
+>Threats Reported</div>
         </div>
         <div className="bg-white rounded-xl p-6 text-center shadow-sm border hover:shadow-md transition-all duration-300">
           <div className="text-3xl font-bold text-green-600 mb-2">94.8%</div>
-          <div className="text-sm ${theme === 'dark' ? 'text-gray-400' : '${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}'}">Detection Accuracy</div>
+          <div className={`text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}
+>Detection Accuracy</div>
         </div>
         <div className="bg-white rounded-xl p-6 text-center shadow-sm border hover:shadow-md transition-all duration-300">
           <div className="text-3xl font-bold text-purple-600 mb-2">1.2M</div>
-          <div className="text-sm ${theme === 'dark' ? 'text-gray-400' : '${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}'}">Lives Protected</div>
+          <div className={`text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}
+>Lives Protected</div>
         </div>
       </div>
 
@@ -1762,7 +1766,7 @@ case 'community':
                       {new Date(post.timestamp).toLocaleDateString()} • {new Date(post.timestamp).toLocaleTimeString()}
                     </p>
                   </div>
-                  <button className="text-gray-400 hover:${theme === 'dark' ? 'text-gray-400' : '${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}'}">⋯</button>
+                  <button className="text-gray-400 hover:${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}">⋯</button>
                 </div>
                 <p className="text-gray-800 mb-4 leading-relaxed">{post.content}</p>
                 
@@ -1934,7 +1938,8 @@ case 'settings':
             <label className="block text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'} mb-2">Avatar Upload</label>
             <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-purple-500 transition-colors">
               <span className="text-4xl mb-2 block">📸</span>
-              <span className="text-sm ${theme === 'dark' ? 'text-gray-400' : '${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}'}">Click to upload custom avatar</span>
+              <span className={`text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}
+>Click to upload custom avatar</span>
             </div>
           </div>
         </div>
@@ -1974,7 +1979,8 @@ case 'settings':
         <div className="mt-4 flex items-center justify-between p-4 bg-gray-50 rounded-lg">
           <div>
             <div className="font-medium ${theme === 'dark' ? 'text-white' : 'text-gray-900'}">Auto-detect Language</div>
-            <div className="text-sm ${theme === 'dark' ? 'text-gray-400' : '${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}'}">Automatically detect user's language</div>
+            <div className={`text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}
+>Automatically detect user's language</div>
           </div>
           <button className="relative w-12 h-6 bg-purple-600 rounded-full">
             <div className="absolute w-5 h-5 bg-white rounded-full shadow transition-transform translate-x-6 top-0.5"></div>
@@ -1992,7 +1998,8 @@ case 'settings':
           <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
             <div>
               <div className="font-medium ${theme === 'dark' ? 'text-white' : 'text-gray-900'}">Data Encryption</div>
-              <div className="text-sm ${theme === 'dark' ? 'text-gray-400' : '${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}'}">End-to-end encryption for all data</div>
+              <div className={`text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}
+>End-to-end encryption for all data</div>
             </div>
             <button className="relative w-12 h-6 bg-green-600 rounded-full">
               <div className="absolute w-5 h-5 bg-white rounded-full shadow transition-transform translate-x-6 top-0.5"></div>
@@ -2002,7 +2009,8 @@ case 'settings':
           <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
             <div>
               <div className="font-medium ${theme === 'dark' ? 'text-white' : 'text-gray-900'}">Two-Factor Authentication</div>
-              <div className="text-sm ${theme === 'dark' ? 'text-gray-400' : '${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}'}">Extra security for your account</div>
+              <div className={`text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}
+>Extra security for your account</div>
             </div>
             <button className="relative w-12 h-6 bg-gray-300 rounded-full">
               <div className="absolute w-5 h-5 bg-white rounded-full shadow transition-transform translate-x-0.5 top-0.5"></div>
@@ -2045,19 +2053,22 @@ case 'settings':
             <button className="p-4 border border-gray-200 rounded-lg hover:border-purple-500 transition-colors text-center">
               <div className="text-2xl mb-2">📊</div>
               <div className="font-medium">Google Analytics</div>
-              <div className="text-sm ${theme === 'dark' ? 'text-gray-400' : '${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}'}">Connect analytics tracking</div>
+              <div className={`text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}
+>Connect analytics tracking</div>
             </button>
             
             <button className="p-4 border border-gray-200 rounded-lg hover:border-purple-500 transition-colors text-center">
               <div className="text-2xl mb-2">💬</div>
               <div className="font-medium">Slack Integration</div>
-              <div className="text-sm ${theme === 'dark' ? 'text-gray-400' : '${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}'}">Send notifications to Slack</div>
+              <div className={`text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}
+>Send notifications to Slack</div>
             </button>
             
             <button className="p-4 border border-gray-200 rounded-lg hover:border-purple-500 transition-colors text-center">
               <div className="text-2xl mb-2">📧</div>
               <div className="font-medium">Email Alerts</div>
-              <div className="text-sm ${theme === 'dark' ? 'text-gray-400' : '${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}'}">Configure email notifications</div>
+              <div className={`text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}
+>Configure email notifications</div>
             </button>
           </div>
         </div>
@@ -2086,7 +2097,8 @@ case 'settings':
         <div className="mt-4 flex items-center justify-between p-4 bg-gray-50 rounded-lg">
           <div>
             <div className="font-medium ${theme === 'dark' ? 'text-white' : 'text-gray-900'}">Smart Caching</div>
-            <div className="text-sm ${theme === 'dark' ? 'text-gray-400' : '${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}'}">Cache responses for faster performance</div>
+            <div className={`text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}
+>Cache responses for faster performance</div>
           </div>
           <button className="relative w-12 h-6 bg-purple-600 rounded-full">
             <div className="absolute w-5 h-5 bg-white rounded-full shadow transition-transform translate-x-6 top-0.5"></div>
@@ -4502,7 +4514,8 @@ Examples:
           <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
             <div>
               <div className="font-medium ${theme === 'dark' ? 'text-white' : 'text-gray-900'}">Enable Animations</div>
-              <div className="text-sm ${theme === 'dark' ? 'text-gray-400' : '${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}'}">Smooth transitions and hover effects</div>
+              <div className={`text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}
+>Smooth transitions and hover effects</div>
             </div>
             <button
               onClick={() => setAnimations(!animations)}
@@ -4528,7 +4541,8 @@ Examples:
                 <div className="font-medium ${theme === 'dark' ? 'text-white' : 'text-gray-900'} capitalize">
                   {key.replace(/([A-Z])/g, ' $1').trim()} Notifications
                 </div>
-                <div className="text-sm ${theme === 'dark' ? 'text-gray-400' : '${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}'}">
+                <div className={`text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}
+>
                   {key === 'email' ? 'Receive updates via email' :
                    key === 'push' ? 'Browser push notifications' :
                    'Security alerts and warnings'}
