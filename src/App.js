@@ -42,8 +42,9 @@ deviceType: window.innerWidth < 768 ? 'mobile' : window.innerWidth < 1024 ? 'tab
 
 // UI State (ALL ORIGINAL PRESERVED)
 const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
-const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+const [sidebarCollapsed, setSidebarCollapsed] = useState(window.innerWidth < 768);
 const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
 const [orientation, setOrientation] = useState(window.screen?.orientation?.angle || 0);
 
 // Theme & Settings (ALL ORIGINAL + ENHANCED)
@@ -221,27 +222,28 @@ const [realTimeAlerts, setRealTimeAlerts] = useState([
 // ✅ RESPONSIVE DETECTION (TRUE RESPONSIVE - SAME EXPERIENCE)
 useEffect(() => {
 const updateScreenSize = () => {
-const width = window.innerWidth;
-const height = window.innerHeight;
-const newScreenSize = {
-width,
-height,
-isMobile: width < 768,
-isTablet: width >= 768 && width < 1024,
-isDesktop: width >= 1024,
-deviceType: width < 768 ? 'mobile' : width < 1024 ? 'tablet' : 'desktop'
-};
-
-setScreenSize(newScreenSize);
-
-// Auto-adjust sidebar for mobile but keep same experience
-if (newScreenSize.isMobile && !sidebarCollapsed) {
-setSidebarCollapsed(true);
-}
-
-if (mobileMenuOpen && !newScreenSize.isMobile) {
-setMobileMenuOpen(false);
-}
+  const width = window.innerWidth;
+  const height = window.innerHeight;
+  const newScreenSize = {
+    width,
+    height,
+    isMobile: width < 768,
+    isTablet: width >= 768 && width < 1024,
+    isDesktop: width >= 1024,
+    deviceType: width < 768 ? 'mobile' : width < 1024 ? 'tablet' : 'desktop'
+  };
+  
+  setScreenSize(newScreenSize);
+  setIsMobile(width < 768);
+  
+  // ✅ FIXED: Proper mobile navigation handling
+  if (newScreenSize.isMobile) {
+    setSidebarCollapsed(true);
+    setMobileMenuOpen(false); // Close mobile menu when switching to mobile
+  } else {
+    setSidebarCollapsed(false); // Auto-expand on desktop
+    setMobileMenuOpen(false); // Always close mobile menu on desktop
+  }
 };
 
 const handleOrientationChange = () => {
@@ -1038,13 +1040,17 @@ throw new Error('Invalid response format');
 }
 
 const botMessage = {
-sender: 'bot',
-message: data.choices[0].message.content,
-timestamp: new Date().toISOString(),
-isAI: true,
-model: 'deepseek/deepseek-r1:free'
+  sender: 'bot',
+  message: (() => {
+    const apiContent = data.choices?.[0]?.message?.content;
+    if (typeof apiContent === 'string') return apiContent;
+    if (typeof apiContent === 'object') return JSON.stringify(apiContent);
+    return 'AI response received but could not be displayed properly.';
+  })(),
+  timestamp: new Date().toISOString(),
+  isAI: true,
+  model: 'deepseek/deepseek-r1:free'
 };
-
 setChatMessages(prev => [...prev, botMessage]);
 
 } catch (error) {
@@ -1311,8 +1317,17 @@ title="Logout"
 
 {/* Mobile Menu Toggle */}
 <button
-onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-className="md:hidden relative w-10 h-10 bg-gradient-to-r from-cyan-500 to-purple-600 rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 focus:outline-none focus:ring-2 focus:ring-cyan-400/50 flex items-center justify-center"
+  onClick={() => {
+    if (screenSize.isMobile || window.innerWidth < 768) {
+      setMobileMenuOpen(!mobileMenuOpen);
+      // Prevent sidebar from interfering
+      setSidebarCollapsed(true);
+    }
+    if ('vibrate' in navigator) {
+      navigator.vibrate(50);
+    }
+  }}
+  className="md:hidden relative w-10 h-10..."
 aria-label="Toggle mobile menu"
 >
 <div className="w-6 h-6 flex flex-col justify-center items-center">
@@ -2378,7 +2393,11 @@ analysisResult.verdict === 'Suspicious' ? 'text-yellow-600' : 'text-red-600'
 <span className="text-xl mr-2">🧠</span>
 AI Analysis Summary
 </h4>
-<p className="text-blue-800 text-sm leading-relaxed">{analysisResult.summary}</p>
+<p className="text-blue-800 text-sm leading-relaxed">
+  {typeof analysisResult.summary === 'string' 
+    ? analysisResult.summary 
+    : 'Analysis completed successfully. View detailed results below.'}
+</p>
 </div>
 
 {analysisResult.warnings.length > 0 && (
@@ -2503,11 +2522,15 @@ Offline
 )}
 </div>
 <div className="whitespace-pre-wrap text-sm leading-relaxed">
-  {typeof msg.message === 'string' 
-    ? msg.message 
-    : typeof msg.message === 'object' 
-      ? JSON.stringify(msg.message, null, 2)
-      : String(msg.message || 'No message')}
+  {(() => {
+    if (typeof msg.message === 'string') return msg.message;
+    if (typeof msg.message === 'object' && msg.message !== null) {
+      if (msg.message.content) return msg.message.content;
+      if (msg.message.text) return msg.message.text;
+      return JSON.stringify(msg.message, null, 2);
+    }
+    return String(msg.message || 'No message content');
+  })()}
 </div>
 
 <div className="text-xs opacity-70 mt-1">
@@ -3114,12 +3137,25 @@ Track your digital safety progress and analyze threat patterns
 <h3 className="text-lg font-semibold mb-4">Daily Activity</h3>
 <ResponsiveContainer width="100%" height={300}>
 <BarChart data={userStats.dailyActivity}>
-<CartesianGrid strokeDasharray="3 3" />
-<XAxis dataKey="date" />
-<YAxis />
-<Tooltip />
-<Bar dataKey="analyses" fill="#8B5CF6" />
-<Bar dataKey="threats" fill="#EF4444" />
+  <CartesianGrid strokeDasharray="3 3" stroke={theme === 'dark' ? '#4b5563' : '#e5e7eb'} />
+  <XAxis 
+    dataKey="date" 
+    tick={{ fill: theme === 'dark' ? '#f9fafb' : '#374151', fontSize: 12 }}
+    axisLine={{ stroke: theme === 'dark' ? '#6b7280' : '#d1d5db' }}
+  />
+  <YAxis 
+    tick={{ fill: theme === 'dark' ? '#f9fafb' : '#374151', fontSize: 12 }}
+    axisLine={{ stroke: theme === 'dark' ? '#6b7280' : '#d1d5db' }}
+  />
+  <Tooltip 
+    contentStyle={{
+      backgroundColor: theme === 'dark' ? '#1f2937' : '#ffffff',
+      border: `1px solid ${theme === 'dark' ? '#4b5563' : '#e5e7eb'}`,
+      color: theme === 'dark' ? '#f9fafb' : '#374151'
+    }}
+  />
+  <Bar dataKey="analyses" fill="#8B5CF6" />
+  <Bar dataKey="threats" fill="#EF4444" />
 </BarChart>
 </ResponsiveContainer>
 </div>
@@ -3129,21 +3165,28 @@ Track your digital safety progress and analyze threat patterns
 <h3 className="text-lg font-semibold mb-4">Threat Categories</h3>
 <ResponsiveContainer width="100%" height={300}>
 <PieChart>
-<Pie
-data={[
-{ name: 'Phishing', value: 35, fill: '#EF4444' },
-{ name: 'Scams', value: 28, fill: '#F59E0B' },
-{ name: 'Malware', value: 20, fill: '#8B5CF6' },
-{ name: 'Social Engineering', value: 17, fill: '#10B981' }
-]}
-dataKey="value"
-nameKey="name"
-cx="50%"
-cy="50%"
-outerRadius={80}
-label={({ name, value }) => `${name}: ${value}%`}
-/>
-<Tooltip />
+  <Pie
+    data={[
+      { name: 'Phishing', value: 35, fill: '#EF4444' },
+      { name: 'Scams', value: 28, fill: '#F59E0B' },
+      { name: 'Malware', value: 20, fill: '#8B5CF6' },
+      { name: 'Social Engineering', value: 17, fill: '#10B981' }
+    ]}
+    dataKey="value"
+    nameKey="name"
+    cx="50%"
+    cy="50%"
+    outerRadius={80}
+    label={({ name, value }) => `${name}: ${value}%`}
+    labelStyle={{ fill: theme === 'dark' ? '#f9fafb' : '#374151', fontSize: '12px' }}
+  />
+  <Tooltip 
+    contentStyle={{
+      backgroundColor: theme === 'dark' ? '#1f2937' : '#ffffff',
+      border: `1px solid ${theme === 'dark' ? '#4b5563' : '#e5e7eb'}`,
+      color: theme === 'dark' ? '#f9fafb' : '#374151'
+    }}
+  />
 </PieChart>
 </ResponsiveContainer>
 </div>
