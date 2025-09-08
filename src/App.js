@@ -25,6 +25,7 @@ const App = () => {
   
   // UI State (ALL ORIGINAL PRESERVED)
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+  
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [orientation, setOrientation] = useState(window.screen?.orientation?.angle || 0);
@@ -82,6 +83,7 @@ const App = () => {
   const [typingIndicator, setTypingIndicator] = useState(false);
   const [suggestionHighlight, setSuggestionHighlight] = useState(-1);
   const [chatHistory, setChatHistory] = useState([]);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   // ✅ ALL ORIGINAL USER STATS & GAMIFICATION (PRESERVED EXACTLY)
   const [userStats, setUserStats] = useState({
@@ -361,6 +363,13 @@ const App = () => {
     }
   }, [analysisState, animations, screenSize.isMobile]);
 
+  useEffect(() => {
+  const checkMobile = () => setIsMobile(window.innerWidth <= 768);
+  checkMobile();
+  window.addEventListener('resize', checkMobile);
+  return () => window.removeEventListener('resize', checkMobile);
+}, []);
+
   // ✅ GOOGLE LOGIN (ALL ORIGINAL)
   const login = useGoogleLogin({
     onSuccess: async (credentialResponse) => {
@@ -482,6 +491,7 @@ const App = () => {
     }
   };
 
+  
   // ✅ ADD THIS MISSING FUNCTION
 const fetchUserStats = async (email) => {
   try {
@@ -1233,84 +1243,58 @@ Best practices:
 
             {/* Mobile Menu Toggle */}
             <button
-              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="md:hidden relative w-10 h-10 bg-gradient-to-r from-cyan-500 to-purple-600 rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 focus:outline-none focus:ring-2 focus:ring-cyan-400/50 flex items-center justify-center"
-              aria-label="Toggle mobile menu"
-            >
-              <div className="w-6 h-6 flex flex-col justify-center items-center">
-                <span className={`bg-white block transition-all duration-300 ease-out h-0.5 w-4 rounded-sm ${mobileMenuOpen ? 'rotate-45 translate-y-1' : '-translate-y-0.5'}`}></span>
-                <span className={`bg-white block transition-all duration-300 ease-out h-0.5 w-4 rounded-sm my-0.5 ${mobileMenuOpen ? 'opacity-0' : 'opacity-100'}`}></span>
-                <span className={`bg-white block transition-all duration-300 ease-out h-0.5 w-4 rounded-sm ${mobileMenuOpen ? '-rotate-45 -translate-y-1' : 'translate-y-0.5'}`}></span>
-              </div>
-            </button>
+  onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+  className="md:hidden relative w-10 h-10 bg-gradient-to-r from-cyan-500 to-purple-600 rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 focus:outline-none focus:ring-2 focus:ring-cyan-400/50 flex items-center justify-center"
+  aria-label="Toggle mobile menu"
+>
+  <div className="w-6 h-6 flex flex-col justify-center items-center">
+    <span className={`bg-white block transition-all duration-300 ease-out h-0.5 w-4 rounded-sm ${mobileMenuOpen ? 'rotate-45 translate-y-1' : '-translate-y-0.5'}`}></span>
+    <span className={`bg-white block transition-all duration-300 ease-out h-0.5 w-4 rounded-sm my-0.5 ${mobileMenuOpen ? 'opacity-0' : 'opacity-100'}`}></span>
+    <span className={`bg-white block transition-all duration-300 ease-out h-0.5 w-4 rounded-sm ${mobileMenuOpen ? '-rotate-45 -translate-y-1' : 'translate-y-0.5'}`}></span>
+  </div>
+</button>
           </div>
         </div>
 
         {/* Mobile Menu */}
         {mobileMenuOpen && (
-          <div className="md:hidden bg-slate-800/95 backdrop-blur-sm border-t border-purple-700/30 absolute left-0 right-0 top-full">
-            <div className="px-4 py-2 space-y-1">
-              {['Home', 'Verify', 'Education', 'Community', 'Analytics', 'Protection', 'Reports', 'Incidents', 'Intelligence', 'API', 'Health', 'Authority', 'Settings'].map((item) => (
-                <button
-                  key={item}
-                  onClick={() => {
-                    setCurrentSection(item.toLowerCase());
-                    setMobileMenuOpen(false);
-                    if ('vibrate' in navigator) {
-                      navigator.vibrate(50);
-                    }
-                  }}
-                  className={`block w-full text-left px-3 py-3 text-sm font-medium rounded-md transition-colors ${
-                    currentSection === item.toLowerCase()
-                      ? 'bg-gradient-to-r from-cyan-500/30 to-purple-600/30 text-cyan-300'
-                      : 'text-gray-300 hover:text-cyan-400 hover:bg-purple-800/20'
-                  }`}
-                >
-                  <span className="flex items-center space-x-3">
-                    <span className="text-lg">
-                      {item === 'Home' ? '🏠' :
-                       item === 'Verify' ? '🔍' :
-                       item === 'Education' ? '📚' :
-                       item === 'Community' ? '👥' :
-                       item === 'Analytics' ? '📊' :
-                       item === 'Protection' ? '🛡️' :
-                       item === 'Reports' ? '📋' :
-                       item === 'Incidents' ? '🚨' :
-                       item === 'Intelligence' ? '🧠' :
-                       item === 'API' ? '🔌' :
-                       item === 'Health' ? '💓' :
-                       item === 'Authority' ? '⚖️' :
-                       item === 'Settings' ? '⚙️' : '📄'}
-                    </span>
-                    <span>{item}</span>
-                  </span>
-                </button>
-              ))}
-
-              {/* Mobile User Stats */}
-              {user && (
-                <div className="border-t border-purple-700/30 mt-2 pt-2">
-                  <div className="px-3 py-2 text-sm text-gray-400">
-                    <div className="flex items-center justify-between">
-                      <span>Level {userStats.level} {userStats.reputation}</span>
-                      <span>{userStats.communityPoints} pts</span>
-                    </div>
-                    <div className="w-full bg-gray-600 rounded-full h-1 mt-1">
-                      <div
-                        className="bg-gradient-to-r from-cyan-400 to-purple-400 h-1 rounded-full transition-all duration-500"
-                        style={{ width: `${(userStats.communityPoints % 100)}%` }}
-                      ></div>
-                    </div>
-                    <div className="mt-2 flex items-center justify-between text-xs">
-                      <span>🎯 {userStats.totalAnalyses} Analyses</span>
-                      <span>🛡️ {userStats.threatsStopped} Threats Stopped</span>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-        )}
+  <div className="md:hidden bg-slate-800/95 backdrop-blur-sm border-t border-purple-700/30 absolute left-0 right-0 top-full z-50">
+    <div className="px-4 py-2 space-y-1">
+      {['Home', 'Verify', 'Education', 'Community', 'Analytics', 'Protection', 'About', 'Support', 'Contact'].map((item) => (
+        <button
+          key={item}
+          onClick={() => {
+            setCurrentSection(item.toLowerCase());
+            setMobileMenuOpen(false);
+            if ('vibrate' in navigator) {
+              navigator.vibrate(50);
+            }
+          }}
+          className={`block w-full text-left px-3 py-3 text-sm font-medium rounded-md transition-colors ${
+            currentSection === item.toLowerCase()
+              ? 'bg-gradient-to-r from-cyan-500/30 to-purple-600/30 text-cyan-300'
+              : 'text-gray-300 hover:text-cyan-400 hover:bg-purple-800/20'
+          }`}
+        >
+          <span className="flex items-center space-x-3">
+            <span className="text-lg">
+              {item === 'Home' ? '🏠' :
+               item === 'Verify' ? '🔍' :
+               item === 'Education' ? '📚' :
+               item === 'Community' ? '👥' :
+               item === 'Analytics' ? '📊' :
+               item === 'Protection' ? '🛡️' :
+               item === 'About' ? 'ℹ️' :
+               item === 'Support' ? '🎧' :
+               item === 'Contact' ? '📞' : '📄'}
+            </span>
+            <span>{item}</span>
+          </span>
+        </button>
+      ))}
+    </div>
+  </div>
+)}
       </div>
     </div>
   );
@@ -1514,143 +1498,255 @@ case 'community':
       <div className="grid md:grid-cols-4 gap-6">
         <div className="bg-white rounded-xl p-6 text-center shadow-sm border hover:shadow-md transition-all duration-300">
           <div className="text-3xl font-bold text-blue-600 mb-2">12,847</div>
-          <div className="text-sm text-gray-600">Active Members</div>
+          <div className="text-sm ${theme === 'dark' ? 'text-gray-400' : '${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}'}">Active Members</div>
         </div>
         <div className="bg-white rounded-xl p-6 text-center shadow-sm border hover:shadow-md transition-all duration-300">
           <div className="text-3xl font-bold text-red-600 mb-2">3,521</div>
-          <div className="text-sm text-gray-600">Threats Reported</div>
+          <div className="text-sm ${theme === 'dark' ? 'text-gray-400' : '${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}'}">Threats Reported</div>
         </div>
         <div className="bg-white rounded-xl p-6 text-center shadow-sm border hover:shadow-md transition-all duration-300">
           <div className="text-3xl font-bold text-green-600 mb-2">94.8%</div>
-          <div className="text-sm text-gray-600">Detection Accuracy</div>
+          <div className="text-sm ${theme === 'dark' ? 'text-gray-400' : '${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}'}">Detection Accuracy</div>
         </div>
         <div className="bg-white rounded-xl p-6 text-center shadow-sm border hover:shadow-md transition-all duration-300">
           <div className="text-3xl font-bold text-purple-600 mb-2">1.2M</div>
-          <div className="text-sm text-gray-600">Lives Protected</div>
+          <div className="text-sm ${theme === 'dark' ? 'text-gray-400' : '${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}'}">Lives Protected</div>
         </div>
       </div>
 
       {/* 🚨 ENHANCED THREAT REPORTING SYSTEM (FROM DOCS) */}
-      {user && (
-        <div className="bg-gradient-to-r from-red-50 to-orange-50 rounded-xl shadow-sm border border-red-200 p-6">
-          <h3 className="text-lg font-semibold text-red-900 mb-4 flex items-center">
-            <span className="text-xl mr-3">🚨</span>
-            Report Threat or Suspicious Activity
-          </h3>
-          <div className="grid md:grid-cols-2 gap-6">
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-red-800 mb-2">Threat Type</label>
-                <select className="w-full px-3 py-2 border border-red-300 rounded-lg focus:ring-2 focus:ring-red-500 bg-white">
-                  <option value="">Select threat type</option>
-                  <option value="phishing">🎣 Phishing Attack</option>
-                  <option value="scam">💰 Financial Scam</option>
-                  <option value="malware">🦠 Malware/Virus</option>
-                  <option value="identity_theft">🆔 Identity Theft</option>
-                  <option value="fake_website">🌐 Fake Website</option>
-                  <option value="social_engineering">🧠 Social Engineering</option>
-                  <option value="ransomware">🔒 Ransomware</option>
-                  <option value="other">❓ Other</option>
-                </select>
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-red-800 mb-2">Urgency Level</label>
-                <select className="w-full px-3 py-2 border border-red-300 rounded-lg focus:ring-2 focus:ring-red-500 bg-white">
-                  <option value="">Select urgency</option>
-                  <option value="low">🟢 Low Priority</option>
-                  <option value="medium">🟡 Medium Priority</option>
-                  <option value="high">🔴 High Priority</option>
-                  <option value="critical">🚨 Critical/Emergency</option>
-                </select>
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-red-800 mb-2">Affected Platform</label>
-                <select className="w-full px-3 py-2 border border-red-300 rounded-lg focus:ring-2 focus:ring-red-500 bg-white">
-                  <option value="">Select platform</option>
-                  <option value="email">📧 Email</option>
-                  <option value="website">🌐 Website</option>
-                  <option value="social_media">📱 Social Media</option>
-                  <option value="sms">📱 SMS/Text</option>
-                  <option value="phone">📞 Phone Call</option>
-                  <option value="app">📱 Mobile App</option>
-                  <option value="other">❓ Other</option>
-                </select>
-              </div>
-            </div>
-            
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-red-800 mb-2">Threat Description</label>
-                <textarea 
-                  rows="4" 
-                  placeholder="Describe the threat, including URLs, email addresses, phone numbers, or other relevant details..."
-                  className="w-full px-3 py-2 border border-red-300 rounded-lg focus:ring-2 focus:ring-red-500 resize-none"
-                />
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-red-800 mb-2">Evidence (Optional)</label>
-                <div className="border-2 border-dashed border-red-300 rounded-lg p-4 text-center hover:border-red-500 transition-colors">
-                  <span className="text-2xl mb-2 block">📎</span>
-                  <span className="text-sm text-red-700">Upload screenshots, emails, or other evidence</span>
-                  <input type="file" multiple className="hidden" />
-                </div>
-              </div>
-              
-              <div className="flex items-center space-x-2">
-                <input type="checkbox" id="anonymous" className="rounded border-red-300 text-red-600 focus:ring-red-500" />
-                <label htmlFor="anonymous" className="text-sm text-red-800">Report anonymously</label>
-              </div>
-              
-              <button className="w-full py-3 bg-red-600 hover:bg-red-700 text-white rounded-lg font-semibold transition-colors flex items-center justify-center space-x-2">
-                <span className="text-xl">🚨</span>
-                <span>Submit Threat Report</span>
-              </button>
+      {/* 🚨 WORKING THREAT REPORTING SYSTEM */}
+{user && (
+  <div className="bg-gradient-to-r from-red-50 to-orange-50 rounded-xl shadow-sm border border-red-200 p-6">
+    <h3 className="text-lg font-semibold text-red-900 mb-4 flex items-center">
+      <span className="text-xl mr-3">🚨</span>
+      Report Threat or Suspicious Activity
+    </h3>
+    
+    <form onSubmit={(e) => {
+      e.preventDefault();
+      const formData = new FormData(e.target);
+      const threatData = {
+        id: Date.now(),
+        type: formData.get('threatType'),
+        urgency: formData.get('urgencyLevel'),
+        platform: formData.get('affectedPlatform'),
+        description: formData.get('threatDescription'),
+        author: user.name,
+        avatar: user.picture,
+        timestamp: new Date().toISOString(),
+        verified: false,
+        likes: 0,
+        comments: 0,
+        tags: [formData.get('threatType'), 'community-report']
+      };
+      
+      // Add to community posts
+      setCommunityPosts(prev => [threatData, ...prev]);
+      
+      // Reset form
+      e.target.reset();
+      
+      // Show success notification
+      showNotification('🚨 Threat report submitted successfully!', 'success');
+      
+      // Update user stats
+      setUserStats(prev => ({
+        ...prev,
+        communityPoints: prev.communityPoints + 15,
+        totalAnalyses: prev.totalAnalyses + 1
+      }));
+    }}>
+      <div className="grid md:grid-cols-2 gap-6">
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-red-800 mb-2">Threat Type</label>
+            <select name="threatType" required className="w-full px-3 py-2 border border-red-300 rounded-lg focus:ring-2 focus:ring-red-500 bg-white">
+              <option value="">Select threat type</option>
+              <option value="phishing">🎣 Phishing Attack</option>
+              <option value="scam">💰 Financial Scam</option>
+              <option value="malware">🦠 Malware/Virus</option>
+              <option value="identity_theft">🆔 Identity Theft</option>
+              <option value="fake_website">🌐 Fake Website</option>
+              <option value="social_engineering">🧠 Social Engineering</option>
+              <option value="ransomware">🔒 Ransomware</option>
+              <option value="other">❓ Other</option>
+            </select>
+          </div>
+          
+          <div>
+            <label className="block text-sm font-medium text-red-800 mb-2">Urgency Level</label>
+            <select name="urgencyLevel" required className="w-full px-3 py-2 border border-red-300 rounded-lg focus:ring-2 focus:ring-red-500 bg-white">
+              <option value="">Select urgency</option>
+              <option value="low">🟢 Low Priority</option>
+              <option value="medium">🟡 Medium Priority</option>
+              <option value="high">🔴 High Priority</option>
+              <option value="critical">🚨 Critical/Emergency</option>
+            </select>
+          </div>
+          
+          <div>
+            <label className="block text-sm font-medium text-red-800 mb-2">Affected Platform</label>
+            <select name="affectedPlatform" required className="w-full px-3 py-2 border border-red-300 rounded-lg focus:ring-2 focus:ring-red-500 bg-white">
+              <option value="">Select platform</option>
+              <option value="email">📧 Email</option>
+              <option value="website">🌐 Website</option>
+              <option value="social_media">📱 Social Media</option>
+              <option value="sms">📱 SMS/Text</option>
+              <option value="phone">📞 Phone Call</option>
+              <option value="app">📱 Mobile App</option>
+              <option value="other">❓ Other</option>
+            </select>
+          </div>
+        </div>
+        
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-red-800 mb-2">Threat Description</label>
+            <textarea
+              name="threatDescription"
+              required
+              rows="4"
+              placeholder="Describe the threat, including URLs, email addresses, phone numbers, or other relevant details..."
+              className="w-full px-3 py-2 border border-red-300 rounded-lg focus:ring-2 focus:ring-red-500 resize-none"
+            />
+          </div>
+          
+          <div>
+            <label className="block text-sm font-medium text-red-800 mb-2">Evidence (Optional)</label>
+            <div className="border-2 border-dashed border-red-300 rounded-lg p-4 text-center hover:border-red-500 transition-colors">
+              <input type="file" multiple className="hidden" id="threat-evidence" />
+              <label htmlFor="threat-evidence" className="cursor-pointer">
+                <span className="text-2xl mb-2 block">📎</span>
+                <span className="text-sm text-red-700">Upload screenshots, emails, or other evidence</span>
+              </label>
             </div>
           </div>
           
-          <div className="mt-4 p-3 bg-red-100 rounded-lg">
-            <div className="text-sm text-red-800">
-              <strong>🛡️ Emergency:</strong> For immediate threats or if you're currently being scammed, contact local authorities or our 24/7 emergency hotline at <strong>+1-800-XIST-911</strong>
-            </div>
+          <div className="flex items-center space-x-2">
+            <input type="checkbox" id="anonymous" className="rounded border-red-300 text-red-600 focus:ring-red-500" />
+            <label htmlFor="anonymous" className="text-sm text-red-800">Report anonymously</label>
           </div>
+          
+          <button 
+            type="submit"
+            className="w-full py-3 bg-red-600 hover:bg-red-700 text-white rounded-lg font-semibold transition-colors flex items-center justify-center space-x-2"
+          >
+            <span className="text-xl">🚨</span>
+            <span>Submit Threat Report</span>
+          </button>
         </div>
-      )}
+      </div>
+    </form>
+    
+    <div className="mt-4 p-3 bg-red-100 rounded-lg">
+      <div className="text-sm text-red-800">
+        <strong>🛡️ Emergency:</strong> For immediate threats or if you're currently being scammed, contact local authorities or our 24/7 emergency hotline at <strong>+1-800-XIST-911</strong>
+      </div>
+    </div>
+  </div>
+)}
+
 
       {/* Create Regular Post */}
-      {user && (
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Share with Community</h3>
-          <div className="flex items-start space-x-4">
-            <img src={user.picture} alt="Your avatar" className="w-10 h-10 rounded-full" />
-            <div className="flex-1">
-              <textarea
-                placeholder="Share a security tip, ask for help, or discuss digital safety..."
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 resize-none"
-                rows="3"
-              />
-              <div className="mt-3 flex justify-between items-center">
-                <div className="flex space-x-2">
-                  <button className="px-3 py-1 bg-green-100 text-green-800 text-sm rounded-full hover:bg-green-200 transition-colors">
-                    💡 Safety Tip
-                  </button>
-                  <button className="px-3 py-1 bg-yellow-100 text-yellow-800 text-sm rounded-full hover:bg-yellow-200 transition-colors">
-                    ❓ Question
-                  </button>
-                  <button className="px-3 py-1 bg-blue-100 text-blue-800 text-sm rounded-full hover:bg-blue-200 transition-colors">
-                    📢 General Discussion
-                  </button>
-                </div>
-                <button className="px-6 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-semibold transition-colors">
-                  Share
-                </button>
-              </div>
+      {/* Share with Community - WORKING VERSION */}
+{user && (
+  <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+    <h3 className="text-lg font-semibold text-gray-900 mb-4">Share with Community</h3>
+    <form onSubmit={(e) => {
+      e.preventDefault();
+      const formData = new FormData(e.target);
+      const postContent = formData.get('postContent');
+      const postType = formData.get('postType') || 'general';
+      
+      if (!postContent.trim()) return;
+      
+      const newPost = {
+        id: Date.now(),
+        author: user.name,
+        avatar: user.picture,
+        content: postContent,
+        timestamp: new Date().toISOString(),
+        likes: 0,
+        comments: 0,
+        tags: [postType, 'community'],
+        verified: false,
+        reputation: userStats.reputation || 'Member'
+      };
+      
+      // Add to community posts
+      setCommunityPosts(prev => [newPost, ...prev]);
+      
+      // Reset form
+      e.target.reset();
+      
+      // Show success notification
+      showNotification('✅ Post shared with community!', 'success');
+      
+      // Update user stats
+      setUserStats(prev => ({
+        ...prev,
+        communityPoints: prev.communityPoints + 5
+      }));
+    }}>
+      <div className="flex items-start space-x-4">
+        <img src={user.picture} alt="Your avatar" className="w-10 h-10 rounded-full" />
+        <div className="flex-1">
+          <textarea
+            name="postContent"
+            placeholder="Share a security tip, ask for help, or discuss digital safety..."
+            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 resize-none"
+            rows="3"
+            required
+          />
+          <div className="mt-3 flex justify-between items-center">
+            <div className="flex space-x-2">
+              <button
+                type="button"
+                onClick={(e) => {
+                  const textarea = e.target.closest('form').querySelector('textarea');
+                  const typeInput = e.target.closest('form').querySelector('input[name="postType"]');
+                  if (typeInput) typeInput.value = 'safety-tip';
+                }}
+                className="px-3 py-1 bg-green-100 text-green-800 text-sm rounded-full hover:bg-green-200 transition-colors"
+              >
+                💡 Safety Tip
+              </button>
+              <button
+                type="button"
+                onClick={(e) => {
+                  const typeInput = e.target.closest('form').querySelector('input[name="postType"]');
+                  if (typeInput) typeInput.value = 'question';
+                }}
+                className="px-3 py-1 bg-yellow-100 text-yellow-800 text-sm rounded-full hover:bg-yellow-200 transition-colors"
+              >
+                ❓ Question
+              </button>
+              <button
+                type="button"
+                onClick={(e) => {
+                  const typeInput = e.target.closest('form').querySelector('input[name="postType"]');
+                  if (typeInput) typeInput.value = 'discussion';
+                }}
+                className="px-3 py-1 bg-blue-100 text-blue-800 text-sm rounded-full hover:bg-blue-200 transition-colors"
+              >
+                📢 Discussion
+              </button>
             </div>
+            <button
+              type="submit"
+              className="px-6 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-semibold transition-colors"
+            >
+              Share
+            </button>
           </div>
+          <input type="hidden" name="postType" value="general" />
         </div>
-      )}
+      </div>
+    </form>
+  </div>
+)}
+
 
       {/* Community Posts (keeping your existing design) */}
       <div className="space-y-6">
@@ -1661,19 +1757,19 @@ case 'community':
               <div className="flex-1">
                 <div className="flex items-center justify-between mb-2">
                   <div>
-                    <h4 className="font-semibold text-gray-900">{post.author}</h4>
+                    <h4 className="font-semibold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}">{post.author}</h4>
                     <p className="text-sm text-gray-500">
                       {new Date(post.timestamp).toLocaleDateString()} • {new Date(post.timestamp).toLocaleTimeString()}
                     </p>
                   </div>
-                  <button className="text-gray-400 hover:text-gray-600">⋯</button>
+                  <button className="text-gray-400 hover:${theme === 'dark' ? 'text-gray-400' : '${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}'}">⋯</button>
                 </div>
                 <p className="text-gray-800 mb-4 leading-relaxed">{post.content}</p>
                 
                 {/* Tags */}
                 <div className="flex flex-wrap gap-2 mb-4">
                   {post.tags.map((tag, tagIndex) => (
-                    <span key={tagIndex} className="px-2 py-1 bg-gray-100 text-gray-600 text-sm rounded-full hover:bg-gray-200 cursor-pointer transition-colors">
+                    <span key={tagIndex} className="px-2 py-1 bg-gray-100 ${theme === 'dark' ? 'text-gray-400' : '${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}'} text-sm rounded-full hover:bg-gray-200 cursor-pointer transition-colors">
                       #{tag}
                     </span>
                   ))}
@@ -1706,200 +1802,10 @@ case 'community':
 
       {/* Load More */}
       <div className="text-center">
-        <button className="px-8 py-3 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-lg font-semibold transition-colors">
+        <button className="px-8 py-3 bg-gray-200 hover:bg-gray-300 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'} rounded-lg font-semibold transition-colors">
           Load More Posts
         </button>
       </div>
-      // ✅ COMMUNITY WITH DOCS REPORTING FEATURES INTEGRATED
-case 'community':
-  return (
-    <div className="max-w-6xl mx-auto space-y-8" style={{ marginBottom: '100px' }}>
-      {/* Existing header and stats... */}
-      
-      {/* 🚨 THREAT REPORTING SYSTEM (FROM DOCS) */}
-      <div className="bg-white rounded-xl shadow-sm border p-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-          <span className="text-2xl mr-3">🚨</span>
-          Report Digital Threat
-        </h3>
-        {user ? (
-          <div className="space-y-4">
-            <div className="grid md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Threat Type</label>
-                <select className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500">
-                  <option value="">Select threat type</option>
-                  <option value="phishing">Phishing Email</option>
-                  <option value="scam_website">Scam Website</option>
-                  <option value="fake_social">Fake Social Media Account</option>
-                  <option value="investment_fraud">Investment Fraud</option>
-                  <option value="romance_scam">Romance Scam</option>
-                  <option value="tech_support">Tech Support Scam</option>
-                  <option value="other">Other</option>
-                </select>
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Urgency Level</label>
-                <select className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500">
-                  <option value="low">Low - General awareness</option>
-                  <option value="medium">Medium - Active threat</option>
-                  <option value="high">High - Immediate danger</option>
-                  <option value="critical">Critical - Mass targeting</option>
-                </select>
-              </div>
-            </div>
-            
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Threat Details</label>
-              <textarea 
-                rows="4" 
-                placeholder="Describe the threat in detail - include URLs, phone numbers, email addresses, or any other relevant information..."
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
-              />
-            </div>
-            
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Evidence (Optional)</label>
-              <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-purple-500 transition-colors">
-                <span className="text-4xl mb-2 block">📎</span>
-                <span className="text-sm text-gray-600">Upload screenshots, emails, or other evidence</span>
-              </div>
-            </div>
-            
-            <div className="flex items-center space-x-2">
-              <input type="checkbox" id="anonymous" className="rounded border-gray-300 text-purple-600 focus:ring-purple-500" />
-              <label htmlFor="anonymous" className="text-sm text-gray-700">Report anonymously</label>
-            </div>
-            
-            <button className="w-full py-3 bg-red-600 hover:bg-red-700 text-white rounded-lg font-semibold transition-colors flex items-center justify-center space-x-2">
-              <span>🚨</span>
-              <span>Submit Threat Report</span>
-            </button>
-          </div>
-        ) : (
-          <div className="text-center py-8">
-            <div className="text-4xl mb-4">🔐</div>
-            <h4 className="text-lg font-semibold mb-2">Sign In Required</h4>
-            <p className="text-gray-600 mb-4">Please sign in to report threats to the community</p>
-            <button 
-              onClick={() => login()}
-              className="px-6 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-semibold transition-colors"
-            >
-              Sign In to Report
-            </button>
-          </div>
-        )}
-      </div>
-
-      {/* 📊 PUBLIC THREAT ALERTS DISPLAY */}
-      <div className="bg-white rounded-xl shadow-sm border p-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-          <span className="text-2xl mr-3">⚠️</span>
-          Recent Threat Alerts
-        </h3>
-        
-        <div className="space-y-4">
-          {[
-            {
-              id: 1,
-              type: "phishing",
-              title: "Fake Apple Security Alert Emails",
-              description: "Phishing emails claiming Apple ID compromise, asking for password reset via suspicious links",
-              severity: "high",
-              reporter: "CyberSec_Expert",
-              time: "2 hours ago",
-              affected: 1247,
-              verified: true
-            },
-            {
-              id: 2,
-              type: "investment_fraud",
-              title: "Crypto Investment Ponzi Scheme",
-              description: "Website promising 500% returns in 30 days through 'AI trading bot' - classic pyramid scheme",
-              severity: "critical",
-              reporter: "FinancialWatch",
-              time: "5 hours ago",
-              affected: 3200,
-              verified: true
-            },
-            {
-              id: 3,
-              type: "tech_support",
-              title: "Microsoft Tech Support Scam Calls",
-              description: "Cold callers claiming computer infection, demanding remote access and payment for fake services",
-              severity: "medium",
-              reporter: "Community_Guardian",
-              time: "1 day ago",
-              affected: 892,
-              verified: false
-            }
-          ].map((alert) => (
-            <div key={alert.id} className={`p-4 rounded-lg border-l-4 ${
-              alert.severity === 'critical' ? 'border-red-500 bg-red-50' :
-              alert.severity === 'high' ? 'border-orange-500 bg-orange-50' :
-              alert.severity === 'medium' ? 'border-yellow-500 bg-yellow-50' :
-              'border-blue-500 bg-blue-50'
-            }`}>
-              <div className="flex items-start justify-between">
-                <div className="flex-1">
-                  <div className="flex items-center space-x-2 mb-2">
-                    <span className={`px-2 py-1 rounded-full text-xs font-medium uppercase ${
-                      alert.severity === 'critical' ? 'bg-red-200 text-red-800' :
-                      alert.severity === 'high' ? 'bg-orange-200 text-orange-800' :
-                      alert.severity === 'medium' ? 'bg-yellow-200 text-yellow-800' :
-                      'bg-blue-200 text-blue-800'
-                    }`}>
-                      {alert.severity}
-                    </span>
-                    
-                    <span className="px-2 py-1 bg-gray-200 text-gray-700 text-xs rounded-full">
-                      {alert.type.replace('_', ' ')}
-                    </span>
-                    
-                    {alert.verified && (
-                      <span className="px-2 py-1 bg-green-200 text-green-800 text-xs rounded-full flex items-center">
-                        ✓ Verified
-                      </span>
-                    )}
-                  </div>
-                  
-                  <h4 className="font-semibold text-gray-900 mb-2">{alert.title}</h4>
-                  <p className="text-gray-700 text-sm mb-3">{alert.description}</p>
-                  
-                  <div className="flex items-center space-x-4 text-xs text-gray-500">
-                    <span>Reported by {alert.reporter}</span>
-                    <span>•</span>
-                    <span>{alert.time}</span>
-                    <span>•</span>
-                    <span>{alert.affected} people affected</span>
-                  </div>
-                </div>
-                
-                <div className="flex flex-col items-center space-y-2 ml-4">
-                  <button className="p-2 text-red-600 hover:bg-red-100 rounded-lg transition-colors">
-                    <span>⚠️</span>
-                  </button>
-                  <button className="p-2 text-blue-600 hover:bg-blue-100 rounded-lg transition-colors">
-                    <span>📤</span>
-                  </button>
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-        
-        <div className="mt-4 text-center">
-          <button className="px-6 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-lg font-medium transition-colors">
-            View All Threat Alerts
-          </button>
-        </div>
-      </div>
-
-      {/* Existing community posts and features... */}
-    </div>
-  );
-cmd
     </div>
   );
 
@@ -1940,13 +1846,13 @@ case 'settings':
 
       {/* 🤖 AI MODEL CONFIGURATION (FROM DOCS) */}
       <div className="bg-white rounded-xl shadow-sm border p-6">
-        <h3 className="text-xl font-semibold text-gray-900 mb-4 flex items-center">
+        <h3 className="text-xl font-semibold ${theme === 'dark' ? 'text-white' : 'text-gray-900'} mb-4 flex items-center">
           <span className="text-2xl mr-3">🤖</span>
           AI Model Settings
         </h3>
         <div className="grid md:grid-cols-2 gap-6">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">AI Model</label>
+            <label className="block text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'} mb-2">AI Model</label>
             <select className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500">
               <option value="deepseek-r1">DeepSeek-R1 (Recommended)</option>
               <option value="gpt-4">GPT-4</option>
@@ -1956,7 +1862,7 @@ case 'settings':
           </div>
         
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'} mb-2">
               Temperature: <span className="text-purple-600 font-bold">0.7</span>
             </label>
             <input type="range" min="0" max="2" step="0.1" defaultValue="0.7" className="w-full accent-purple-600" />
@@ -1969,12 +1875,12 @@ case 'settings':
         
         <div className="mt-4 grid md:grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Max Response Tokens</label>
+            <label className="block text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'} mb-2">Max Response Tokens</label>
             <input type="number" min="100" max="4000" defaultValue="1200" 
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500" />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Context Window</label>
+            <label className="block text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'} mb-2">Context Window</label>
             <select className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500">
               <option value="4k">4K tokens</option>
               <option value="8k">8K tokens</option>
@@ -1987,13 +1893,13 @@ case 'settings':
 
       {/* 🎨 CHAT WIDGET CUSTOMIZATION (FROM DOCS) */}
       <div className="bg-white rounded-xl shadow-sm border p-6">
-        <h3 className="text-xl font-semibold text-gray-900 mb-4 flex items-center">
+        <h3 className="text-xl font-semibold ${theme === 'dark' ? 'text-white' : 'text-gray-900'} mb-4 flex items-center">
           <span className="text-2xl mr-3">🎨</span>
           Chat Widget Appearance
         </h3>
         <div className="grid md:grid-cols-3 gap-6">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Widget Position</label>
+            <label className="block text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'} mb-2">Widget Position</label>
             <select className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500">
               <option value="bottom-right">Bottom Right</option>
               <option value="bottom-left">Bottom Left</option>
@@ -2003,7 +1909,7 @@ case 'settings':
           </div>
           
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Chat Bubble Style</label>
+            <label className="block text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'} mb-2">Chat Bubble Style</label>
             <select className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500">
               <option value="rounded">Rounded</option>
               <option value="square">Square</option>
@@ -2012,7 +1918,7 @@ case 'settings':
           </div>
           
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Brand Color</label>
+            <label className="block text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'} mb-2">Brand Color</label>
             <input type="color" defaultValue="#8B5CF6" 
               className="w-full h-10 border border-gray-300 rounded-lg" />
           </div>
@@ -2020,15 +1926,15 @@ case 'settings':
         
         <div className="mt-6 grid md:grid-cols-2 gap-6">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Welcome Message</label>
+            <label className="block text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'} mb-2">Welcome Message</label>
             <textarea rows="3" placeholder="Hello! How can I help you today?" 
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500" />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Avatar Upload</label>
+            <label className="block text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'} mb-2">Avatar Upload</label>
             <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-purple-500 transition-colors">
               <span className="text-4xl mb-2 block">📸</span>
-              <span className="text-sm text-gray-600">Click to upload custom avatar</span>
+              <span className="text-sm ${theme === 'dark' ? 'text-gray-400' : '${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}'}">Click to upload custom avatar</span>
             </div>
           </div>
         </div>
@@ -2036,13 +1942,13 @@ case 'settings':
 
       {/* 🌐 LANGUAGE & LOCALIZATION (FROM DOCS) */}
       <div className="bg-white rounded-xl shadow-sm border p-6">
-        <h3 className="text-xl font-semibold text-gray-900 mb-4 flex items-center">
+        <h3 className="text-xl font-semibold ${theme === 'dark' ? 'text-white' : 'text-gray-900'} mb-4 flex items-center">
           <span className="text-2xl mr-3">🌐</span>
           Language & Localization
         </h3>
         <div className="grid md:grid-cols-2 gap-6">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Primary Language</label>
+            <label className="block text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'} mb-2">Primary Language</label>
             <select className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500">
               <option value="en">English</option>
               <option value="es">Spanish</option>
@@ -2056,7 +1962,7 @@ case 'settings':
           </div>
           
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Date Format</label>
+            <label className="block text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'} mb-2">Date Format</label>
             <select className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500">
               <option value="MM/DD/YYYY">MM/DD/YYYY</option>
               <option value="DD/MM/YYYY">DD/MM/YYYY</option>
@@ -2067,8 +1973,8 @@ case 'settings':
         
         <div className="mt-4 flex items-center justify-between p-4 bg-gray-50 rounded-lg">
           <div>
-            <div className="font-medium text-gray-900">Auto-detect Language</div>
-            <div className="text-sm text-gray-600">Automatically detect user's language</div>
+            <div className="font-medium ${theme === 'dark' ? 'text-white' : 'text-gray-900'}">Auto-detect Language</div>
+            <div className="text-sm ${theme === 'dark' ? 'text-gray-400' : '${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}'}">Automatically detect user's language</div>
           </div>
           <button className="relative w-12 h-6 bg-purple-600 rounded-full">
             <div className="absolute w-5 h-5 bg-white rounded-full shadow transition-transform translate-x-6 top-0.5"></div>
@@ -2078,15 +1984,15 @@ case 'settings':
 
       {/* 🔒 ENHANCED PRIVACY & SECURITY (FROM DOCS) */}
       <div className="bg-white rounded-xl shadow-sm border p-6">
-        <h3 className="text-xl font-semibold text-gray-900 mb-4 flex items-center">
+        <h3 className="text-xl font-semibold ${theme === 'dark' ? 'text-white' : 'text-gray-900'} mb-4 flex items-center">
           <span className="text-2xl mr-3">🔒</span>
           Privacy & Security
         </h3>
         <div className="space-y-4">
           <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
             <div>
-              <div className="font-medium text-gray-900">Data Encryption</div>
-              <div className="text-sm text-gray-600">End-to-end encryption for all data</div>
+              <div className="font-medium ${theme === 'dark' ? 'text-white' : 'text-gray-900'}">Data Encryption</div>
+              <div className="text-sm ${theme === 'dark' ? 'text-gray-400' : '${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}'}">End-to-end encryption for all data</div>
             </div>
             <button className="relative w-12 h-6 bg-green-600 rounded-full">
               <div className="absolute w-5 h-5 bg-white rounded-full shadow transition-transform translate-x-6 top-0.5"></div>
@@ -2095,8 +2001,8 @@ case 'settings':
           
           <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
             <div>
-              <div className="font-medium text-gray-900">Two-Factor Authentication</div>
-              <div className="text-sm text-gray-600">Extra security for your account</div>
+              <div className="font-medium ${theme === 'dark' ? 'text-white' : 'text-gray-900'}">Two-Factor Authentication</div>
+              <div className="text-sm ${theme === 'dark' ? 'text-gray-400' : '${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}'}">Extra security for your account</div>
             </div>
             <button className="relative w-12 h-6 bg-gray-300 rounded-full">
               <div className="absolute w-5 h-5 bg-white rounded-full shadow transition-transform translate-x-0.5 top-0.5"></div>
@@ -2105,12 +2011,12 @@ case 'settings':
           
           <div className="grid md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Session Timeout (minutes)</label>
+              <label className="block text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'} mb-2">Session Timeout (minutes)</label>
               <input type="number" min="5" max="480" defaultValue="30" 
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500" />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Data Retention (days)</label>
+              <label className="block text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'} mb-2">Data Retention (days)</label>
               <select className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500">
                 <option value="30">30 days</option>
                 <option value="90">90 days</option>
@@ -2124,13 +2030,13 @@ case 'settings':
 
       {/* 🔌 INTEGRATIONS & WEBHOOKS (FROM DOCS) */}
       <div className="bg-white rounded-xl shadow-sm border p-6">
-        <h3 className="text-xl font-semibold text-gray-900 mb-4 flex items-center">
+        <h3 className="text-xl font-semibold ${theme === 'dark' ? 'text-white' : 'text-gray-900'} mb-4 flex items-center">
           <span className="text-2xl mr-3">🔌</span>
           API & Integrations
         </h3>
         <div className="space-y-6">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Webhook URL</label>
+            <label className="block text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'} mb-2">Webhook URL</label>
             <input type="url" placeholder="https://your-domain.com/webhook" 
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500" />
           </div>
@@ -2139,19 +2045,19 @@ case 'settings':
             <button className="p-4 border border-gray-200 rounded-lg hover:border-purple-500 transition-colors text-center">
               <div className="text-2xl mb-2">📊</div>
               <div className="font-medium">Google Analytics</div>
-              <div className="text-sm text-gray-600">Connect analytics tracking</div>
+              <div className="text-sm ${theme === 'dark' ? 'text-gray-400' : '${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}'}">Connect analytics tracking</div>
             </button>
             
             <button className="p-4 border border-gray-200 rounded-lg hover:border-purple-500 transition-colors text-center">
               <div className="text-2xl mb-2">💬</div>
               <div className="font-medium">Slack Integration</div>
-              <div className="text-sm text-gray-600">Send notifications to Slack</div>
+              <div className="text-sm ${theme === 'dark' ? 'text-gray-400' : '${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}'}">Send notifications to Slack</div>
             </button>
             
             <button className="p-4 border border-gray-200 rounded-lg hover:border-purple-500 transition-colors text-center">
               <div className="text-2xl mb-2">📧</div>
               <div className="font-medium">Email Alerts</div>
-              <div className="text-sm text-gray-600">Configure email notifications</div>
+              <div className="text-sm ${theme === 'dark' ? 'text-gray-400' : '${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}'}">Configure email notifications</div>
             </button>
           </div>
         </div>
@@ -2159,19 +2065,19 @@ case 'settings':
 
       {/* ⚡ PERFORMANCE SETTINGS (FROM DOCS) */}
       <div className="bg-white rounded-xl shadow-sm border p-6">
-        <h3 className="text-xl font-semibold text-gray-900 mb-4 flex items-center">
+        <h3 className="text-xl font-semibold ${theme === 'dark' ? 'text-white' : 'text-gray-900'} mb-4 flex items-center">
           <span className="text-2xl mr-3">⚡</span>
           Performance & Behavior
         </h3>
         <div className="grid md:grid-cols-2 gap-6">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Response Delay (ms)</label>
+            <label className="block text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'} mb-2">Response Delay (ms)</label>
             <input type="number" min="0" max="5000" defaultValue="1000" 
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500" />
           </div>
           
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Memory Depth (messages)</label>
+            <label className="block text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'} mb-2">Memory Depth (messages)</label>
             <input type="number" min="5" max="100" defaultValue="20" 
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500" />
           </div>
@@ -2179,8 +2085,8 @@ case 'settings':
         
         <div className="mt-4 flex items-center justify-between p-4 bg-gray-50 rounded-lg">
           <div>
-            <div className="font-medium text-gray-900">Smart Caching</div>
-            <div className="text-sm text-gray-600">Cache responses for faster performance</div>
+            <div className="font-medium ${theme === 'dark' ? 'text-white' : 'text-gray-900'}">Smart Caching</div>
+            <div className="text-sm ${theme === 'dark' ? 'text-gray-400' : '${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}'}">Cache responses for faster performance</div>
           </div>
           <button className="relative w-12 h-6 bg-purple-600 rounded-full">
             <div className="absolute w-5 h-5 bg-white rounded-full shadow transition-transform translate-x-6 top-0.5"></div>
@@ -2191,14 +2097,14 @@ case 'settings':
       {/* EXISTING CURRENT SETTINGS (THEME, FONT, NOTIFICATIONS, API, ACCOUNT) */}
       {/* 🎨 APPEARANCE SETTINGS (KEEPING YOUR BEAUTIFUL DESIGN) */}
       <div className="bg-white rounded-xl shadow-sm border p-6">
-        <h3 className="text-xl font-semibold text-gray-900 mb-6 flex items-center">
+        <h3 className="text-xl font-semibold ${theme === 'dark' ? 'text-white' : 'text-gray-900'} mb-6 flex items-center">
           <span className="text-2xl mr-3">🎨</span>
           Appearance & Display
         </h3>
         <div className="space-y-6">
           {/* Theme Selection */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-3">Theme</label>
+            <label className="block text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'} mb-3">Theme</label>
             <div className="grid grid-cols-3 gap-4">
               {[
                 { value: 'light', icon: '☀️', label: 'Light' },
@@ -2223,7 +2129,7 @@ case 'settings':
 
           {/* Font Size with Live Preview */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-3">
+            <label className="block text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'} mb-3">
               Font Size: <span className="text-purple-600 font-semibold">{fontSize}px</span>
             </label>
             <div className="flex items-center space-x-4">
@@ -2240,7 +2146,7 @@ case 'settings':
               <span className="text-sm text-gray-500">Large</span>
             </div>
             <div className="mt-3 p-3 bg-gray-50 rounded-lg">
-              <p style={{fontSize: `${fontSize}px`}} className="text-gray-700">
+              <p style={{fontSize: `${fontSize}px`}} className="${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}">
                 Live preview: This is how your text will appear with the selected font size.
               </p>
             </div>
@@ -2249,8 +2155,8 @@ case 'settings':
           {/* Animations Toggle */}
           <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
             <div>
-              <div className="font-medium text-gray-900">Enable Animations</div>
-              <div className="text-sm text-gray-600">Smooth transitions and hover effects</div>
+              <div className="font-medium ${theme === 'dark' ? 'text-white' : 'text-gray-900'}">Enable Animations</div>
+              <div className="text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}">Smooth transitions and hover effects</div>
             </div>
             <button
               onClick={() => setAnimations(!animations)}
@@ -2290,8 +2196,8 @@ case 'about':
             <div className="bg-white rounded-xl shadow-sm border p-8">
               <div className="space-y-6">
                 <div>
-                  <h3 className="text-xl font-semibold text-gray-900 mb-3">Our Mission</h3>
-                  <p className="text-gray-600 leading-relaxed">
+                  <h3 className="text-xl font-semibold ${theme === 'dark' ? 'text-white' : 'text-gray-900'} mb-3">Our Mission</h3>
+                  <p className="${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'} leading-relaxed">
                     Xist AI is dedicated to protecting individuals and communities from digital threats, 
                     misinformation, and online scams through advanced artificial intelligence and 
                     community-driven intelligence sharing. We believe everyone deserves to navigate 
@@ -2300,8 +2206,8 @@ case 'about':
                 </div>
                 
                 <div>
-                  <h3 className="text-xl font-semibold text-gray-900 mb-3">Technology</h3>
-                  <p className="text-gray-600 leading-relaxed">
+                  <h3 className="text-xl font-semibold ${theme === 'dark' ? 'text-white' : 'text-gray-900'} mb-3">Technology</h3>
+                  <p className="${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'} leading-relaxed">
                     Our platform combines machine learning algorithms, natural language processing, 
                     pattern recognition, and real-time threat intelligence powered by DeepSeek-R1 AI 
                     to provide comprehensive digital protection services with 94.8% accuracy.
@@ -2309,19 +2215,19 @@ case 'about':
                 </div>
                 
                 <div>
-                  <h3 className="text-xl font-semibold text-gray-900 mb-3">Community Impact</h3>
+                  <h3 className="text-xl font-semibold ${theme === 'dark' ? 'text-white' : 'text-gray-900'} mb-3">Community Impact</h3>
                   <div className="grid md:grid-cols-3 gap-4">
                     <div className="text-center p-4 bg-blue-50 rounded-lg">
                       <div className="text-2xl font-bold text-blue-600">12,847</div>
-                      <div className="text-sm text-gray-600">Protected Users</div>
+                      <div className="text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}">Protected Users</div>
                     </div>
                     <div className="text-center p-4 bg-red-50 rounded-lg">
                       <div className="text-2xl font-bold text-red-600">3,521</div>
-                      <div className="text-sm text-gray-600">Threats Blocked</div>
+                      <div className="text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}">Threats Blocked</div>
                     </div>
                     <div className="text-center p-4 bg-green-50 rounded-lg">
                       <div className="text-2xl font-bold text-green-600">1.2M</div>
-                      <div className="text-sm text-gray-600">Lives Protected</div>
+                      <div className="text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}">Lives Protected</div>
                     </div>
                   </div>
                 </div>
@@ -2349,7 +2255,7 @@ case 'about':
 
             <div className="grid md:grid-cols-2 gap-6">
               <div className="bg-white rounded-xl shadow-sm border p-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">📧 Contact Support</h3>
+                <h3 className="text-lg font-semibold ${theme === 'dark' ? 'text-white' : 'text-gray-900'} mb-4">📧 Contact Support</h3>
                 <form className="space-y-4">
                   <input
                     type="text"
@@ -2376,7 +2282,7 @@ case 'about':
               </div>
 
               <div className="bg-white rounded-xl shadow-sm border p-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">🔗 Quick Links</h3>
+                <h3 className="text-lg font-semibold ${theme === 'dark' ? 'text-white' : 'text-gray-900'} mb-4">🔗 Quick Links</h3>
                 <div className="space-y-3">
                   <a href="#faq" className="block p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
                     ❓ Frequently Asked Questions
@@ -2416,14 +2322,14 @@ case 'about':
             <div className="grid md:grid-cols-2 gap-8">
               <div className="space-y-6">
                 <div className="bg-white rounded-xl shadow-sm border p-6">
-                  <h3 className="text-lg font-semibold text-gray-900 mb-4">📍 Contact Information</h3>
+                  <h3 className="text-lg font-semibold ${theme === 'dark' ? 'text-white' : 'text-gray-900'} mb-4">📍 Contact Information</h3>
                   <div className="space-y-3">
                     <div className="flex items-center space-x-3">
                       <span className="text-xl">📧</span>
                       <div>
                         <div className="font-medium">Email</div>
                         <div className="font-medium">Lead Developer</div>
-                        <div className="text-gray-600">rshozab64@gmail.com</div>
+                        <div className="${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}">rshozab64@gmail.com</div>
                       </div>
                     </div>
                     <div className="flex items-center space-x-3">
@@ -2431,7 +2337,7 @@ case 'about':
                       <div>
                         <div className="font-medium">Security Issues</div>
                         <div className="font-medium">Our AI Specialist</div>
-                        <div className="text-gray-600">asmitgupta2006@gmail.com</div>
+                        <div className="${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}">asmitgupta2006@gmail.com</div>
                       </div>
                     </div>
                     <div className="flex items-center space-x-3">
@@ -2439,22 +2345,22 @@ case 'about':
                       <div>
                         <div className="font-medium">Business Inquiries</div>
                         <div className="font-medium">Creative Media</div>
-                        <div className="text-gray-600">parabalsrivastava@gmail.com</div>
+                        <div className="${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}">parabalsrivastava@gmail.com</div>
                       </div>
                     </div>
                   </div>
                 </div>
 
                 <div className="bg-white rounded-xl shadow-sm border p-6">
-                  <h3 className="text-lg font-semibold text-gray-900 mb-4">⏰ Response Times</h3>
+                  <h3 className="text-lg font-semibold ${theme === 'dark' ? 'text-white' : 'text-gray-900'} mb-4">⏰ Response Times</h3>
                   <div className="space-y-2 text-sm">
                     <div className="flex justify-between">
                       <span>General Inquiries:</span>
-                      <span className="text-gray-600">24-48 hours</span>
+                      <span className="${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}">24-48 hours</span>
                     </div>
                     <div className="flex justify-between">
                       <span>Technical Support:</span>
-                      <span className="text-gray-600">4-8 hours</span>
+                      <span className="${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}">4-8 hours</span>
                     </div>
                     <div className="flex justify-between">
                       <span>Security Issues:</span>
@@ -2465,7 +2371,7 @@ case 'about':
               </div>
 
               <div className="bg-white rounded-xl shadow-sm border p-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">✉️ Send Message</h3>
+                <h3 className="text-lg font-semibold ${theme === 'dark' ? 'text-white' : 'text-gray-900'} mb-4">✉️ Send Message</h3>
                 <form className="space-y-4">
                   <input
                     type="text"
@@ -2595,33 +2501,33 @@ case 'about':
       {/* User Stats Dashboard (ALL ORIGINAL) */}
       {user && (
         <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-6">
-          <h3 className="text-xl font-semibold text-gray-900 mb-4 flex items-center">
+          <h3 className="text-xl font-semibold ${theme === 'dark' ? 'text-white' : 'text-gray-900'} mb-4 flex items-center">
             <span className="text-2xl mr-3">📊</span>
             Your Protection Dashboard
           </h3>
           <div className="grid md:grid-cols-4 gap-4">
             <div className="text-center p-4 bg-blue-50 rounded-lg hover:shadow-md transition-all duration-300">
               <div className="text-3xl font-bold text-blue-600">{userStats.totalAnalyses}</div>
-              <div className="text-sm text-gray-600">Analyses</div>
+              <div className="text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}">Analyses</div>
             </div>
             <div className="text-center p-4 bg-green-50 rounded-lg hover:shadow-md transition-all duration-300">
               <div className="text-3xl font-bold text-green-600">{userStats.threatsStopped}</div>
-              <div className="text-sm text-gray-600">Threats Stopped</div>
+              <div className="text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}">Threats Stopped</div>
             </div>
             <div className="text-center p-4 bg-purple-50 rounded-lg hover:shadow-md transition-all duration-300">
               <div className="text-3xl font-bold text-purple-600">{userStats.communityPoints}</div>
-              <div className="text-sm text-gray-600">Community Points</div>
+              <div className="text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}">Community Points</div>
             </div>
             <div className="text-center p-4 bg-yellow-50 rounded-lg hover:shadow-md transition-all duration-300">
               <div className="text-3xl font-bold text-yellow-600">{userStats.badges.length}</div>
-              <div className="text-sm text-gray-600">Badges Earned</div>
+              <div className="text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}">Badges Earned</div>
             </div>
           </div>
 
           {/* Recent Badges */}
           {userStats.badges.length > 0 && (
             <div className="mt-6">
-              <h4 className="font-medium text-gray-900 mb-3">Recent Achievements</h4>
+              <h4 className="font-medium ${theme === 'dark' ? 'text-white' : 'text-gray-900'} mb-3">Recent Achievements</h4>
               <div className="flex space-x-2">
                 {userStats.badges.slice(0, 3).map((badge, index) => (
                   <div key={index} className="flex items-center space-x-2 bg-yellow-50 border border-yellow-200 rounded-lg px-3 py-2 hover:shadow-md transition-all duration-300">
@@ -2676,7 +2582,7 @@ case 'about':
 }`}>
           AI-Powered Threat Verification
         </h1>
-        <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+        <p className="text-xl ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'} max-w-2xl mx-auto">
           Advanced threat detection powered by DeepSeek-R1 AI with real-time streaming analysis and community intelligence
         </p>
       </div>
@@ -2691,7 +2597,7 @@ case 'about':
               {isOnline ? '🟢' : '🔴'}
             </div>
             <div>
-              <div className="font-semibold text-gray-900">Network Status</div>
+              <div className="font-semibold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}">Network Status</div>
               <div className={`text-sm ${isOnline ? 'text-green-600' : 'text-red-600'}`}>
                 {isOnline ? 'Connected & Secured' : 'Offline Protection'}
               </div>
@@ -2703,7 +2609,7 @@ case 'about':
           <div className="flex items-center">
             <div className="text-2xl mr-3 text-blue-600">🏆</div>
             <div>
-              <div className="font-semibold text-gray-900">Your Score</div>
+              <div className="font-semibold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}">Your Score</div>
               <div className="text-sm text-blue-600">{userStats.communityPoints} Points</div>
             </div>
           </div>
@@ -2713,7 +2619,7 @@ case 'about':
           <div className="flex items-center">
             <div className="text-2xl mr-3 text-purple-600">🛡️</div>
             <div>
-              <div className="font-semibold text-gray-900">Threats Stopped</div>
+              <div className="font-semibold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}">Threats Stopped</div>
               <div className="text-sm text-purple-600">{userStats.threatsStopped} Total</div>
             </div>
           </div>
@@ -2723,7 +2629,7 @@ case 'about':
           <div className="flex items-center">
             <div className="text-2xl mr-3 text-yellow-600">🎯</div>
             <div>
-              <div className="font-semibold text-gray-900">Accuracy Rate</div>
+              <div className="font-semibold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}">Accuracy Rate</div>
               <div className="text-sm text-yellow-600">94.8% Success</div>
             </div>
           </div>
@@ -2734,7 +2640,7 @@ case 'about':
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
         <div className="space-y-6">
           <div>
-            <label htmlFor="verify-input" className="block text-sm font-medium text-gray-700 mb-2">
+            <label htmlFor="verify-input" className="block text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'} mb-2">
               Enter suspicious content for AI analysis
             </label>
             <textarea
@@ -2868,7 +2774,7 @@ Examples:
                       }`}>
                         {suggestion.difficulty}
                       </div>
-                      <div className="px-2 py-1 bg-gray-100 text-gray-700 text-xs rounded-full font-medium">
+                      <div className="px-2 py-1 bg-gray-100 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'} text-xs rounded-full font-medium">
                         {suggestion.category}
                       </div>
                     </div>
@@ -2936,15 +2842,41 @@ Examples:
             )}
 
             {/* Camera Button */}
-            {cameraEnabled && (
-              <button
-                onClick={captureScreenshot}
-                className="px-6 py-3 bg-cyan-500 hover:bg-cyan-600 text-white rounded-lg font-semibold transition-all duration-300 flex items-center justify-center space-x-2 min-h-[48px]"
-              >
-                <span className="text-xl">📷</span>
-                <span>OCR</span>
-              </button>
-            )}
+            {/* Camera/OCR Button - UPDATED */}
+{cameraEnabled && (
+  <div className="relative">
+    <input
+      type="file"
+      accept="image/*"
+      onChange={(e) => {
+        const file = e.target.files[0];
+        if (file && (file.type === 'image/jpeg' || file.type === 'image/png' || file.type === 'image/jpg')) {
+          // Process the file for OCR
+          const reader = new FileReader();
+          reader.onload = (event) => {
+            // Add OCR processing here
+            const imageData = event.target.result;
+            setVerifyInput(prev => prev + "\n\nImage uploaded for OCR analysis...");
+            showNotification('📷 Image uploaded successfully!', 'success');
+          };
+          reader.readAsDataURL(file);
+        } else {
+          showNotification('📷 Please select a valid image file (JPG, PNG)', 'error');
+        }
+      }}
+      className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+      id="ocr-file-input"
+    />
+    <label
+      htmlFor="ocr-file-input"
+      className="px-6 py-3 bg-cyan-500 hover:bg-cyan-600 text-white rounded-lg font-semibold transition-all duration-300 flex items-center justify-center space-x-2 min-h-[48px] cursor-pointer"
+    >
+      <span className="text-xl">📷</span>
+      <span>Upload Image</span>
+    </label>
+  </div>
+)}
+
 
             <button
               onClick={() => {
@@ -2952,7 +2884,7 @@ Examples:
                 setAnalysisResult(null);
                 setAnalysisState('idle');
               }}
-              className="flex items-center justify-center space-x-2 px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-all duration-200 min-h-[48px] hover:scale-105"
+              className="flex items-center justify-center space-x-2 px-6 py-3 border border-gray-300 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'} rounded-lg hover:bg-gray-50 transition-all duration-200 min-h-[48px] hover:scale-105"
             >
               <span className="text-xl">🗑️</span>
               <span>Clear</span>
@@ -2965,7 +2897,7 @@ Examples:
       {analysisResult && (
         <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-6 animate-fade-in">
           <div className="flex items-center justify-between mb-6">
-            <h3 className="text-xl font-semibold text-gray-900 flex items-center">
+            <h3 className="text-xl font-semibold ${theme === 'dark' ? 'text-white' : 'text-gray-900'} flex items-center">
               <span className="text-2xl mr-3">🛡️</span>
               AI Analysis Results
             </h3>
@@ -2987,7 +2919,7 @@ Examples:
               }`}>
                 {analysisResult.credibilityScore}%
               </div>
-              <div className="text-sm text-gray-600 font-medium mb-2">Credibility Score</div>
+              <div className="text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'} font-medium mb-2">Credibility Score</div>
               <div className="w-full bg-gray-200 rounded-full h-2">
                 <div
                   className={`h-2 rounded-full transition-all duration-1000 ${
@@ -3006,7 +2938,7 @@ Examples:
               }`}>
                 {analysisResult.scamRisk}%
               </div>
-              <div className="text-sm text-gray-600 font-medium mb-2">Threat Risk</div>
+              <div className="text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'} font-medium mb-2">Threat Risk</div>
               <div className="w-full bg-gray-200 rounded-full h-2">
                 <div
                   className={`h-2 rounded-full transition-all duration-1000 ${
@@ -3029,7 +2961,7 @@ Examples:
               }`}>
                 {analysisResult.verdict}
               </div>
-              <div className="text-sm text-gray-600">
+              <div className="text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}">
                 {analysisResult.confidence}% Confidence
               </div>
             </div>
@@ -3117,7 +3049,7 @@ Examples:
       {/* AI Assistant Chat (ALL ORIGINAL) */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
         <div className="p-4 bg-gradient-to-r from-purple-50 to-blue-50 border-b border-gray-200">
-          <h3 className="text-lg font-semibold text-gray-900 flex items-center">
+          <h3 className="text-lg font-semibold ${theme === 'dark' ? 'text-white' : 'text-gray-900'} flex items-center">
             <span className="text-xl mr-3">🤖</span>
             AI Safety Assistant
             <span className="ml-2 text-sm text-gray-500">(Powered by DeepSeek-R1)</span>
@@ -3284,23 +3216,23 @@ Examples:
       {/* Progress Overview */}
       {user && (
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-          <h3 className="text-xl font-semibold text-gray-900 mb-4">Your Learning Progress</h3>
+          <h3 className="text-xl font-semibold ${theme === 'dark' ? 'text-white' : 'text-gray-900'} mb-4">Your Learning Progress</h3>
           <div className="grid md:grid-cols-4 gap-6">
             <div className="text-center">
               <div className="text-3xl font-bold text-blue-600">3</div>
-              <div className="text-sm text-gray-600">Courses Enrolled</div>
+              <div className="text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}">Courses Enrolled</div>
             </div>
             <div className="text-center">
               <div className="text-3xl font-bold text-green-600">67%</div>
-              <div className="text-sm text-gray-600">Average Progress</div>
+              <div className="text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}">Average Progress</div>
             </div>
             <div className="text-center">
               <div className="text-3xl font-bold text-purple-600">2.5h</div>
-              <div className="text-sm text-gray-600">Time Invested</div>
+              <div className="text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}">Time Invested</div>
             </div>
             <div className="text-center">
               <div className="text-3xl font-bold text-orange-600">🏆</div>
-              <div className="text-sm text-gray-600">Certificates</div>
+              <div className="text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}">Certificates</div>
             </div>
           </div>
         </div>
@@ -3333,10 +3265,10 @@ Examples:
                 </div>
               </div>
               
-              <h3 className="text-xl font-semibold text-gray-900 mb-2 group-hover:text-purple-600 transition-colors">
+              <h3 className="text-xl font-semibold ${theme === 'dark' ? 'text-white' : 'text-gray-900'} mb-2 group-hover:text-purple-600 transition-colors">
                 {course.title}
               </h3>
-              <p className="text-gray-600 mb-4 text-sm">{course.content}</p>
+              <p className="${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'} mb-4 text-sm">{course.content}</p>
               
               <div className="flex items-center justify-between text-sm text-gray-500 mb-4">
                 <span>{course.category}</span>
@@ -3346,7 +3278,7 @@ Examples:
               {/* Progress Bar */}
               {user && (
                 <div className="mb-4">
-                  <div className="flex justify-between text-xs text-gray-600 mb-1">
+                  <div className="flex justify-between text-xs ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'} mb-1">
                     <span>Progress</span>
                     <span>{course.progress}%</span>
                   </div>
@@ -3362,7 +3294,7 @@ Examples:
               {/* Tags */}
               <div className="flex flex-wrap gap-1 mb-4">
                 {course.tags.map((tag, tagIndex) => (
-                  <span key={tagIndex} className="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded-full">
+                  <span key={tagIndex} className="px-2 py-1 bg-gray-100 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'} text-xs rounded-full">
                     {tag}
                   </span>
                 ))}
@@ -3398,26 +3330,26 @@ Examples:
       <div className="grid md:grid-cols-4 gap-6">
         <div className="bg-white rounded-xl p-6 text-center shadow-sm border hover:shadow-md transition-all duration-300">
           <div className="text-3xl font-bold text-blue-600 mb-2">12,847</div>
-          <div className="text-sm text-gray-600">Active Members</div>
+          <div className="text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}">Active Members</div>
         </div>
         <div className="bg-white rounded-xl p-6 text-center shadow-sm border hover:shadow-md transition-all duration-300">
           <div className="text-3xl font-bold text-red-600 mb-2">3,521</div>
-          <div className="text-sm text-gray-600">Threats Reported</div>
+          <div className="text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}">Threats Reported</div>
         </div>
         <div className="bg-white rounded-xl p-6 text-center shadow-sm border hover:shadow-md transition-all duration-300">
           <div className="text-3xl font-bold text-green-600 mb-2">94.8%</div>
-          <div className="text-sm text-gray-600">Detection Accuracy</div>
+          <div className="text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}">Detection Accuracy</div>
         </div>
         <div className="bg-white rounded-xl p-6 text-center shadow-sm border hover:shadow-md transition-all duration-300">
           <div className="text-3xl font-bold text-purple-600 mb-2">1.2M</div>
-          <div className="text-sm text-gray-600">Lives Protected</div>
+          <div className="text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}">Lives Protected</div>
         </div>
       </div>
 
       {/* Create Post */}
       {user && (
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Share with Community</h3>
+          <h3 className="text-lg font-semibold ${theme === 'dark' ? 'text-white' : 'text-gray-900'} mb-4">Share with Community</h3>
           <div className="flex items-start space-x-4">
             <img src={user.picture} alt="Your avatar" className="w-10 h-10 rounded-full" />
             <div className="flex-1">
@@ -3456,19 +3388,19 @@ Examples:
               <div className="flex-1">
                 <div className="flex items-center justify-between mb-2">
                   <div>
-                    <h4 className="font-semibold text-gray-900">{post.author}</h4>
+                    <h4 className="font-semibold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}">{post.author}</h4>
                     <p className="text-sm text-gray-500">
                       {new Date(post.timestamp).toLocaleDateString()} • {new Date(post.timestamp).toLocaleTimeString()}
                     </p>
                   </div>
-                  <button className="text-gray-400 hover:text-gray-600">⋯</button>
+                  <button className="text-gray-400 hover:${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}">⋯</button>
                 </div>
                 <p className="text-gray-800 mb-4 leading-relaxed">{post.content}</p>
                 
                 {/* Tags */}
                 <div className="flex flex-wrap gap-2 mb-4">
                   {post.tags.map((tag, tagIndex) => (
-                    <span key={tagIndex} className="px-2 py-1 bg-gray-100 text-gray-600 text-sm rounded-full hover:bg-gray-200 cursor-pointer transition-colors">
+                    <span key={tagIndex} className="px-2 py-1 bg-gray-100 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'} text-sm rounded-full hover:bg-gray-200 cursor-pointer transition-colors">
                       #{tag}
                     </span>
                   ))}
@@ -3501,7 +3433,7 @@ Examples:
 
       {/* Load More */}
       <div className="text-center">
-        <button className="px-8 py-3 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-lg font-semibold transition-colors">
+        <button className="px-8 py-3 bg-gray-200 hover:bg-gray-300 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'} rounded-lg font-semibold transition-colors">
           Load More Posts
         </button>
       </div>
@@ -3533,7 +3465,7 @@ Examples:
               <div className="flex items-center justify-between">
                 <div>
                   <div className="text-3xl font-bold text-blue-600">{userStats.totalAnalyses}</div>
-                  <div className="text-sm text-gray-600">Total Analyses</div>
+                  <div className="text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}">Total Analyses</div>
                 </div>
                 <div className="text-3xl">🔍</div>
               </div>
@@ -3542,7 +3474,7 @@ Examples:
               <div className="flex items-center justify-between">
                 <div>
                   <div className="text-3xl font-bold text-red-600">{userStats.threatsStopped}</div>
-                  <div className="text-sm text-gray-600">Threats Blocked</div>
+                  <div className="text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}">Threats Blocked</div>
                 </div>
                 <div className="text-3xl">🛡️</div>
               </div>
@@ -3551,7 +3483,7 @@ Examples:
               <div className="flex items-center justify-between">
                 <div>
                   <div className="text-3xl font-bold text-green-600">97.2%</div>
-                  <div className="text-sm text-gray-600">Success Rate</div>
+                  <div className="text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}">Success Rate</div>
                 </div>
                 <div className="text-3xl">✅</div>
               </div>
@@ -3560,7 +3492,7 @@ Examples:
               <div className="flex items-center justify-between">
                 <div>
                   <div className="text-3xl font-bold text-purple-600">{userStats.communityPoints}</div>
-                  <div className="text-sm text-gray-600">Community Points</div>
+                  <div className="text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}">Community Points</div>
                 </div>
                 <div className="text-3xl">🏆</div>
               </div>
@@ -3650,7 +3582,7 @@ Examples:
         <div className="bg-white rounded-xl p-8 text-center shadow-sm border">
           <div className="text-4xl mb-4">🔐</div>
           <h3 className="text-xl font-semibold mb-2">Sign In Required</h3>
-          <p className="text-gray-600 mb-4">Sign in with Google to view your personal analytics and protection statistics!</p>
+          <p className="${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'} mb-4">Sign in with Google to view your personal analytics and protection statistics!</p>
           <button
             onClick={() => login()}
             className="px-6 py-3 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-semibold transition-all duration-200 hover:scale-105"
@@ -3697,7 +3629,7 @@ Examples:
       <div className="grid md:grid-cols-3 gap-6">
         <div className="bg-white rounded-xl p-6 shadow-sm border">
           <div className="flex items-center justify-between mb-4">
-            <h4 className="font-semibold text-gray-900">Security Score</h4>
+            <h4 className="font-semibold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}">Security Score</h4>
             <div className="text-2xl">🎯</div>
           </div>
           <div className="text-3xl font-bold text-green-600 mb-2">{protectionStatus.securityScore}/100</div>
@@ -3708,20 +3640,20 @@ Examples:
         
         <div className="bg-white rounded-xl p-6 shadow-sm border">
           <div className="flex items-center justify-between mb-4">
-            <h4 className="font-semibold text-gray-900">Threats Blocked</h4>
+            <h4 className="font-semibold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}">Threats Blocked</h4>
             <div className="text-2xl">🚫</div>
           </div>
           <div className="text-3xl font-bold text-red-600">{protectionStatus.threatsBlocked}</div>
-          <div className="text-sm text-gray-600">This month</div>
+          <div className="text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}">This month</div>
         </div>
         
         <div className="bg-white rounded-xl p-6 shadow-sm border">
           <div className="flex items-center justify-between mb-4">
-            <h4 className="font-semibold text-gray-900">Active Sessions</h4>
+            <h4 className="font-semibold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}">Active Sessions</h4>
             <div className="text-2xl">👤</div>
           </div>
           <div className="text-3xl font-bold text-blue-600">{protectionStatus.activeSessions}</div>
-          <div className="text-sm text-gray-600">Secured connections</div>
+          <div className="text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}">Secured connections</div>
         </div>
       </div>
 
@@ -3762,8 +3694,8 @@ Examples:
                 {feature.status ? 'Active' : 'Inactive'}
               </div>
             </div>
-            <h4 className="text-lg font-semibold text-gray-900 mb-2">{feature.name}</h4>
-            <p className="text-gray-600 text-sm mb-4">{feature.description}</p>
+            <h4 className="text-lg font-semibold ${theme === 'dark' ? 'text-white' : 'text-gray-900'} mb-2">{feature.name}</h4>
+            <p className="${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'} text-sm mb-4">{feature.description}</p>
             <button
               onClick={() => {
                 setProtectionStatus(prev => ({
@@ -3785,7 +3717,7 @@ Examples:
 
       {/* Recent Activity */}
       <div className="bg-white rounded-xl shadow-sm border p-6">
-        <h3 className="text-xl font-semibold text-gray-900 mb-4 flex items-center">
+        <h3 className="text-xl font-semibold ${theme === 'dark' ? 'text-white' : 'text-gray-900'} mb-4 flex items-center">
           <span className="text-2xl mr-3">🛡️</span>
           Recent Protection Activity
         </h3>
@@ -3811,8 +3743,8 @@ Examples:
                  activity.type === 'protected' ? '🔒' : '🔄'}
               </div>
               <div className="flex-1">
-                <div className="font-medium text-gray-900">{activity.action}</div>
-                <div className="text-sm text-gray-600">{activity.details}</div>
+                <div className="font-medium ${theme === 'dark' ? 'text-white' : 'text-gray-900'}">{activity.action}</div>
+                <div className="text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}">{activity.details}</div>
               </div>
               <div className="text-sm text-gray-500">{activity.time}</div>
             </div>
@@ -3843,7 +3775,7 @@ Examples:
         <div className="bg-white rounded-xl p-6 shadow-sm border hover:shadow-lg transition-all duration-300">
           <div className="text-3xl mb-4">📊</div>
           <h3 className="text-lg font-semibold mb-2">Threat Analysis Report</h3>
-          <p className="text-gray-600 text-sm mb-4">Comprehensive analysis of detected threats and patterns</p>
+          <p className="${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'} text-sm mb-4">Comprehensive analysis of detected threats and patterns</p>
           <button className="w-full py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
             Generate Report
           </button>
@@ -3852,7 +3784,7 @@ Examples:
         <div className="bg-white rounded-xl p-6 shadow-sm border hover:shadow-lg transition-all duration-300">
           <div className="text-3xl mb-4">🛡️</div>
           <h3 className="text-lg font-semibold mb-2">Security Summary</h3>
-          <p className="text-gray-600 text-sm mb-4">Overall security posture and protection effectiveness</p>
+          <p className="${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'} text-sm mb-4">Overall security posture and protection effectiveness</p>
           <button className="w-full py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors">
             Generate Report
           </button>
@@ -3861,7 +3793,7 @@ Examples:
         <div className="bg-white rounded-xl p-6 shadow-sm border hover:shadow-lg transition-all duration-300">
           <div className="text-3xl mb-4">📈</div>
           <h3 className="text-lg font-semibold mb-2">Performance Metrics</h3>
-          <p className="text-gray-600 text-sm mb-4">System performance and detection accuracy statistics</p>
+          <p className="${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'} text-sm mb-4">System performance and detection accuracy statistics</p>
           <button className="w-full py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors">
             Generate Report
           </button>
@@ -3917,15 +3849,15 @@ Examples:
           <div className="space-y-3">
             <div className="p-3 bg-gray-50 rounded-lg">
               <h4 className="font-medium">Level 1: Low Priority</h4>
-              <p className="text-sm text-gray-600">Standard monitoring and logging</p>
+              <p className="text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}">Standard monitoring and logging</p>
             </div>
             <div className="p-3 bg-yellow-50 rounded-lg">
               <h4 className="font-medium">Level 2: Medium Priority</h4>
-              <p className="text-sm text-gray-600">Enhanced monitoring and analysis</p>
+              <p className="text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}">Enhanced monitoring and analysis</p>
             </div>
             <div className="p-3 bg-red-50 rounded-lg">
               <h4 className="font-medium">Level 3: High Priority</h4>
-              <p className="text-sm text-gray-600">Immediate response and mitigation</p>
+              <p className="text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}">Immediate response and mitigation</p>
             </div>
           </div>
         </div>
@@ -3952,15 +3884,15 @@ Examples:
       <div className="grid md:grid-cols-3 gap-6 mb-8">
         <div className="bg-white rounded-xl p-6 shadow-sm border text-center">
           <div className="text-3xl font-bold text-red-600 mb-2">147</div>
-          <div className="text-sm text-gray-600">Active Threats</div>
+          <div className="text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}">Active Threats</div>
         </div>
         <div className="bg-white rounded-xl p-6 shadow-sm border text-center">
           <div className="text-3xl font-bold text-blue-600 mb-2">2,843</div>
-          <div className="text-sm text-gray-600">IOCs Tracked</div>
+          <div className="text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}">IOCs Tracked</div>
         </div>
         <div className="bg-white rounded-xl p-6 shadow-sm border text-center">
           <div className="text-3xl font-bold text-green-600 mb-2">99.7%</div>
-          <div className="text-sm text-gray-600">Detection Rate</div>
+          <div className="text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}">Detection Rate</div>
         </div>
       </div>
 
@@ -3983,7 +3915,7 @@ Examples:
                   {item.severity}
                 </span>
               </div>
-              <p className="text-sm text-gray-600 mb-2">{item.description}</p>
+              <p className="text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'} mb-2">{item.description}</p>
               <div className="text-xs text-gray-500">{item.time}</div>
             </div>
           ))}
@@ -4068,7 +4000,7 @@ Examples:
         <div className="bg-white rounded-xl p-6 shadow-sm border text-center">
           <div className="text-2xl mb-2">🖥️</div>
           <div className="text-2xl font-bold text-blue-600 mb-1">{systemHealth.cpu}%</div>
-          <div className="text-sm text-gray-600">CPU Usage</div>
+          <div className="text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}">CPU Usage</div>
           <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
             <div className="bg-blue-500 h-2 rounded-full" style={{width: `${systemHealth.cpu}%`}}></div>
           </div>
@@ -4077,7 +4009,7 @@ Examples:
         <div className="bg-white rounded-xl p-6 shadow-sm border text-center">
           <div className="text-2xl mb-2">💾</div>
           <div className="text-2xl font-bold text-green-600 mb-1">{systemHealth.memory}%</div>
-          <div className="text-sm text-gray-600">Memory Usage</div>
+          <div className="text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}">Memory Usage</div>
           <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
             <div className="bg-green-500 h-2 rounded-full" style={{width: `${systemHealth.memory}%`}}></div>
           </div>
@@ -4086,7 +4018,7 @@ Examples:
         <div className="bg-white rounded-xl p-6 shadow-sm border text-center">
           <div className="text-2xl mb-2">🌐</div>
           <div className="text-2xl font-bold text-purple-600 mb-1">{systemHealth.network}%</div>
-          <div className="text-sm text-gray-600">Network Health</div>
+          <div className="text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}">Network Health</div>
           <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
             <div className="bg-purple-500 h-2 rounded-full" style={{width: `${systemHealth.network}%`}}></div>
           </div>
@@ -4095,7 +4027,7 @@ Examples:
         <div className="bg-white rounded-xl p-6 shadow-sm border text-center">
           <div className="text-2xl mb-2">🚨</div>
           <div className="text-2xl font-bold text-red-600 mb-1">{systemHealth.threats}</div>
-          <div className="text-sm text-gray-600">Active Threats</div>
+          <div className="text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}">Active Threats</div>
         </div>
       </div>
 
@@ -4144,7 +4076,7 @@ Examples:
         <div className="bg-white rounded-xl p-8 text-center shadow-sm border">
           <div className="text-4xl mb-4">🔐</div>
           <h3 className="text-xl font-semibold mb-2">Authentication Required</h3>
-          <p className="text-gray-600 mb-4">Please sign in to access authority verification features.</p>
+          <p className="${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'} mb-4">Please sign in to access authority verification features.</p>
           <button
             onClick={() => login()}
             className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold transition-all duration-200"
@@ -4157,8 +4089,8 @@ Examples:
         <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl shadow-sm border border-blue-200 p-8">
           <div className="text-center mb-8">
             <div className="text-5xl mb-4">🆔</div>
-            <h3 className="text-2xl font-bold text-gray-900 mb-2">Government ID Verification</h3>
-            <p className="text-gray-600 max-w-2xl mx-auto">
+            <h3 className="text-2xl font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'} mb-2">Government ID Verification</h3>
+            <p className="${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'} max-w-2xl mx-auto">
               Verify your official credentials to access authority features and manage threat intelligence
             </p>
           </div>
@@ -4166,7 +4098,7 @@ Examples:
           <div className="max-w-2xl mx-auto space-y-6">
             <div className="grid md:grid-cols-2 gap-6">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'} mb-2">
                   ID Type <span className="text-red-500">*</span>
                 </label>
                 <select
@@ -4183,7 +4115,7 @@ Examples:
               </div>
               
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'} mb-2">
                   ID Number <span className="text-red-500">*</span>
                 </label>
                 <input
@@ -4266,15 +4198,15 @@ Examples:
                     Active
                   </div>
                 </div>
-                <h4 className="text-lg font-semibold text-gray-900 mb-2">{item.title}</h4>
-                <p className="text-gray-600 text-sm">{item.count}</p>
+                <h4 className="text-lg font-semibold ${theme === 'dark' ? 'text-white' : 'text-gray-900'} mb-2">{item.title}</h4>
+                <p className="${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'} text-sm">{item.count}</p>
               </div>
             ))}
           </div>
 
           {/* Recent Actions */}
           <div className="bg-white rounded-xl shadow-sm border p-6">
-            <h3 className="text-xl font-semibold text-gray-900 mb-4">Recent Authority Actions</h3>
+            <h3 className="text-xl font-semibold ${theme === 'dark' ? 'text-white' : 'text-gray-900'} mb-4">Recent Authority Actions</h3>
             <div className="space-y-3">
               {[
                 { action: 'Reviewed threat report', user: 'Sarah Chen', time: '5 minutes ago' },
@@ -4284,8 +4216,8 @@ Examples:
               ].map((log, index) => (
                 <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                   <div>
-                    <div className="font-medium text-gray-900">{log.action}</div>
-                    <div className="text-sm text-gray-600">by {log.user}</div>
+                    <div className="font-medium ${theme === 'dark' ? 'text-white' : 'text-gray-900'}">{log.action}</div>
+                    <div className="text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}">by {log.user}</div>
                   </div>
                   <div className="text-sm text-gray-500">{log.time}</div>
                 </div>
@@ -4316,10 +4248,10 @@ Examples:
 
     {/* AI MODEL CONFIGURATION */}
     <div className="bg-white rounded-xl shadow-sm border p-6">
-      <h3 className="text-xl font-semibold text-gray-900 mb-4">🤖 AI Model Settings</h3>
+      <h3 className="text-xl font-semibold ${theme === 'dark' ? 'text-white' : 'text-gray-900'} mb-4">🤖 AI Model Settings</h3>
       <div className="grid md:grid-cols-2 gap-6">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">AI Model</label>
+          <label className="block text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'} mb-2">AI Model</label>
           <select className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500">
             <option value="deepseek-r1">DeepSeek-R1 (Recommended)</option>
             <option value="gpt-4">GPT-4</option>
@@ -4329,7 +4261,7 @@ Examples:
         </div>
         
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+          <label className="block text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'} mb-2">
             Temperature: <span className="text-purple-600">0.7</span>
           </label>
           <input type="range" min="0" max="2" step="0.1" className="w-full accent-purple-600" />
@@ -4341,7 +4273,7 @@ Examples:
       </div>
       
       <div className="mt-4">
-        <label className="block text-sm font-medium text-gray-700 mb-2">Max Response Tokens</label>
+        <label className="block text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'} mb-2">Max Response Tokens</label>
         <input type="number" min="100" max="4000" defaultValue="1200" 
           className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500" />
       </div>
@@ -4349,10 +4281,10 @@ Examples:
 
     {/* CHAT WIDGET CUSTOMIZATION */}
     <div className="bg-white rounded-xl shadow-sm border p-6">
-      <h3 className="text-xl font-semibold text-gray-900 mb-4">🎨 Chat Widget Appearance</h3>
+      <h3 className="text-xl font-semibold ${theme === 'dark' ? 'text-white' : 'text-gray-900'} mb-4">🎨 Chat Widget Appearance</h3>
       <div className="grid md:grid-cols-3 gap-6">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">Widget Position</label>
+          <label className="block text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'} mb-2">Widget Position</label>
           <select className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500">
             <option value="bottom-right">Bottom Right</option>
             <option value="bottom-left">Bottom Left</option>
@@ -4362,7 +4294,7 @@ Examples:
         </div>
         
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">Chat Bubble Style</label>
+          <label className="block text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'} mb-2">Chat Bubble Style</label>
           <select className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500">
             <option value="rounded">Rounded</option>
             <option value="square">Square</option>
@@ -4371,14 +4303,14 @@ Examples:
         </div>
         
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">Brand Color</label>
+          <label className="block text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'} mb-2">Brand Color</label>
           <input type="color" defaultValue="#8B5CF6" 
             className="w-full h-10 border border-gray-300 rounded-lg" />
         </div>
       </div>
       
       <div className="mt-4">
-        <label className="block text-sm font-medium text-gray-700 mb-2">Welcome Message</label>
+        <label className="block text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'} mb-2">Welcome Message</label>
         <textarea rows="3" placeholder="Hello! How can I help you today?" 
           className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500" />
       </div>
@@ -4386,10 +4318,10 @@ Examples:
 
     {/* LANGUAGE & LOCALIZATION */}
     <div className="bg-white rounded-xl shadow-sm border p-6">
-      <h3 className="text-xl font-semibold text-gray-900 mb-4">🌐 Language & Localization</h3>
+      <h3 className="text-xl font-semibold ${theme === 'dark' ? 'text-white' : 'text-gray-900'} mb-4">🌐 Language & Localization</h3>
       <div className="grid md:grid-cols-2 gap-6">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">Primary Language</label>
+          <label className="block text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'} mb-2">Primary Language</label>
           <select className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500">
             <option value="en">English</option>
             <option value="es">Spanish</option>
@@ -4400,7 +4332,7 @@ Examples:
         </div>
         
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">Date Format</label>
+          <label className="block text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'} mb-2">Date Format</label>
           <select className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500">
             <option value="MM/DD/YYYY">MM/DD/YYYY</option>
             <option value="DD/MM/YYYY">DD/MM/YYYY</option>
@@ -4411,8 +4343,8 @@ Examples:
       
       <div className="mt-4 flex items-center justify-between">
         <div>
-          <div className="font-medium text-gray-900">Auto-detect Language</div>
-          <div className="text-sm text-gray-600">Automatically detect user's language</div>
+          <div className="font-medium ${theme === 'dark' ? 'text-white' : 'text-gray-900'}">Auto-detect Language</div>
+          <div className="text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}">Automatically detect user's language</div>
         </div>
         <button className="relative w-12 h-6 bg-purple-600 rounded-full">
           <div className="absolute w-5 h-5 bg-white rounded-full shadow transition-transform translate-x-6 top-0.5"></div>
@@ -4422,12 +4354,12 @@ Examples:
 
     {/* PRIVACY & SECURITY */}
     <div className="bg-white rounded-xl shadow-sm border p-6">
-      <h3 className="text-xl font-semibold text-gray-900 mb-4">🔒 Privacy & Security</h3>
+      <h3 className="text-xl font-semibold ${theme === 'dark' ? 'text-white' : 'text-gray-900'} mb-4">🔒 Privacy & Security</h3>
       <div className="space-y-4">
         <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
           <div>
-            <div className="font-medium text-gray-900">Data Encryption</div>
-            <div className="text-sm text-gray-600">End-to-end encryption for all data</div>
+            <div className="font-medium ${theme === 'dark' ? 'text-white' : 'text-gray-900'}">Data Encryption</div>
+            <div className="text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}">End-to-end encryption for all data</div>
           </div>
           <button className="relative w-12 h-6 bg-green-600 rounded-full">
             <div className="absolute w-5 h-5 bg-white rounded-full shadow transition-transform translate-x-6 top-0.5"></div>
@@ -4436,8 +4368,8 @@ Examples:
         
         <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
           <div>
-            <div className="font-medium text-gray-900">Two-Factor Authentication</div>
-            <div className="text-sm text-gray-600">Extra security for your account</div>
+            <div className="font-medium ${theme === 'dark' ? 'text-white' : 'text-gray-900'}">Two-Factor Authentication</div>
+            <div className="text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}">Extra security for your account</div>
           </div>
           <button className="relative w-12 h-6 bg-gray-300 rounded-full">
             <div className="absolute w-5 h-5 bg-white rounded-full shadow transition-transform translate-x-0.5 top-0.5"></div>
@@ -4445,7 +4377,7 @@ Examples:
         </div>
         
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">Session Timeout (minutes)</label>
+          <label className="block text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'} mb-2">Session Timeout (minutes)</label>
           <input type="number" min="5" max="480" defaultValue="30" 
             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500" />
         </div>
@@ -4454,10 +4386,10 @@ Examples:
 
     {/* INTEGRATIONS */}
     <div className="bg-white rounded-xl shadow-sm border p-6">
-      <h3 className="text-xl font-semibold text-gray-900 mb-4">🔌 API & Integrations</h3>
+      <h3 className="text-xl font-semibold ${theme === 'dark' ? 'text-white' : 'text-gray-900'} mb-4">🔌 API & Integrations</h3>
       <div className="space-y-4">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">Webhook URL</label>
+          <label className="block text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'} mb-2">Webhook URL</label>
           <input type="url" placeholder="https://your-domain.com/webhook" 
             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500" />
         </div>
@@ -4466,13 +4398,13 @@ Examples:
           <button className="p-4 border border-gray-200 rounded-lg hover:border-purple-500 transition-colors">
             <div className="text-lg mb-2">📊</div>
             <div className="font-medium">Google Analytics</div>
-            <div className="text-sm text-gray-600">Connect analytics tracking</div>
+            <div className="text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}">Connect analytics tracking</div>
           </button>
           
           <button className="p-4 border border-gray-200 rounded-lg hover:border-purple-500 transition-colors">
             <div className="text-lg mb-2">💬</div>
             <div className="font-medium">Slack Integration</div>
-            <div className="text-sm text-gray-600">Send notifications to Slack</div>
+            <div className="text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}">Send notifications to Slack</div>
           </button>
         </div>
       </div>
@@ -4480,16 +4412,16 @@ Examples:
 
     {/* PERFORMANCE SETTINGS */}
     <div className="bg-white rounded-xl shadow-sm border p-6">
-      <h3 className="text-xl font-semibold text-gray-900 mb-4">⚡ Performance & Behavior</h3>
+      <h3 className="text-xl font-semibold ${theme === 'dark' ? 'text-white' : 'text-gray-900'} mb-4">⚡ Performance & Behavior</h3>
       <div className="grid md:grid-cols-2 gap-6">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">Response Delay (ms)</label>
+          <label className="block text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'} mb-2">Response Delay (ms)</label>
           <input type="number" min="0" max="5000" defaultValue="1000" 
             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500" />
         </div>
         
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">Memory Depth (messages)</label>
+          <label className="block text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'} mb-2">Memory Depth (messages)</label>
           <input type="number" min="5" max="100" defaultValue="20" 
             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500" />
         </div>
@@ -4498,7 +4430,7 @@ Examples:
 
       {/* API Status Information Only */}
 <div className="bg-white rounded-xl shadow-sm border p-6">
-  <h3 className="text-xl font-semibold text-gray-900 mb-4">🔑 API Status</h3>
+  <h3 className="text-xl font-semibold ${theme === 'dark' ? 'text-white' : 'text-gray-900'} mb-4">🔑 API Status</h3>
   <div className="p-4 bg-green-50 rounded-lg border border-green-200">
     <div className="flex items-center space-x-3">
       <span className="text-2xl">✅</span>
@@ -4514,11 +4446,11 @@ Examples:
 
       {/* Appearance Settings with Live Preview */}
       <div className="bg-white rounded-xl shadow-sm border p-6">
-        <h3 className="text-xl font-semibold text-gray-900 mb-6">🎨 Appearance</h3>
+        <h3 className="text-xl font-semibold ${theme === 'dark' ? 'text-white' : 'text-gray-900'} mb-6">🎨 Appearance</h3>
         <div className="space-y-6">
           {/* Theme Selection */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-3">Theme</label>
+            <label className="block text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'} mb-3">Theme</label>
             <div className="grid grid-cols-3 gap-4">
               {[
                 { value: 'light', icon: '☀️', label: 'Light' },
@@ -4543,7 +4475,7 @@ Examples:
 
           {/* Font Size with Live Preview */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-3">
+            <label className="block text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'} mb-3">
               Font Size: <span className="text-purple-600 font-semibold">{fontSize}px</span>
             </label>
             <div className="flex items-center space-x-4">
@@ -4560,7 +4492,7 @@ Examples:
               <span className="text-sm text-gray-500">Large</span>
             </div>
             <div className="mt-3 p-3 bg-gray-50 rounded-lg">
-              <p style={{fontSize: `${fontSize}px`}} className="text-gray-700">
+              <p style={{fontSize: `${fontSize}px`}} className="${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}">
                 Live preview: This is how your text will appear with the selected font size.
               </p>
             </div>
@@ -4569,8 +4501,8 @@ Examples:
           {/* Animations Toggle */}
           <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
             <div>
-              <div className="font-medium text-gray-900">Enable Animations</div>
-              <div className="text-sm text-gray-600">Smooth transitions and hover effects</div>
+              <div className="font-medium ${theme === 'dark' ? 'text-white' : 'text-gray-900'}">Enable Animations</div>
+              <div className="text-sm ${theme === 'dark' ? 'text-gray-400' : '${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}'}">Smooth transitions and hover effects</div>
             </div>
             <button
               onClick={() => setAnimations(!animations)}
@@ -4588,15 +4520,15 @@ Examples:
 
       {/* Notification Settings */}
       <div className="bg-white rounded-xl shadow-sm border p-6">
-        <h3 className="text-xl font-semibold text-gray-900 mb-4">🔔 Notifications</h3>
+        <h3 className="text-xl font-semibold ${theme === 'dark' ? 'text-white' : 'text-gray-900'} mb-4">🔔 Notifications</h3>
         <div className="space-y-4">
           {Object.entries(notifications).map(([key, value]) => (
             <div key={key} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
               <div>
-                <div className="font-medium text-gray-900 capitalize">
+                <div className="font-medium ${theme === 'dark' ? 'text-white' : 'text-gray-900'} capitalize">
                   {key.replace(/([A-Z])/g, ' $1').trim()} Notifications
                 </div>
-                <div className="text-sm text-gray-600">
+                <div className="text-sm ${theme === 'dark' ? 'text-gray-400' : '${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}'}">
                   {key === 'email' ? 'Receive updates via email' :
                    key === 'push' ? 'Browser push notifications' :
                    'Security alerts and warnings'}
@@ -4624,12 +4556,12 @@ Examples:
       {/* Account Settings */}
       {user && (
         <div className="bg-white rounded-xl shadow-sm border p-6">
-          <h3 className="text-xl font-semibold text-gray-900 mb-4">👤 Account Information</h3>
+          <h3 className="text-xl font-semibold ${theme === 'dark' ? 'text-white' : 'text-gray-900'} mb-4">👤 Account Information</h3>
           <div className="flex items-center space-x-4 mb-6">
             <img src={user.picture} alt="Profile" className="w-16 h-16 rounded-full" />
             <div>
-              <div className="font-semibold text-gray-900">{user.name}</div>
-              <div className="text-gray-600">{user.email}</div>
+              <div className="font-semibold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}">{user.name}</div>
+              <div className="${theme === 'dark' ? 'text-gray-400' : '${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}'}">{user.email}</div>
               <div className="text-sm text-green-600">✅ Verified Account</div>
             </div>
           </div>
