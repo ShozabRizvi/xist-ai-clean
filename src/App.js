@@ -3,6 +3,23 @@ import { GoogleOAuthProvider, useGoogleLogin, googleLogout } from '@react-oauth/
 import { BarChart, Bar, LineChart, Line, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import './index.css';
 
+// Helper function to safely render any value
+const safeRender = (value) => {
+  if (typeof value === 'string') return value;
+  if (typeof value === 'number') return String(value);
+  if (typeof value === 'boolean') return String(value);
+  if (value === null || value === undefined) return 'No data';
+  if (typeof value === 'object') {
+    try {
+      return JSON.stringify(value, null, 2);
+    } catch {
+      return '[Complex Object]';
+    }
+  }
+  return String(value);
+};
+
+
 // ✅ LAZY LOADING FOR PERFORMANCE
 const AnalyticsCharts = lazy(() => import('./components/Analytics/ActivityChart'));
 
@@ -73,6 +90,8 @@ const [isListening, setIsListening] = useState(false);
 const [cameraEnabled, setCameraEnabled] = useState('mediaDevices' in navigator);
 const inputRef = useRef(null);
 const recognitionRef = useRef(null);
+const [selectedFile, setSelectedFile] = useState(null);
+
 
 // ✅ ALL ORIGINAL CHAT STATE (PRESERVED EXACTLY)
 const [chatMessages, setChatMessages] = useState([]);
@@ -2196,37 +2215,71 @@ isListening
 
 {/* Camera/OCR Button - UPDATED */}
 {cameraEnabled && (
-<div className="relative">
-<input
-type="file"
-accept="image/*"
-onChange={(e) => {
-const file = e.target.files[0];
-if (file && (file.type === 'image/jpeg' || file.type === 'image/png' || file.type === 'image/jpg')) {
-// Process the file for OCR
-const reader = new FileReader();
-reader.onload = (event) => {
-// Add OCR processing here
-const imageData = event.target.result;
-setVerifyInput(prev => prev + "\n\nImage uploaded for OCR analysis...");
-showNotification('📷 Image uploaded successfully!', 'success');
-};
-reader.readAsDataURL(file);
-} else {
-showNotification('📷 Please select a valid image file (JPG, PNG)', 'error');
-}
-}}
-className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-id="ocr-file-input"
-/>
-<label
-htmlFor="ocr-file-input"
-className="px-6 py-3 bg-cyan-500 hover:bg-cyan-600 text-white rounded-lg font-semibold transition-all duration-300 flex items-center justify-center space-x-2 min-h-[48px] cursor-pointer"
->
-<span className="text-xl">📷</span>
-<span>Upload Image</span>
-</label>
+// Replace your existing file input area with:
+<div className="space-y-4">
+  <label className="block text-sm font-medium text-gray-900 dark:text-gray-100 mb-2">
+    📎 Upload File for Analysis (Optional)
+  </label>
+  
+  <div className="relative">
+    <input
+      type="file"
+      id="file-upload-verify"
+      className="hidden"
+      accept=".txt,.pdf,.doc,.docx,.jpg,.jpeg,.png,.gif,.csv,.json"
+      onChange={(e) => {
+        const file = e.target.files[0];
+        if (file) {
+          setSelectedFile(file);
+          // Process file here if needed
+          console.log('Selected file:', file.name);
+        }
+      }}
+    />
+    
+    <label
+      htmlFor="file-upload-verify"
+      className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-xl cursor-pointer hover:border-purple-500 dark:hover:border-purple-400 transition-all duration-300 bg-gray-50 dark:bg-gray-800/50 hover:bg-purple-50 dark:hover:bg-purple-900/20 group"
+    >
+      <div className="flex flex-col items-center justify-center pt-5 pb-6">
+        <div className="text-4xl mb-2 group-hover:scale-110 transition-transform">📁</div>
+        <p className="mb-2 text-sm text-gray-500 dark:text-gray-400">
+          <span className="font-semibold">Click to upload</span> or drag and drop
+        </p>
+        <p className="text-xs text-gray-500 dark:text-gray-400">
+          PDF, DOC, TXT, Images, CSV, JSON (MAX. 10MB)
+        </p>
+      </div>
+    </label>
+  </div>
+  
+  {/* Selected File Display */}
+  {selectedFile && (
+    <div className="mt-3 p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-700 rounded-lg animate-fade-in">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center space-x-2">
+          <span className="text-green-600 dark:text-green-400 text-lg">✓</span>
+          <div>
+            <div className="text-sm font-medium text-green-800 dark:text-green-200">
+              {selectedFile.name}
+            </div>
+            <div className="text-xs text-green-600 dark:text-green-400">
+              Size: {(selectedFile.size / 1024 / 1024).toFixed(2)} MB • Type: {selectedFile.type || 'Unknown'}
+            </div>
+          </div>
+        </div>
+        <button
+          onClick={() => setSelectedFile(null)}
+          className="text-green-600 dark:text-green-400 hover:text-green-800 dark:hover:text-green-200 hover:bg-green-100 dark:hover:bg-green-800/20 rounded-full p-1 transition-all"
+          title="Remove file"
+        >
+          ✕
+        </button>
+      </div>
+    </div>
+  )}
 </div>
+
 )}
 
 <button
@@ -2449,7 +2502,14 @@ Offline
 </span>
 )}
 </div>
-<div className="whitespace-pre-wrap text-sm leading-relaxed">{msg.message}</div>
+<div className="whitespace-pre-wrap text-sm leading-relaxed">
+  {typeof msg.message === 'string' 
+    ? msg.message 
+    : typeof msg.message === 'object' 
+      ? JSON.stringify(msg.message, null, 2)
+      : String(msg.message || 'No message')}
+</div>
+
 <div className="text-xs opacity-70 mt-1">
 {new Date(msg.timestamp).toLocaleTimeString()}
 </div>
