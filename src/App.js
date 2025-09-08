@@ -3804,18 +3804,19 @@ Submit for Verification
 </button>
 </form>
 
-<div className="mt-8 p-4 bg-blue-50 rounded-lg">
-<div className="flex items-start space-x-3">
-<div className="text-blue-600 text-xl">ℹ️</div>
-<div>
-<h4 className="font-medium text-blue-900">Verification Process</h4>
-<p className="text-sm text-blue-800 mt-1">
-Our team manually reviews all authority verification requests. Processing typically takes 24-48 hours. 
-You will receive email confirmation once approved.
-</p>
+<div className="mt-8 p-4 bg-blue-50 dark:bg-blue-900 dark:bg-opacity-20 rounded-lg border dark:border-blue-700">
+  <div className="flex items-start space-x-3">
+    <div className="text-blue-600 dark:text-blue-400 text-xl">ℹ️</div>
+    <div>
+      <h4 className="font-medium text-blue-900 dark:text-blue-200">Verification Process</h4>
+      <p className="text-sm text-blue-800 dark:text-blue-300 mt-1">
+        Our team manually reviews all authority verification requests. Processing typically takes 24-48 hours. 
+        You will receive email confirmation once approved.
+      </p>
+    </div>
+  </div>
 </div>
-</div>
-</div>
+
 </div>
 </div>
 ) : (

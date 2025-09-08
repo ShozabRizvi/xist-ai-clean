@@ -266,3 +266,173 @@ html {
   image-rendering: -webkit-optimize-contrast !important;
   image-rendering: crisp-edges !important;
 }
+
+/* EMERGENCY BLUE TEXT FIX */
+.dark .bg-blue-50,
+.dark .text-blue-600,
+.dark .text-blue-800, 
+.dark .text-blue-900 {
+  background-color: #1e3a8a !important;
+  color: #dbeafe !important;
+}
+
+/* ===== COMPREHENSIVE DARK MODE COLOR FIXES ===== */
+
+/* Fix ALL green elements */
+.dark .bg-green-50 { 
+  background-color: #065f46 !important; 
+  color: #d1fae5 !important; 
+}
+.dark .bg-green-50 * { color: #d1fae5 !important; }
+.dark .text-green-900 { color: #d1fae5 !important; }
+.dark .text-green-700 { color: #a7f3d0 !important; }
+.dark .text-green-600 { color: #6ee7b7 !important; }
+.dark .border-green-200 { border-color: #065f46 !important; }
+
+/* Fix ALL yellow/warning elements */
+.dark .bg-yellow-50 { 
+  background-color: #78350f !important; 
+  color: #fef3c7 !important; 
+}
+.dark .bg-yellow-50 * { color: #fef3c7 !important; }
+.dark .bg-yellow-200 { background-color: #92400e !important; color: #fef3c7 !important; }
+.dark .text-yellow-800 { color: #fef3c7 !important; }
+.dark .text-yellow-600 { color: #fbbf24 !important; }
+.dark .border-yellow-200 { border-color: #78350f !important; }
+
+/* Fix ALL red/error elements */
+.dark .bg-red-50 { 
+  background-color: #7f1d1d !important; 
+  color: #fecaca !important; 
+}
+.dark .bg-red-50 * { color: #fecaca !important; }
+.dark .bg-red-200 { background-color: #991b1b !important; color: #fecaca !important; }
+.dark .text-red-800 { color: #fecaca !important; }
+.dark .text-red-600 { color: #f87171 !important; }
+.dark .border-red-200 { border-color: #7f1d1d !important; }
+
+/* Fix ALL blue elements */
+.dark .bg-blue-50 { 
+  background-color: #1e3a8a !important; 
+  color: #dbeafe !important; 
+}
+.dark .bg-blue-50 * { color: #dbeafe !important; }
+.dark .bg-blue-200 { background-color: #1d4ed8 !important; color: #dbeafe !important; }
+.dark .text-blue-900 { color: #dbeafe !important; }
+.dark .text-blue-800 { color: #bfdbfe !important; }
+.dark .text-blue-600 { color: #60a5fa !important; }
+.dark .border-blue-200 { border-color: #1e3a8a !important; }
+
+/* Fix ALL purple elements */
+.dark .bg-purple-50 { 
+  background-color: #581c87 !important; 
+  color: #e9d5ff !important; 
+}
+.dark .bg-purple-50 * { color: #e9d5ff !important; }
+.dark .text-purple-600 { color: #a855f7 !important; }
+.dark .border-purple-200 { border-color: #581c87 !important; }
+
+/* Fix ALL orange elements */
+.dark .bg-orange-50 { 
+  background-color: #7c2d12 !important; 
+  color: #fed7aa !important; 
+}
+.dark .bg-orange-50 * { color: #fed7aa !important; }
+
+/* Fix ALL gradient backgrounds */
+.dark .bg-gradient-to-r.from-blue-50 { 
+  background: linear-gradient(to right, #1e3a8a, #581c87, #1e40af) !important; 
+}
+.dark .bg-gradient-to-r.from-blue-100 { 
+  background: linear-gradient(to right, #1d4ed8, #7c3aed) !important; 
+}
+
+/* Fix difficulty badges specifically */
+.dark .bg-green-100 { background-color: #065f46 !important; color: #d1fae5 !important; }
+.dark .text-green-800 { color: #d1fae5 !important; }
+.dark .bg-yellow-100 { background-color: #78350f !important; color: #fef3c7 !important; }
+.dark .text-yellow-800 { color: #fef3c7 !important; }
+.dark .bg-red-100 { background-color: #7f1d1d !important; color: #fecaca !important; }
+.dark .text-red-800 { color: #fecaca !important; }
+
+/* Fix status indicators */
+.dark .bg-green-100.text-green-800 { 
+  background-color: #065f46 !important; 
+  color: #d1fae5 !important; 
+}
+
+/* Fix button acknowledge styles */
+.dark button[class*="bg-yellow-200"] { 
+  background-color: #78350f !important; 
+  color: #fef3c7 !important; 
+}
+.dark button[class*="bg-red-200"] { 
+  background-color: #7f1d1d !important; 
+  color: #fecaca !important; 
+}
+.dark button[class*="bg-blue-200"] { 
+  background-color: #1e3a8a !important; 
+  color: #dbeafe !important; 
+}
+
+/* Fix specific card backgrounds with dynamic classes */
+.dark [class*="bg-green-50"] { 
+  background-color: #065f46 !important; 
+  color: #d1fae5 !important; 
+}
+.dark [class*="bg-green-50"] * { color: #d1fae5 !important; }
+
+.dark [class*="bg-red-50"] { 
+  background-color: #7f1d1d !important; 
+  color: #fecaca !important; 
+}
+.dark [class*="bg-red-50"] * { color: #fecaca !important; }
+
+/* Fix challenge mode section */
+.dark .bg-gradient-to-r.from-blue-50.via-purple-50.to-cyan-50 {
+  background: linear-gradient(to right, #1e3a8a, #581c87, #155e75) !important;
+  color: #dbeafe !important;
+}
+
+.dark .bg-gradient-to-r.from-blue-50.via-purple-50.to-cyan-50 * {
+  color: #dbeafe !important;
+}
+
+/* Fix AI assistant header */
+.dark .bg-gradient-to-r.from-purple-50.to-blue-50 {
+  background: linear-gradient(to right, #581c87, #1e3a8a) !important;
+  color: #dbeafe !important;
+}
+
+.dark .bg-gradient-to-r.from-purple-50.to-blue-50 * {
+  color: #dbeafe !important;
+}
+
+/* Fix all colored text in ANY colored background */
+.dark [class*="text-green"] { color: #6ee7b7 !important; }
+.dark [class*="text-blue"] { color: #60a5fa !important; }
+.dark [class*="text-yellow"] { color: #fbbf24 !important; }
+.dark [class*="text-red"] { color: #f87171 !important; }
+.dark [class*="text-purple"] { color: #a855f7 !important; }
+.dark [class*="text-orange"] { color: #fb923c !important; }
+
+/* Emergency override for any missed colored elements */
+.dark [class*="bg-"][class*="50"] { 
+  color: #f9fafb !important; 
+}
+.dark [class*="bg-"][class*="50"] * { 
+  color: #f9fafb !important; 
+}
+.dark [class*="bg-"][class*="100"] { 
+  color: #f9fafb !important; 
+}
+.dark [class*="bg-"][class*="100"] * { 
+  color: #f9fafb !important; 
+}
+.dark [class*="bg-"][class*="200"] { 
+  color: #f9fafb !important; 
+}
+.dark [class*="bg-"][class*="200"] * { 
+  color: #f9fafb !important; 
+}
+
