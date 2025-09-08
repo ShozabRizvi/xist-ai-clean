@@ -436,3 +436,122 @@ html {
   color: #f9fafb !important; 
 }
 
+/* ===== FOOTER STICKY FIX ===== */
+
+/* Ensure proper flex layout for sticky footer */
+html, body, #root {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+/* Main app container should use flexbox */
+.min-h-screen {
+  display: flex !important;
+  flex-direction: column !important;
+  min-height: 100vh !important;
+}
+
+/* Main content area should grow to fill space */
+main {
+  flex-grow: 1 !important;
+}
+
+/* Footer should stick to bottom */
+footer {
+  margin-top: auto !important;
+  flex-shrink: 0 !important;
+  width: 100% !important;
+}
+
+/* Ensure footer is visible above mobile browsers UI */
+@media screen and (max-width: 768px) {
+  footer {
+    padding-bottom: env(safe-area-inset-bottom, 20px) !important;
+  }
+}
+
+/* ===== NAVIGATION LOGO SHARP RENDERING FIX ===== */
+
+/* Force sharp rendering for all navigation elements */
+nav,
+.bg-gradient-to-r.from-slate-900 {
+  -webkit-font-smoothing: antialiased !important;
+  -moz-osx-font-smoothing: grayscale !important;
+  text-rendering: optimizeLegibility !important;
+  transform: translateZ(0) !important;
+  backface-visibility: hidden !important;
+  will-change: transform !important;
+}
+
+/* Specific logo fixes */
+nav img,
+.navbar img,
+[alt*="Xist AI"] {
+  image-rendering: -webkit-optimize-contrast !important;
+  image-rendering: crisp-edges !important;
+  image-rendering: pixelated !important;
+  transform: translateZ(0) !important;
+  backface-visibility: hidden !important;
+  -webkit-backface-visibility: hidden !important;
+  max-width: 100% !important;
+  height: auto !important;
+}
+
+/* Fix text rendering in navigation */
+nav *,
+nav span,
+nav div,
+nav button {
+  -webkit-font-smoothing: antialiased !important;
+  -moz-osx-font-smoothing: grayscale !important;
+  text-rendering: optimizeLegibility !important;
+  backface-visibility: hidden !important;
+}
+
+/* Alternative approach: Reduce backdrop blur specifically for logo container */
+nav .flex.items-center.space-x-3 {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+/* Force GPU acceleration for smoother rendering */
+nav .relative.group {
+  transform: translate3d(0, 0, 0) !important;
+  -webkit-transform: translate3d(0, 0, 0) !important;
+}
+
+/* Browser-specific logo fixes */
+@media screen and (-webkit-min-device-pixel-ratio: 0) {
+  nav img {
+    -webkit-transform: translateZ(0);
+    -webkit-backface-visibility: hidden;
+  }
+}
+
+/* Firefox specific */
+@-moz-document url-prefix() {
+  nav img {
+    image-rendering: -moz-crisp-edges;
+  }
+}
+
+/* Footer visibility and styling */
+footer {
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  position: relative !important;
+  z-index: 10 !important;
+}
+
+/* Footer content styling */
+footer .bg-gradient-to-r {
+  background: linear-gradient(to right, #0f172a, #581c87, #0f172a) !important;
+  color: #ffffff !important;
+}
+
+footer * {
+  color: #ffffff !important;
+}
+
