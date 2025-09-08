@@ -291,15 +291,19 @@ const App = () => {
 
   // ✅ ENHANCED THEME APPLICATION
   useEffect(() => {
-    const root = document.documentElement;
-    
-    if (theme === 'dark') {
-      root.classList.add('dark');
-      document.body.style.backgroundColor = '#0f172a';
-    } else {
-      root.classList.remove('dark');
-      document.body.style.backgroundColor = '#f8fafc';
-    }
+  const root = document.documentElement;
+  if (theme === 'dark') {
+    root.classList.add('dark');
+    document.body.style.backgroundColor = '#0f172a';
+    // Add this for better text contrast:
+    root.style.setProperty('--text-primary', '#ffffff');
+    root.style.setProperty('--text-secondary', '#e5e7eb');
+  } else {
+    root.classList.remove('dark');
+    document.body.style.backgroundColor = '#f8fafc';
+    root.style.setProperty('--text-primary', '#111827');
+    root.style.setProperty('--text-secondary', '#6b7280');
+  }
     
     root.style.setProperty('--base-font-size', `${fontSize}px`);
     root.style.setProperty('--animation-duration', animations ? '0.3s' : '0.01s');
@@ -1086,10 +1090,8 @@ Best practices:
                   }}
                 />
                 <div className="w-10 h-10 bg-gradient-to-br from-cyan-400 via-blue-500 to-purple-600 rounded-xl hidden items-center justify-center shadow-lg transition-transform duration-300 group-hover:scale-110">
-                  <svg className="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M12,2A2,2 0 0,1 14,4C14,4.74 13.6,5.39 13,5.73V7.29C13.58,7.63 14,8.26 14,9A2,2 0 0,1 12,11A2,2 0 0,1 10,9C10,8.26 10.42,7.63 11,7.29V5.73C10.4,5.39 10,4.74 10,4A2,2 0 0,1 12,2M12,15A2,2 0 0,1 14,17A2,2 0 0,1 12,19A2,2 0 0,1 10,17A2,2 0 0,1 12,15M8,9A2,2 0 0,1 10,11A2,2 0 0,1 8,13A2,2 0 0,1 6,11A2,2 0 0,1 8,9M16,9A2,2 0 0,1 18,11A2,2 0 0,1 16,13A2,2 0 0,1 14,11A2,2 0 0,1 16,9Z"/>
-                  </svg>
-                </div>
+  <span className="text-white font-bold text-lg">X</span>
+</div>
               </div>
               
               <div className="flex flex-col">
@@ -1496,10 +1498,14 @@ case 'community':
     <div className={`space-y-8 ${screenSize.isMobile ? 'px-4' : 'px-6'}`}>
       <div className="text-center">
         <div className="text-6xl mb-6">👥</div>
-        <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+        <h1 className={`text-3xl md:text-4xl font-bold mb-4 ${
+  theme === 'dark' ? 'text-white' : 'text-gray-900'
+}`}>
           Xist AI Community Hub
         </h1>
-        <p className="text-xl text-gray-600">
+        <p className={`text-xl ${
+  theme === 'dark' ? 'text-gray-300' : 'text-gray-600'
+}`}>
           Connect, share experiences, and collaborate to fight digital threats together
         </p>
       </div>
@@ -1920,10 +1926,14 @@ case 'settings':
     <div className="max-w-6xl mx-auto space-y-8" style={{ marginBottom: '100px' /* Extra bottom space for taskbar */ }}>
       <div className="text-center">
         <div className="text-6xl mb-6">⚙️</div>
-        <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+        <h1 className={`text-3xl md:text-4xl font-bold mb-4 ${
+  theme === 'dark' ? 'text-white' : 'text-gray-900'
+}`}>
           Advanced Settings & Configuration
         </h1>
-        <p className="text-xl text-gray-600">
+        <p className={`text-xl ${
+  theme === 'dark' ? 'text-gray-300' : 'text-gray-600'
+}`}>
           Comprehensive customization center with live preview
         </p>
       </div>
@@ -2265,10 +2275,14 @@ case 'about':
           <div className="max-w-4xl mx-auto space-y-8">
             <div className="text-center">
               <div className="text-6xl mb-6">ℹ️</div>
-              <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+              <h1 className={`text-3xl md:text-4xl font-bold mb-4 ${
+  theme === 'dark' ? 'text-white' : 'text-gray-900'
+}`}>
                 About Xist AI
               </h1>
-              <p className="text-xl text-gray-600">
+              <p className={`text-xl ${
+  theme === 'dark' ? 'text-gray-300' : 'text-gray-600'
+}`}>
                 Advanced AI platform for digital safety and threat detection
               </p>
             </div>
@@ -2321,10 +2335,14 @@ case 'about':
           <div className="max-w-4xl mx-auto space-y-8">
             <div className="text-center">
               <div className="text-6xl mb-6">🎧</div>
-              <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+              <h1 className={`text-3xl md:text-4xl font-bold mb-4 ${
+  theme === 'dark' ? 'text-white' : 'text-gray-900'
+}`}>
                 Support Center
               </h1>
-              <p className="text-xl text-gray-600">
+              <p className={`text-xl ${
+  theme === 'dark' ? 'text-gray-300' : 'text-gray-600'
+}`}>
                 Get help with Xist AI features and digital safety guidance
               </p>
             </div>
@@ -2383,10 +2401,14 @@ case 'about':
           <div className="max-w-4xl mx-auto space-y-8">
             <div className="text-center">
               <div className="text-6xl mb-6">📞</div>
-              <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+              <h1 className={`text-3xl md:text-4xl font-bold mb-4 ${
+  theme === 'dark' ? 'text-white' : 'text-gray-900'
+}`}>
                 Contact Us
               </h1>
-              <p className="text-xl text-gray-600">
+              <p className={`text-xl ${
+  theme === 'dark' ? 'text-gray-300' : 'text-gray-600'
+}`}>
                 Get in touch with the Xist AI team
               </p>
             </div>
@@ -2649,7 +2671,9 @@ case 'about':
       {/* Header */}
       <div className="text-center">
         <div className="text-6xl mb-6">🔍</div>
-        <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+        <h1 className={`text-3xl md:text-4xl font-bold mb-4 ${
+  theme === 'dark' ? 'text-white' : 'text-gray-900'
+}`}>
           AI-Powered Threat Verification
         </h1>
         <p className="text-xl text-gray-600 max-w-2xl mx-auto">
@@ -3226,10 +3250,14 @@ Examples:
     <div className={`space-y-8 ${screenSize.isMobile ? 'px-4' : 'px-6'}`}>
       <div className="text-center">
         <div className="text-6xl mb-6">📚</div>
-        <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+        <h1 className={`text-3xl md:text-4xl font-bold mb-4 ${
+  theme === 'dark' ? 'text-white' : 'text-gray-900'
+}`}>
           Digital Safety Education Center
         </h1>
-        <p className="text-xl text-gray-600">
+        <p className={`text-xl ${
+  theme === 'dark' ? 'text-gray-300' : 'text-gray-600'
+}`}>
           Comprehensive learning resources to master digital threat detection and prevention
         </p>
       </div>
@@ -3354,10 +3382,14 @@ Examples:
     <div className={`space-y-8 ${screenSize.isMobile ? 'px-4' : 'px-6'}`}>
       <div className="text-center">
         <div className="text-6xl mb-6">👥</div>
-        <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+        <h1 className={`text-3xl md:text-4xl font-bold mb-4 ${
+  theme === 'dark' ? 'text-white' : 'text-gray-900'
+}`}>
           Xist AI Community Hub
         </h1>
-        <p className="text-xl text-gray-600">
+        <p className={`text-xl ${
+  theme === 'dark' ? 'text-gray-300' : 'text-gray-600'
+}`}>
           Connect, share experiences, and collaborate to fight digital threats together
         </p>
       </div>
@@ -3481,10 +3513,14 @@ Examples:
     <div className={`space-y-8 ${screenSize.isMobile ? 'px-4' : 'px-6'}`}>
       <div className="text-center">
         <div className="text-6xl mb-6">📊</div>
-        <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+        <h1 className={`text-3xl md:text-4xl font-bold mb-4 ${
+  theme === 'dark' ? 'text-white' : 'text-gray-900'
+}`}>
           Personal Protection Analytics
         </h1>
-        <p className="text-xl text-gray-600">
+        <p className={`text-xl ${
+  theme === 'dark' ? 'text-gray-300' : 'text-gray-600'
+}`}>
           Track your digital safety progress and analyze threat patterns
         </p>
       </div>
@@ -3631,10 +3667,14 @@ Examples:
     <div className={`space-y-8 ${screenSize.isMobile ? 'px-4' : 'px-6'}`}>
       <div className="text-center">
         <div className="text-6xl mb-6">🛡️</div>
-        <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+        <h1 className={`text-3xl md:text-4xl font-bold mb-4 ${
+  theme === 'dark' ? 'text-white' : 'text-gray-900'
+}`}>
           Advanced Protection Center
         </h1>
-        <p className="text-xl text-gray-600">
+        <p className={`text-xl ${
+  theme === 'dark' ? 'text-gray-300' : 'text-gray-600'
+}`}>
           Comprehensive security monitoring and threat prevention system
         </p>
       </div>
@@ -3787,10 +3827,14 @@ Examples:
     <div className={`space-y-8 ${screenSize.isMobile ? 'px-4' : 'px-6'}`}>
       <div className="text-center">
         <div className="text-6xl mb-6">📋</div>
-        <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+        <h1 className={`text-3xl md:text-4xl font-bold mb-4 ${
+  theme === 'dark' ? 'text-white' : 'text-gray-900'
+}`}>
           Security Reports Dashboard
         </h1>
-        <p className="text-xl text-gray-600">
+        <p className={`text-xl ${
+  theme === 'dark' ? 'text-gray-300' : 'text-gray-600'
+}`}>
           Generate comprehensive security reports and analytics
         </p>
       </div>
@@ -3830,10 +3874,14 @@ Examples:
     <div className={`space-y-8 ${screenSize.isMobile ? 'px-4' : 'px-6'}`}>
       <div className="text-center">
         <div className="text-6xl mb-6">🚨</div>
-        <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+        <h1 className={`text-3xl md:text-4xl font-bold mb-4 ${
+  theme === 'dark' ? 'text-white' : 'text-gray-900'
+}`}>
           Incident Response Center
         </h1>
-        <p className="text-xl text-gray-600">
+        <p className={`text-xl ${
+  theme === 'dark' ? 'text-gray-300' : 'text-gray-600'
+}`}>
           Emergency response tools and threat mitigation protocols
         </p>
       </div>
@@ -3889,10 +3937,14 @@ Examples:
     <div className={`space-y-8 ${screenSize.isMobile ? 'px-4' : 'px-6'}`}>
       <div className="text-center">
         <div className="text-6xl mb-6">🧠</div>
-        <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+        <h1 className={`text-3xl md:text-4xl font-bold mb-4 ${
+  theme === 'dark' ? 'text-white' : 'text-gray-900'
+}`}>
           Threat Intelligence Hub
         </h1>
-        <p className="text-xl text-gray-600">
+        <p className={`text-xl ${
+  theme === 'dark' ? 'text-gray-300' : 'text-gray-600'
+}`}>
           Global threat intelligence and security research center
         </p>
       </div>
@@ -3944,10 +3996,14 @@ Examples:
     <div className={`space-y-8 ${screenSize.isMobile ? 'px-4' : 'px-6'}`}>
       <div className="text-center">
         <div className="text-6xl mb-6">🔌</div>
-        <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+        <h1 className={`text-3xl md:text-4xl font-bold mb-4 ${
+  theme === 'dark' ? 'text-white' : 'text-gray-900'
+}`}>
           API Management Dashboard
         </h1>
-        <p className="text-xl text-gray-600">
+        <p className={`text-xl ${
+  theme === 'dark' ? 'text-gray-300' : 'text-gray-600'
+}`}>
           Monitor and manage API integrations and developer tools
         </p>
       </div>
@@ -3996,10 +4052,14 @@ Examples:
     <div className={`space-y-8 ${screenSize.isMobile ? 'px-4' : 'px-6'}`}>
       <div className="text-center">
         <div className="text-6xl mb-6">💓</div>
-        <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+        <h1 className={`text-3xl md:text-4xl font-bold mb-4 ${
+  theme === 'dark' ? 'text-white' : 'text-gray-900'
+}`}>
           System Health Monitor
         </h1>
-        <p className="text-xl text-gray-600">
+        <p className={`text-xl ${
+  theme === 'dark' ? 'text-gray-300' : 'text-gray-600'
+}`}>
           Real-time system performance and health monitoring
         </p>
       </div>
@@ -4068,10 +4128,14 @@ Examples:
     <div className={`space-y-8 ${screenSize.isMobile ? 'px-4' : 'px-6'}`}>
       <div className="text-center">
         <div className="text-6xl mb-6">⚖️</div>
-        <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+        <h1 className={`text-3xl md:text-4xl font-bold mb-4 ${
+  theme === 'dark' ? 'text-white' : 'text-gray-900'
+}`}>
           Authority Verification Center
         </h1>
-        <p className="text-xl text-gray-600">
+        <p className={`text-xl ${
+  theme === 'dark' ? 'text-gray-300' : 'text-gray-600'
+}`}>
           Government credential verification and administrative controls
         </p>
       </div>
@@ -4238,10 +4302,14 @@ Examples:
   <div className={`space-y-8 ${screenSize.isMobile ? 'px-4' : 'px-6'}`}>
     <div className="text-center">
       <div className="text-6xl mb-6">⚙️</div>
-      <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+      <h1 className={`text-3xl md:text-4xl font-bold mb-4 ${
+  theme === 'dark' ? 'text-white' : 'text-gray-900'
+}`}>
         Advanced Settings & Configuration
       </h1>
-      <p className="text-xl text-gray-600">
+      <p className={`text-xl ${
+  theme === 'dark' ? 'text-gray-300' : 'text-gray-600'
+}`}>
         Complete customization and configuration center
       </p>
     </div>
