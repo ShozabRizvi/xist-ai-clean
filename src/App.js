@@ -41,9 +41,8 @@ deviceType: window.innerWidth < 768 ? 'mobile' : window.innerWidth < 1024 ? 'tab
 });
 
 // UI State (ALL ORIGINAL PRESERVED)
-const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
-const [sidebarCollapsed, setSidebarCollapsed] = useState(window.innerWidth < 768);
 const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+const [sidebarCollapsed, setSidebarCollapsed] = useState(window.innerWidth < 768);
 
 const [orientation, setOrientation] = useState(window.screen?.orientation?.angle || 0);
 
@@ -1489,23 +1488,25 @@ const renderTopNavigation = () => (
           )}
 
           {/* ✅ FIXED MOBILE MENU TOGGLE */}
-          <button
-            onClick={() => {
-              console.log('Mobile menu clicked, current state:', mobileMenuOpen);
-              setMobileMenuOpen(!mobileMenuOpen);
-              if ('vibrate' in navigator) {
-                navigator.vibrate(50);
-              }
-            }}
-            className="md:hidden relative w-10 h-10 flex items-center justify-center text-white hover:bg-purple-800/20 rounded-lg transition-colors"
-            aria-label="Toggle mobile menu"
-          >
-            <div className="w-6 h-6 flex flex-col justify-center items-center space-y-1">
-              <span className={`bg-white block transition-all duration-300 ease-out h-0.5 w-4 rounded-sm ${mobileMenuOpen ? 'rotate-45 translate-y-1' : '-translate-y-0.5'}`}></span>
-              <span className={`bg-white block transition-all duration-300 ease-out h-0.5 w-4 rounded-sm ${mobileMenuOpen ? 'opacity-0' : 'opacity-100'}`}></span>
-              <span className={`bg-white block transition-all duration-300 ease-out h-0.5 w-4 rounded-sm ${mobileMenuOpen ? '-rotate-45 -translate-y-1' : 'translate-y-0.5'}`}></span>
-            </div>
-          </button>
+          <div className="md:hidden">
+  <button
+    onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+    className="relative w-8 h-8 flex items-center justify-center text-white focus:outline-none"
+    aria-label="Toggle mobile menu"
+  >
+    <div className="w-6 h-6 flex flex-col justify-center items-center">
+      <span className={`bg-white block transition-all duration-300 ease-out h-0.5 w-6 rounded-sm ${
+        mobileMenuOpen ? 'rotate-45 translate-y-1.5' : '-translate-y-0.5'
+      }`}></span>
+      <span className={`bg-white block transition-all duration-300 ease-out h-0.5 w-6 rounded-sm ${
+        mobileMenuOpen ? 'opacity-0' : 'opacity-100'
+      }`}></span>
+      <span className={`bg-white block transition-all duration-300 ease-out h-0.5 w-6 rounded-sm ${
+        mobileMenuOpen ? '-rotate-45 -translate-y-1.5' : 'translate-y-0.5'
+      }`}></span>
+    </div>
+  </button>
+</div>
         </div>
       </div>
 
@@ -1569,17 +1570,16 @@ const renderTopNavigation = () => (
 
 // ✅ SIDEBAR (AS ORIGINALLY DESIGNED)
 const renderSidebar = () => (
-<>
-{/* Sidebar */}
-<nav className={`fixed top-16 left-0 bg-gradient-to-b from-slate-900 via-purple-900 to-slate-900 shadow-2xl z-40 transition-all duration-300 ${
-sidebarCollapsed ? 'w-16' : 'w-64'
-} ${isMobile && sidebarCollapsed ? '-translate-x-full' : ''}`}
-style={{
-// ✅ FIXED: Prevent Windows taskbar from covering sidebar
-height: 'calc(100vh - 4rem)', // Full height minus top nav (64px)
-maxHeight: 'calc(100vh - 4rem)', // Ensure it doesn't exceed viewport
-bottom: '0px' // Stick to bottom but don't go below it
-}}>
+  <>
+    {/* Desktop Sidebar */}
+    <nav className={`fixed top-16 left-0 bg-gradient-to-b from-slate-900 via-purple-900 to-slate-900 shadow-2xl z-40 transition-all duration-300 ${
+      screenSize.isMobile 
+        ? 'hidden' // Hide desktop sidebar on mobile
+        : sidebarCollapsed 
+          ? 'w-16' 
+          : 'w-64'
+    }`}
+    style={{ height: 'calc(100vh - 4rem)' }}>
 <div className="flex flex-col h-full">
 {/* Ultra-Professional Toggle Button */}
 <div className="flex items-center justify-center p-4 border-b border-purple-700/30 flex-shrink-0">
@@ -1724,13 +1724,28 @@ style={{ width: `${(userStats.communityPoints % 100)}%` }}
 </nav>
 
 {/* Mobile Sidebar Overlay */}
-{screenSize.isMobile && !sidebarCollapsed && (
-<div
-className="fixed inset-0 bg-black/50 z-30 top-16"
-onClick={() => setSidebarCollapsed(true)}
-/>
-)}
-</>
+{screenSize.isMobile && mobileMenuOpen && (
+      <div className="fixed inset-0 bg-black/50 z-40 top-16" onClick={() => setMobileMenuOpen(false)}>
+        <div className="bg-slate-900 w-80 h-full shadow-xl">
+          {/* Mobile-specific navigation */}
+          <div className="p-4">
+            {['Home', 'Verify', 'Education', 'Community', 'Analytics', 'Protection', 'About', 'Support', 'Contact'].map((item) => (
+              <button
+                key={item}
+                onClick={() => {
+                  setCurrentSection(item.toLowerCase());
+                  setMobileMenuOpen(false);
+                }}
+                className="block w-full text-left px-4 py-3 text-white hover:bg-purple-700 rounded-lg mb-2"
+              >
+                {item}
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+    )}
+  </>
 );
 
 // ✅ SECTION ROUTER (COMPLETE WITH ALL NEW SECTIONS)
@@ -1992,7 +2007,11 @@ return renderHomeSection();
 
 // ✅ HOME SECTION (ALL ORIGINAL FEATURES PRESERVED)
 const renderHomeSection = () => (
-<div className={`space-y-8 ${screenSize.isMobile ? 'px-4' : 'px-6'}`}>
+<div className={`${
+  screenSize.isMobile 
+    ? 'mobile-button w-full py-3 px-4 text-base' 
+    : 'px-6 py-2'
+} bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-semibold transition-colors`}>
 {/* Enhanced Hero Section (ALL ORIGINAL CONTENT) */}
 <div className="relative overflow-hidden bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 rounded-2xl p-8 text-white text-center">
 <div className="absolute inset-0 opacity-20">
@@ -2219,10 +2238,10 @@ isOnline ? 'bg-green-50 border-green-200 hover:shadow-md' : 'bg-red-50 border-re
 Enter suspicious content for AI analysis
 </label>
 <textarea
-ref={inputRef}
-id="verify-input"
-value={verifyInput}
-onChange={(e) => setVerifyInput(e.target.value)}
+  ref={inputRef}
+  id="verify-input"
+  value={verifyInput}
+  onChange={(e) => setVerifyInput(e.target.value)}
 placeholder={`Paste suspicious messages, URLs, claims, or any content you want our AI to verify for digital threats...
 
 Examples:
@@ -2231,8 +2250,12 @@ Examples:
 • Too-good-to-be-true offers
 • Social media claims
 • Investment opportunities`}
-rows="6"
-className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 resize-none text-base transition-all duration-300"
+rows={screenSize.isMobile ? "4" : "6"}
+  className={`w-full border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 resize-none transition-all duration-300 ${
+    screenSize.isMobile 
+      ? 'px-4 py-3 text-base min-h-[44px]' // Mobile-optimized
+      : 'px-4 py-3 text-base'
+  }`}
 />
 {/* State Indicator */}
 <div className="mt-2 flex items-center justify-between">
@@ -2793,7 +2816,11 @@ className="p-2 text-left bg-purple-50 hover:bg-purple-100 rounded text-xs text-p
 
 // ✅ EDUCATION SECTION (ALL ORIGINAL FEATURES PRESERVED) - STARTING FROM LINE 1890
 const renderEducationSection = () => (
-<div className={`space-y-8 ${screenSize.isMobile ? 'px-4' : 'px-6'}`}>
+<div className={`${
+  screenSize.isMobile 
+    ? 'mobile-button w-full py-3 px-4 text-base' 
+    : 'px-6 py-2'
+} bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-semibold transition-colors`}>
 <div className="text-center">
 <div className="text-6xl mb-6">📚</div>
 <h1 className={`text-3xl md:text-4xl font-bold mb-4 ${
@@ -2926,7 +2953,11 @@ style={{ width: `${course.progress}%` }}
 
 // ✅ COMMUNITY SECTION (ALL ORIGINAL FEATURES PRESERVED)
 const renderCommunitySection = () => (
-<div className={`space-y-8 ${screenSize.isMobile ? 'px-4' : 'px-6'}`}>
+<div className={`${
+  screenSize.isMobile 
+    ? 'mobile-button w-full py-3 px-4 text-base' 
+    : 'px-6 py-2'
+} bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-semibold transition-colors`}>
 <div className="text-center">
 <div className="text-6xl mb-6">👥</div>
 <h1 className={`text-3xl md:text-4xl font-bold mb-4 ${
@@ -3255,7 +3286,11 @@ Load More Posts
 
 // ✅ ANALYTICS SECTION (ALL ORIGINAL WITH CHARTS)
 const renderAnalyticsSection = () => (
-<div className={`space-y-8 ${screenSize.isMobile ? 'px-4' : 'px-6'}`}>
+<div className={`${
+  screenSize.isMobile 
+    ? 'mobile-button w-full py-3 px-4 text-base' 
+    : 'px-6 py-2'
+} bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-semibold transition-colors`}>
 <div className="text-center">
 <div className="text-6xl mb-6">📊</div>
 <h1 className={`text-3xl md:text-4xl font-bold mb-4 ${
@@ -3432,7 +3467,11 @@ Sign In with Google
 
 // ✅ PROTECTION SECTION (ALL ORIGINAL FEATURES)
 const renderProtectionSection = () => (
-<div className={`space-y-8 ${screenSize.isMobile ? 'px-4' : 'px-6'}`}>
+<div className={`${
+  screenSize.isMobile 
+    ? 'mobile-button w-full py-3 px-4 text-base' 
+    : 'px-6 py-2'
+} bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-semibold transition-colors`}>
 <div className="text-center">
 <div className="text-6xl mb-6">🛡️</div>
 <h1 className={`text-3xl md:text-4xl font-bold mb-4 ${
@@ -3592,7 +3631,11 @@ activity.type === 'protected' ? '🔒' : '🔄'}
 
 // ✅ ALL NEW SECTIONS (IMPLEMENTING AS REQUESTED)
 const renderReportsSection = () => (
-<div className={`space-y-8 ${screenSize.isMobile ? 'px-4' : 'px-6'}`}>
+<div className={`${
+  screenSize.isMobile 
+    ? 'mobile-button w-full py-3 px-4 text-base' 
+    : 'px-6 py-2'
+} bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-semibold transition-colors`}>
 <div className="text-center">
 <div className="text-6xl mb-6">📋</div>
 <h1 className={`text-3xl md:text-4xl font-bold mb-4 ${
@@ -3639,7 +3682,11 @@ Generate Report
 );
 
 const renderIncidentResponseSection = () => (
-<div className={`space-y-8 ${screenSize.isMobile ? 'px-4' : 'px-6'}`}>
+<div className={`${
+  screenSize.isMobile 
+    ? 'mobile-button w-full py-3 px-4 text-base' 
+    : 'px-6 py-2'
+} bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-semibold transition-colors`}>
 <div className="text-center">
 <div className="text-6xl mb-6">🚨</div>
 <h1 className={`text-3xl md:text-4xl font-bold mb-4 ${
@@ -3702,7 +3749,11 @@ Emergency response tools and threat mitigation protocols
 );
 
 const renderThreatIntelligenceSection = () => (
-<div className={`space-y-8 ${screenSize.isMobile ? 'px-4' : 'px-6'}`}>
+<div className={`${
+  screenSize.isMobile 
+    ? 'mobile-button w-full py-3 px-4 text-base' 
+    : 'px-6 py-2'
+} bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-semibold transition-colors`}>
 <div className="text-center">
 <div className="text-6xl mb-6">🧠</div>
 <h1 className={`text-3xl md:text-4xl font-bold mb-4 ${
@@ -3761,7 +3812,11 @@ item.severity === 'High' ? 'bg-orange-100 text-orange-800' :
 );
 
 const renderAPIManagementSection = () => (
-<div className={`space-y-8 ${screenSize.isMobile ? 'px-4' : 'px-6'}`}>
+<div className={`${
+  screenSize.isMobile 
+    ? 'mobile-button w-full py-3 px-4 text-base' 
+    : 'px-6 py-2'
+} bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-semibold transition-colors`}>
 <div className="text-center">
 <div className="text-6xl mb-6">🔌</div>
 <h1 className={`text-3xl md:text-4xl font-bold mb-4 ${
@@ -3881,7 +3936,11 @@ Sign In to Access API
 );
 
 const renderSystemHealthSection = () => (
-<div className={`space-y-8 ${screenSize.isMobile ? 'px-4' : 'px-6'}`}>
+<div className={`${
+  screenSize.isMobile 
+    ? 'mobile-button w-full py-3 px-4 text-base' 
+    : 'px-6 py-2'
+} bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-semibold transition-colors`}>
 <div className="text-center">
 <div className="text-6xl mb-6">💓</div>
 <h1 className={`text-3xl md:text-4xl font-bold mb-4 ${
@@ -3991,7 +4050,11 @@ Acknowledge
 );
 
 const renderAuthoritySection = () => (
-<div className={`space-y-8 ${screenSize.isMobile ? 'px-4' : 'px-6'}`}>
+<div className={`${
+  screenSize.isMobile 
+    ? 'mobile-button w-full py-3 px-4 text-base' 
+    : 'px-6 py-2'
+} bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-semibold transition-colors`}>
 <div className="text-center">
 <div className="text-6xl mb-6">⚖️</div>
 <h1 className={`text-3xl md:text-4xl font-bold mb-4 ${
@@ -4175,7 +4238,11 @@ Launch Tools
 );
 
 const renderSettingsSection = () => (
-<div className={`space-y-8 ${screenSize.isMobile ? 'px-4' : 'px-6'}`}>
+<div className={`${
+  screenSize.isMobile 
+    ? 'mobile-button w-full py-3 px-4 text-base' 
+    : 'px-6 py-2'
+} bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-semibold transition-colors`}>
 <div className="text-center">
 <div className="text-6xl mb-6">⚙️</div>
 <h1 className={`text-3xl md:text-4xl font-bold mb-4 ${
