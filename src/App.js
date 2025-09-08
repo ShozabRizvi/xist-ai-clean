@@ -427,6 +427,14 @@ Accept: 'application/json'
 });
 
 const userData = await response.json();
+ const sanitizedUser = {
+        ...userData,
+        name: typeof userData.name === 'string' ? userData.name : 
+              typeof userData.given_name === 'string' ? userData.given_name :
+              'User'
+      };
+      
+      setUser(sanitizedUser);
 setUser(userData);
 fetchUserStats(userData.email);
 showNotification('🎉 Welcome back! Your digital protection is active.', 'success');
@@ -1093,9 +1101,11 @@ aiModel: 'Xist AI Local Detection Engine v2.0'
 
 // ✅ ALL ORIGINAL CHAT SYSTEM (PRESERVED EXACTLY)
 const sendChatMessage = async (messageOverride = null) => {
-const message = messageOverride || chatInput;
-const messageText = typeof message === 'string' ? message : String(message || '');
-
+  const message = messageOverride || chatInput;
+  console.log('Original message:', message, typeof message);
+  console.log('User object:', user);
+  // Ensure message is always a string
+  const messageText = typeof message === 'string' ? message :typeof message === 'object' ? JSON.stringify(message) :String(message || '');
 if (!messageText.trim() || !user || isChatLoading) return;
 
 const userMessage = {
@@ -2704,49 +2714,33 @@ AI Safety Assistant
 </div>
 ) : (
 chatMessages.map((msg, index) => (
-<div key={index} className={`flex ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}>
-<div className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg shadow-sm ${
-msg.sender === 'user'
-? 'bg-purple-600 text-white'
-: 'bg-white text-gray-800 border border-gray-200'
-}`}>
-<div className="text-sm font-medium mb-1 flex items-center">
-{msg.sender === 'user' ? (
-<span className="flex items-center">
-👤 {user?.name || 'You'}
-</span>
-) : (
-<span className="flex items-center">
-🤖 Xist AI
-{msg.isAI ? (
-<span className="ml-2 px-1 py-0.5 bg-green-100 text-green-800 text-xs rounded animate-pulse">
-DeepSeek-R1
-</span>
-) : (
-<span className="ml-2 px-1 py-0.5 bg-yellow-100 text-yellow-800 text-xs rounded">
-Offline
-</span>
-)}
-</span>
-)}
-</div>
-<div className="whitespace-pre-wrap text-sm leading-relaxed">
-  {(() => {
-    if (typeof msg.message === 'string') return msg.message;
-    if (typeof msg.message === 'object' && msg.message !== null) {
-      if (msg.message.content) return msg.message.content;
-      if (msg.message.text) return msg.message.text;
-      return JSON.stringify(msg.message, null, 2);
-    }
-    return String(msg.message || 'No message content');
-  })()}
-</div>
-
-<div className="text-xs opacity-70 mt-1">
-{new Date(msg.timestamp).toLocaleTimeString()}
-</div>
-</div>
-</div>
+  <div key={index} className={`flex ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}>
+    <div className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg shadow-sm ${
+      msg.sender === 'user'
+        ? 'bg-purple-600 text-white'
+        : 'bg-white text-gray-800 border border-gray-200'
+    }`}>
+      <div className="text-sm font-medium mb-1 flex items-center">
+        {msg.sender === 'user' ? (
+          <span className="flex items-center">
+            👤 {typeof user?.name === 'string' ? user.name : 'You'}
+          </span>
+        ) : (
+          <span className="flex items-center">
+            🤖 Xist AI
+          </span>
+        )}
+      </div>
+      <div className="whitespace-pre-wrap text-sm leading-relaxed">
+        {typeof msg.message === 'string' ? msg.message : 
+         typeof msg.message === 'object' && msg.message ? JSON.stringify(msg.message) :
+         'Message could not be displayed'}
+      </div>
+      <div className="text-xs opacity-70 mt-1">
+        {new Date(msg.timestamp).toLocaleTimeString()}
+      </div>
+    </div>
+  </div>
 ))
 )}
 
