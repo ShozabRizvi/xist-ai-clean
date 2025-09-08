@@ -42,6 +42,7 @@ deviceType: window.innerWidth < 768 ? 'mobile' : window.innerWidth < 1024 ? 'tab
 
 // UI State (ALL ORIGINAL PRESERVED)
 const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
 const [sidebarCollapsed, setSidebarCollapsed] = useState(window.innerWidth < 768);
 
 const [orientation, setOrientation] = useState(window.screen?.orientation?.angle || 0);
