@@ -414,6 +414,18 @@ useEffect(() => {
   };
 }, [mobileMenuOpen]);
 
+// Add this useEffect to handle mobile menu closing
+useEffect(() => {
+  const handleResize = () => {
+    if (window.innerWidth >= 768) {
+      setMobileMenuOpen(false); // Close mobile menu when switching to desktop
+    }
+  };
+
+  window.addEventListener('resize', handleResize);
+  return () => window.removeEventListener('resize', handleResize);
+}, []);
+
 
 // ✅ GOOGLE LOGIN (ALL ORIGINAL)
 const login = useGoogleLogin({
@@ -1336,49 +1348,26 @@ return `Thanks for your question, ${userName}! 😊 I'm here to help with digita
 // ✅ TOP NAVIGATION (NO CONTACT STRIP - AS ORIGINALLY DESIGNED)
 // ✅ FIXED TOP NAVIGATION - MOBILE & DESKTOP OPTIMIZED
 const renderTopNavigation = () => (
-  <div className="bg-gradient-to-r from-slate-900 via-purple-900 to-slate-900 shadow-xl border-b border-purple-700/30 sticky top-0 z-50 sharp-nav">
+  <div className="bg-gradient-to-r from-slate-900 via-purple-900 to-slate-900 shadow-xl border-b border-purple-700/30 sticky top-0 z-50">
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       <div className="flex items-center justify-between h-16">
-        
-        {/* Left side - Brand & Navigation */}
+        {/* Left side - Brand */}
         <div className="flex items-center space-x-8">
-          
-          {/* ✅ FIXED LOGO SECTION - MOBILE & DESKTOP OPTIMIZED */}
           <div className="flex items-center space-x-3">
             <div className="relative group">
-              <img
-                src="/logo.png"
-                alt="Xist AI Network Protection"
-                className="w-8 h-8 md:w-10 md:h-10 transition-transform duration-300 group-hover:scale-110"
-                onError={(e) => {
-                  e.target.style.display = 'none';
-                  e.target.nextElementSibling.style.display = 'flex';
-                }}
-              />
-              <div className="w-8 h-8 md:w-10 md:h-10 bg-gradient-to-br from-cyan-400 via-blue-500 to-purple-600 rounded-xl hidden items-center justify-center shadow-lg transition-transform duration-300 group-hover:scale-110">
+              <div className="w-8 h-8 md:w-10 md:h-10 bg-gradient-to-br from-cyan-400 via-blue-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg transition-transform duration-300 group-hover:scale-110">
                 <span className="text-white font-bold text-sm md:text-lg">X</span>
               </div>
             </div>
             <div className="flex flex-col">
-              <span className="text-lg md:text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 to-purple-400">
+              <span className="text-lg md:text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white via-cyan-200 to-purple-200">
                 Xist AI
               </span>
               <span className="text-xs text-gray-400 hidden md:block">Digital Guardian Network</span>
             </div>
-            
-            {/* ✅ FIXED NETWORK STATUS - MOBILE OPTIMIZED */}
-            <div className={`hidden sm:flex items-center px-2 md:px-3 py-1 rounded-full text-xs font-medium transition-all duration-300 ${
-              isOnline ? 'bg-green-500/20 text-green-300 shadow-green-500/20' : 'bg-red-500/20 text-red-300 shadow-red-500/20'
-            } shadow-lg backdrop-blur-sm`}>
-              <div className={`w-2 h-2 rounded-full mr-2 ${
-                isOnline ? 'bg-green-400 animate-pulse' : 'bg-red-400'
-              }`}></div>
-              <span className="hidden md:inline">{isOnline ? `Secured (${networkSpeed.toUpperCase()})` : 'Offline Mode'}</span>
-              <span className="md:hidden">{isOnline ? 'Online' : 'Offline'}</span>
-            </div>
           </div>
 
-          {/* ✅ DESKTOP NAVIGATION - UNCHANGED */}
+          {/* Desktop Navigation - Hidden on mobile */}
           <nav className="hidden md:flex space-x-6">
             {['Home', 'Verify', 'Education', 'Community', 'Analytics', 'Protection', 'About', 'Support', 'Contact'].map((item) => (
               <button
@@ -1398,28 +1387,6 @@ const renderTopNavigation = () => (
 
         {/* Right side - User & Actions */}
         <div className="flex items-center space-x-4">
-          
-          {/* PWA Install Button */}
-          {installPrompt && !isStandalone && (
-            <button
-              onClick={async () => {
-                try {
-                  installPrompt.prompt();
-                  const { outcome } = await installPrompt.userChoice;
-                  if (outcome === 'accepted') {
-                    showNotification('📱 App installed successfully!', 'success');
-                  }
-                  setInstallPrompt(null);
-                } catch (error) {
-                  console.error('Install error:', error);
-                }
-              }}
-              className="hidden sm:flex items-center px-3 py-2 bg-cyan-600 hover:bg-cyan-700 text-white rounded-lg text-sm font-medium transition-all duration-300"
-            >
-              📱 <span className="hidden lg:inline ml-1">Install App</span>
-            </button>
-          )}
-
           {/* Theme Toggle */}
           <button
             onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
@@ -1428,7 +1395,6 @@ const renderTopNavigation = () => (
                 ? 'bg-yellow-500/20 text-yellow-300 hover:bg-yellow-500/30'
                 : 'bg-purple-500/20 text-purple-300 hover:bg-purple-500/30'
             }`}
-            title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
           >
             {theme === 'dark' ? '☀️' : '🌙'}
           </button>
@@ -1439,138 +1405,60 @@ const renderTopNavigation = () => (
               onClick={() => login()}
               className="bg-gradient-to-r from-cyan-500 to-purple-600 hover:from-cyan-600 hover:to-purple-700 text-white px-4 md:px-6 py-2 rounded-lg text-sm font-medium transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105"
             >
-              <span className="flex items-center space-x-2">
-                <span>🔐</span>
-                <span className="hidden sm:inline">Secure Login</span>
-                <span className="sm:hidden">Login</span>
-              </span>
+              🔐 <span className="hidden sm:inline">Login</span>
             </button>
           ) : (
             <div className="flex items-center space-x-3">
-              
-              {/* User Stats - Desktop only */}
-              <div className="hidden lg:flex items-center space-x-4 bg-purple-800/20 rounded-lg px-3 py-1 backdrop-blur-sm">
-                <div className="flex items-center space-x-1">
-                  <span className="text-xs text-gray-400">Points:</span>
-                  <span className="text-sm font-bold text-cyan-400">{userStats.communityPoints}</span>
-                </div>
-                <div className="flex items-center space-x-1">
-                  <span className="text-xs text-gray-400">Lvl:</span>
-                  <span className="text-sm font-bold text-purple-400">{userStats.level}</span>
-                </div>
+              <div className="hidden lg:flex items-center space-x-4 bg-purple-800/20 rounded-lg px-3 py-1">
+                <span className="text-xs text-gray-400">Points:</span>
+                <span className="text-sm font-bold text-cyan-400">{userStats.communityPoints}</span>
               </div>
-
-              {/* User Avatar */}
-              <div className="flex items-center space-x-2 md:space-x-3 bg-purple-800/10 rounded-lg px-2 md:px-3 py-2 backdrop-blur-sm">
-                <div className="relative">
-                  <img
-                    src={user.picture}
-                    alt="Profile"
-                    className="w-6 h-6 md:w-8 md:h-8 rounded-full ring-2 ring-cyan-400 transition-transform duration-300 hover:scale-110"
-                  />
-                  {userStats.badges.length > 0 && (
-                    <div className="absolute -top-1 -right-1 w-3 h-3 md:w-4 md:h-4 bg-yellow-500 rounded-full flex items-center justify-center">
-                      <span className="text-xs">🏆</span>
-                    </div>
-                  )}
-                </div>
+              
+              <div className="flex items-center space-x-2 bg-purple-800/10 rounded-lg px-2 py-2">
+                <img
+                  src={user.picture}
+                  alt="Profile"
+                  className="w-6 h-6 md:w-8 md:h-8 rounded-full ring-2 ring-cyan-400"
+                />
                 <div className="hidden md:block">
                   <div className="text-sm font-medium text-cyan-300">{user.name}</div>
                   <div className="text-xs text-gray-400">{userStats.reputation}</div>
                 </div>
               </div>
 
-              {/* Logout Button */}
               <button
                 onClick={() => {
                   googleLogout();
                   setUser(null);
-                  setUserStats({ totalAnalyses: 0, threatsStopped: 0, communityPoints: 0, badges: [], streak: 0, level: 1, dailyActivity: [], weeklyGoal: 10, achievements: [], securityScore: 0, reputation: 'Newcomer' });
                   setChatMessages([]);
-                  setChatHistory([]);
-                  showNotification('👋 Logged out successfully. Stay safe!', 'info');
+                  showNotification('👋 Logged out successfully!', 'info');
                 }}
                 className="text-gray-400 hover:text-red-400 transition-colors p-1"
-                title="Logout"
               >
                 🚪
               </button>
             </div>
           )}
 
-          {/* ✅ FIXED MOBILE MENU TOGGLE */}
+          {/* Mobile Menu Toggle - FIXED */}
           <div className="md:hidden">
-  <button
-    onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-    className="relative w-8 h-8 flex items-center justify-center text-white focus:outline-none"
-    aria-label="Toggle mobile menu"
-  >
-    <div className="w-6 h-6 flex flex-col justify-center items-center">
-      <span className={`bg-white block transition-all duration-300 ease-out h-0.5 w-6 rounded-sm ${
-        mobileMenuOpen ? 'rotate-45 translate-y-1.5' : '-translate-y-0.5'
-      }`}></span>
-      <span className={`bg-white block transition-all duration-300 ease-out h-0.5 w-6 rounded-sm ${
-        mobileMenuOpen ? 'opacity-0' : 'opacity-100'
-      }`}></span>
-      <span className={`bg-white block transition-all duration-300 ease-out h-0.5 w-6 rounded-sm ${
-        mobileMenuOpen ? '-rotate-45 -translate-y-1.5' : 'translate-y-0.5'
-      }`}></span>
-    </div>
-  </button>
-</div>
-        </div>
-      </div>
-
-      {/* ✅ FIXED MOBILE MENU DROPDOWN */}
-      <div className={`md:hidden transition-all duration-300 ease-in-out overflow-hidden ${
-        mobileMenuOpen ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'
-      }`}>
-        <div className="bg-slate-800/95 backdrop-blur-sm border-t border-purple-700/30 rounded-b-lg">
-          <div className="px-4 py-3 space-y-2">
-            {['Home', 'Verify', 'Education', 'Community', 'Analytics', 'Protection', 'About', 'Support', 'Contact'].map((item) => (
-              <button
-                key={item}
-                onClick={() => {
-                  console.log('Mobile nav item clicked:', item);
-                  setCurrentSection(item.toLowerCase());
-                  setMobileMenuOpen(false);
-                  if ('vibrate' in navigator) {
-                    navigator.vibrate(50);
-                  }
-                }}
-                className={`block w-full text-left px-4 py-3 text-sm font-medium rounded-lg transition-all duration-200 ${
-                  currentSection === item.toLowerCase()
-                    ? 'bg-gradient-to-r from-cyan-500/30 to-purple-600/30 text-cyan-300 shadow-lg'
-                    : 'text-gray-300 hover:text-cyan-400 hover:bg-purple-800/20'
-                }`}
-              >
-                <span className="flex items-center space-x-3">
-                  <span className="text-lg">
-                    {item === 'Home' ? '🏠' :
-                     item === 'Verify' ? '🔍' :
-                     item === 'Education' ? '📚' :
-                     item === 'Community' ? '👥' :
-                     item === 'Analytics' ? '📊' :
-                     item === 'Protection' ? '🛡️' :
-                     item === 'About' ? 'ℹ️' :
-                     item === 'Support' ? '🎧' :
-                     item === 'Contact' ? '📞' : '📄'}
-                  </span>
-                  <span>{item}</span>
-                </span>
-              </button>
-            ))}
-            
-            {/* Mobile User Stats */}
-            {user && (
-              <div className="mt-4 pt-4 border-t border-purple-700/30">
-                <div className="flex justify-between text-xs text-gray-400">
-                  <span>Points: <span className="text-cyan-400 font-bold">{userStats.communityPoints}</span></span>
-                  <span>Level: <span className="text-purple-400 font-bold">{userStats.level}</span></span>
-                  <span>Threats: <span className="text-green-400 font-bold">{userStats.threatsStopped}</span></span>
-                </div>
+            <button
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className="relative w-10 h-10 flex items-center justify-center text-white focus:outline-none"
+              aria-label="Toggle mobile menu"
+            >
+              <div className="w-6 h-6 flex flex-col justify-center items-center">
+                <span className={`bg-white block transition-all duration-300 ease-out h-0.5 w-6 rounded-sm ${
+                  mobileMenuOpen ? 'rotate-45 translate-y-1' : '-translate-y-1'
+                }`}></span>
+                <span className={`bg-white block transition-all duration-300 ease-out h-0.5 w-6 rounded-sm my-0.5 ${
+                  mobileMenuOpen ? 'opacity-0' : 'opacity-100'
+                }`}></span>
+                <span className={`bg-white block transition-all duration-300 ease-out h-0.5 w-6 rounded-sm ${
+                  mobileMenuOpen ? '-rotate-45 -translate-y-1' : 'translate-y-1'
+                }`}></span>
               </div>
-            )}
+            </button>
           </div>
         </div>
       </div>
@@ -1579,185 +1467,150 @@ const renderTopNavigation = () => (
 );
 
 
+
 // ✅ SIDEBAR (AS ORIGINALLY DESIGNED)
 const renderSidebar = () => (
   <>
-    {/* Desktop Sidebar */}
+    {/* Desktop Sidebar - Hidden on mobile */}
     <nav className={`fixed top-16 left-0 bg-gradient-to-b from-slate-900 via-purple-900 to-slate-900 shadow-2xl z-40 transition-all duration-300 ${
       screenSize.isMobile 
-        ? 'hidden' // Hide desktop sidebar on mobile
+        ? 'hidden' 
         : sidebarCollapsed 
           ? 'w-16' 
           : 'w-64'
     }`}
     style={{ height: 'calc(100vh - 4rem)' }}>
-<div className="flex flex-col h-full">
-{/* Ultra-Professional Toggle Button */}
-<div className="flex items-center justify-center p-4 border-b border-purple-700/30 flex-shrink-0">
-<button
-onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-className="group relative w-12 h-12 bg-gradient-to-r from-cyan-500 to-purple-600 rounded-xl shadow-lg hover:shadow-2xl transition-all duration-300 hover:scale-110 focus:outline-none focus:ring-2 focus:ring-cyan-400/50 focus:ring-offset-2 focus:ring-offset-slate-900 overflow-hidden"
-aria-label={sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
->
-<div className="relative flex items-center justify-center h-full">
-<svg
-className={`w-6 h-6 text-white transition-all duration-500 ${sidebarCollapsed ? 'rotate-180' : ''}`}
-fill="none"
-stroke="currentColor"
-viewBox="0 0 24 24"
->
-<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 5l7 7-7 7M5 5l7 7-7 7" />
-</svg>
-</div>
-</button>
-</div>
+      {/* Your existing desktop sidebar content */}
+      <div className="flex flex-col h-full">
+        {/* Toggle Button */}
+        <div className="flex items-center justify-center p-4 border-b border-purple-700/30 flex-shrink-0">
+          <button
+            onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
+            className="group relative w-12 h-12 bg-gradient-to-r from-cyan-500 to-purple-600 rounded-xl shadow-lg hover:shadow-2xl transition-all duration-300 hover:scale-110 focus:outline-none"
+          >
+            <svg className={`w-6 h-6 text-white transition-all duration-500 ${sidebarCollapsed ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 5l7 7-7 7M5 5l7 7-7 7" />
+            </svg>
+          </button>
+        </div>
 
-{/* Navigation Items */}
-<div className="flex-1 overflow-y-auto py-4 scrollbar-thin scrollbar-thumb-purple-600 scrollbar-track-slate-800">
-<div className="space-y-1 px-2">
-{[
-{ id: 'home', icon: '🏠', label: 'Home', description: 'Dashboard & Overview' },
-{ id: 'verify', icon: '🔍', label: 'Verify', description: 'AI Threat Analysis' },
-{ id: 'education', icon: '📚', label: 'Education', description: 'Safety Learning' },
-{ id: 'analytics', icon: '📊', label: 'Analytics', description: 'Usage Statistics' },
-{ id: 'community', icon: '👥', label: 'Community', description: 'Social Network' },
-{ id: 'protection', icon: '🛡️', label: 'Protection', description: 'Security Center' },
-{ id: 'reports', icon: '📋', label: 'Reports', description: 'Security Reports' },
-{ id: 'incidents', icon: '🚨', label: 'Incidents', description: 'Response Center' },
-{ id: 'intelligence', icon: '🧠', label: 'Intelligence', description: 'Threat Intel' },
-{ id: 'api', icon: '🔌', label: 'API', description: 'API Management' },
-{ id: 'health', icon: '💓', label: 'Health', description: 'System Monitor' },
-{ id: 'authority', icon: '⚖️', label: 'Authority', description: 'Admin Panel' },
-{ id: 'settings', icon: '⚙️', label: 'Settings', description: 'Preferences' }
-].map((item) => (
-<button
-key={item.id}
-onClick={() => {
-setCurrentSection(item.id);
-if (screenSize.isMobile) {
-setSidebarCollapsed(true);
-}
-if ('vibrate' in navigator && screenSize.isMobile) {
-navigator.vibrate(50);
-}
-}}
-className={`w-full flex items-center transition-all duration-300 rounded-lg group relative overflow-hidden ${
-currentSection === item.id
-? 'bg-gradient-to-r from-cyan-500 to-purple-600 text-white shadow-lg transform scale-105'
-: 'text-gray-300 hover:text-white hover:bg-purple-800/20'
-} ${sidebarCollapsed ? 'justify-center px-2 py-3' : 'space-x-3 px-3 py-3'}`}
-title={sidebarCollapsed ? `${item.label}: ${item.description}` : ''}
->
-<span className={`text-xl transition-all duration-300 ${
-currentSection === item.id ? 'scale-110 drop-shadow-lg' : 'group-hover:scale-110'
-}`}>
-{item.icon}
-</span>
-{!sidebarCollapsed && (
-<div className="flex-1 min-w-0">
-<div className="font-medium truncate">{item.label}</div>
-<div className="text-xs opacity-70 truncate">{item.description}</div>
-</div>
-)}
-{currentSection === item.id && (
-<div className="absolute right-0 top-0 bottom-0 w-1 bg-white rounded-l-full"></div>
-)}
-</button>
-))}
-</div>
-</div>
-
-{/* User Info */}
-{user && (
-<div className={`p-4 border-t border-purple-700/30 bg-gradient-to-r from-purple-900/20 to-slate-900/20 flex-shrink-0 ${sidebarCollapsed ? 'flex justify-center' : ''}`}>
-{sidebarCollapsed ? (
-<div className="relative">
-<img
-src={user.picture}
-alt="User"
-className="w-8 h-8 rounded-full ring-2 ring-cyan-400 hover:ring-purple-400 transition-all duration-300"
-/>
-{userStats.badges.length > 0 && (
-<div className="absolute -top-1 -right-1 w-4 h-4 bg-yellow-500 rounded-full flex items-center justify-center animate-pulse">
-<span className="text-xs">🏆</span>
-</div>
-)}
-</div>
-) : (
-<div className="space-y-3">
-<div className="flex items-center space-x-3">
-<div className="relative">
-<img
-src={user.picture}
-alt="User"
-className="w-10 h-10 rounded-full ring-2 ring-cyan-400 hover:ring-purple-400 transition-all duration-300"
-/>
-{userStats.badges.length > 0 && (
-<div className="absolute -top-1 -right-1 w-4 h-4 bg-yellow-500 rounded-full flex items-center justify-center animate-pulse">
-<span className="text-xs">🏆</span>
-</div>
-)}
-</div>
-<div className="flex-1 min-w-0">
-<div className="font-medium text-white truncate">{user.name}</div>
-<div className="text-xs text-gray-300 truncate">{userStats.reputation} - Level {userStats.level}</div>
-</div>
-</div>
-
-<div className="grid grid-cols-2 gap-2 text-xs">
-<div className="bg-purple-800/30 rounded-lg p-2 text-center backdrop-blur-sm">
-<div className="font-bold text-cyan-400">{userStats.totalAnalyses}</div>
-<div className="text-gray-400">Analyses</div>
-</div>
-<div className="bg-purple-800/30 rounded-lg p-2 text-center backdrop-blur-sm">
-<div className="font-bold text-green-400">{userStats.threatsStopped}</div>
-<div className="text-gray-400">Threats</div>
-</div>
-</div>
-
-<div className="bg-purple-800/30 rounded-lg p-2 backdrop-blur-sm">
-<div className="flex justify-between text-xs mb-1">
-<span className="text-gray-400">Community Points</span>
-<span className="text-cyan-400">{userStats.communityPoints % 100}/100</span>
-</div>
-<div className="w-full bg-gray-600 rounded-full h-1">
-<div
-className="bg-gradient-to-r from-cyan-400 to-purple-400 h-1 rounded-full transition-all duration-500"
-style={{ width: `${(userStats.communityPoints % 100)}%` }}
-></div>
-</div>
-</div>
-</div>
-)}
-</div>
-)}
-</div>
-</nav>
-
-{/* Mobile Sidebar Overlay */}
-{screenSize.isMobile && mobileMenuOpen && (
-      <div className="fixed inset-0 bg-black/50 z-40 top-16" onClick={() => setMobileMenuOpen(false)}>
-        <div className="bg-slate-900 w-80 h-full shadow-xl">
-          {/* Mobile-specific navigation */}
-          <div className="p-4">
-            {['Home', 'Verify', 'Education', 'Community', 'Analytics', 'Protection', 'About', 'Support', 'Contact'].map((item) => (
+        {/* Navigation Items */}
+        <div className="flex-1 overflow-y-auto py-4">
+          <div className="space-y-1 px-2">
+            {[
+              { id: 'home', icon: '🏠', label: 'Home', description: 'Dashboard & Overview' },
+              { id: 'verify', icon: '🔍', label: 'Verify', description: 'AI Threat Analysis' },
+              { id: 'education', icon: '📚', label: 'Education', description: 'Safety Learning' },
+              { id: 'community', icon: '👥', label: 'Community', description: 'Social Network' },
+              { id: 'analytics', icon: '📊', label: 'Analytics', description: 'Usage Statistics' },
+              { id: 'protection', icon: '🛡️', label: 'Protection', description: 'Security Center' },
+              { id: 'about', icon: 'ℹ️', label: 'About', description: 'About Xist AI' },
+              { id: 'support', icon: '🎧', label: 'Support', description: 'Help Center' },
+              { id: 'contact', icon: '📞', label: 'Contact', description: 'Contact Us' },
+              { id: 'settings', icon: '⚙️', label: 'Settings', description: 'Preferences' }
+            ].map((item) => (
               <button
-                key={item}
-                onClick={() => {
-                  setCurrentSection(item.toLowerCase());
-                  setMobileMenuOpen(false);
-                }}
-                className="block w-full text-left px-4 py-3 text-white hover:bg-purple-700 rounded-lg mb-2"
+                key={item.id}
+                onClick={() => setCurrentSection(item.id)}
+                className={`w-full flex items-center transition-all duration-300 rounded-lg group relative overflow-hidden ${
+                  currentSection === item.id
+                    ? 'bg-gradient-to-r from-cyan-500 to-purple-600 text-white shadow-lg transform scale-105'
+                    : 'text-gray-300 hover:text-white hover:bg-purple-800/20'
+                } ${sidebarCollapsed ? 'justify-center px-2 py-3' : 'space-x-3 px-3 py-3'}`}
               >
-                {item}
+                <span className="text-xl">{item.icon}</span>
+                {!sidebarCollapsed && (
+                  <div className="flex-1 min-w-0">
+                    <div className="font-medium truncate">{item.label}</div>
+                    <div className="text-xs opacity-70 truncate">{item.description}</div>
+                  </div>
+                )}
               </button>
             ))}
+          </div>
+        </div>
+      </div>
+    </nav>
+
+    {/* Mobile Menu Overlay - COMPLETELY FIXED */}
+    {screenSize.isMobile && mobileMenuOpen && (
+      <div 
+        className="fixed inset-0 bg-black/50 z-50 top-16" 
+        onClick={() => setMobileMenuOpen(false)}
+      >
+        <div 
+          className="bg-slate-900 w-80 h-full shadow-xl transform transition-transform duration-300 overflow-y-auto"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <div className="p-4 space-y-2">
+            {/* Mobile Navigation Items */}
+            {[
+              { id: 'home', icon: '🏠', label: 'Home' },
+              { id: 'verify', icon: '🔍', label: 'Verify' },
+              { id: 'education', icon: '📚', label: 'Education' },
+              { id: 'community', icon: '👥', label: 'Community' },
+              { id: 'analytics', icon: '📊', label: 'Analytics' },
+              { id: 'protection', icon: '🛡️', label: 'Protection' },
+              { id: 'about', icon: 'ℹ️', label: 'About' },
+              { id: 'support', icon: '🎧', label: 'Support' },
+              { id: 'contact', icon: '📞', label: 'Contact' },
+              { id: 'settings', icon: '⚙️', label: 'Settings' }
+            ].map((item) => (
+              <button
+                key={item.id}
+                onClick={() => {
+                  setCurrentSection(item.id);
+                  setMobileMenuOpen(false);
+                  if ('vibrate' in navigator) {
+                    navigator.vibrate(50);
+                  }
+                }}
+                className={`block w-full text-left px-4 py-3 text-sm font-medium rounded-lg transition-all duration-200 ${
+                  currentSection === item.id
+                    ? 'bg-gradient-to-r from-cyan-500/30 to-purple-600/30 text-cyan-300 shadow-lg'
+                    : 'text-gray-300 hover:text-cyan-400 hover:bg-purple-800/20'
+                }`}
+              >
+                <span className="flex items-center space-x-3">
+                  <span className="text-lg">{item.icon}</span>
+                  <span>{item.label}</span>
+                </span>
+              </button>
+            ))}
+
+            {/* Mobile User Stats */}
+            {user && (
+              <div className="mt-6 pt-4 border-t border-purple-700/30">
+                <div className="flex items-center space-x-3 px-4 py-2">
+                  <img src={user.picture} alt="Profile" className="w-10 h-10 rounded-full ring-2 ring-cyan-400" />
+                  <div>
+                    <div className="font-medium text-white">{user.name}</div>
+                    <div className="text-sm text-gray-300">{userStats.reputation} - Level {userStats.level}</div>
+                  </div>
+                </div>
+                <div className="grid grid-cols-3 gap-2 px-4 py-2 text-xs">
+                  <div className="text-center">
+                    <div className="font-bold text-cyan-400">{userStats.communityPoints}</div>
+                    <div className="text-gray-400">Points</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="font-bold text-green-400">{userStats.threatsStopped}</div>
+                    <div className="text-gray-400">Threats</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="font-bold text-purple-400">{userStats.level}</div>
+                    <div className="text-gray-400">Level</div>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>
     )}
   </>
 );
+
 
 // ✅ SECTION ROUTER (COMPLETE WITH ALL NEW SECTIONS)
 const renderSection = () => {
@@ -4414,9 +4267,15 @@ theme === 'dark' ? 'dark bg-gray-900' : 'bg-gray-50'
 {renderSidebar()}
 
 {/* Main Content */}
+// In your main render, fix the main content margin:
 <main className={`transition-all duration-300 ${
-sidebarCollapsed ? 'ml-16' : 'ml-64'
-} ${screenSize.isMobile ? 'ml-0' : ''} pt-16 min-h-screen`}>
+  screenSize.isMobile 
+    ? 'ml-0' // No margin on mobile
+    : sidebarCollapsed 
+      ? 'ml-16' 
+      : 'ml-64'
+} pt-16 min-h-screen`}>
+
 <div className="max-w-7xl mx-auto p-6">
 <Suspense fallback={
 <div className="flex items-center justify-center h-64">
