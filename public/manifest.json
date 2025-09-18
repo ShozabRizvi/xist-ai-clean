@@ -1,24 +1,31 @@
 {
-  "name": "Xist AI - Digital Guardian Network",
-  "short_name": "Xist AI",
-  "description": "AI-powered misinformation detection and digital threat protection",
-  "start_url": "/",
-  "display": "standalone",
-  "theme_color": "#8b5cf6",
-  "background_color": "#0f172a",
-  "orientation": "portrait-primary",
+  "manifest_version": 3,
+  "name": "Xist AI Guardian",
+  "version": "1.0.0",
+  "description": "Real-time threat protection while browsing",
   "icons": [
     {
-      "src": "/logo192.png",
-      "sizes": "192x192",
-      "type": "image/png",
-      "purpose": "maskable"
-    },
-    {
-      "src": "/logo512.png",
-      "sizes": "512x512",
-      "type": "image/png",
-      "purpose": "any"
+      "src": "favicon.ico",
+      "sizes": "64x64 32x32 24x24 16x16",
+      "type": "image/x-icon"
     }
-  ]
+  ],
+  "short_name": "Xist AI",
+  "start_url": ".",
+  "display": "standalone",
+  "theme_color": "#8b5cf6",
+  "background_color": "#ffffff",
+  "permissions": [
+    "activeTab", "storage", "background", "webRequest", "tabs"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [{
+    "matches": ["<all_urls>"],
+    "js": ["content.js"]
+  }],
+  "action": {
+    "default_popup": "popup.html"
+  }
 }

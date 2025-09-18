@@ -31,3 +31,27 @@ yarn-error.log*
 
 # Netlify
 .netlify/
+
+# Database files
+*.db
+*.sqlite
+*.sqlite3
+
+# Firebase/Backend secrets  
+firebase-config.js
+firebase-adminsdk-*.json
+service-account-*.json
+
+# AI Model files
+*.model
+*.pkl
+*.h5
+
+# Cache directories
+.cache/
+.parcel-cache/
+coverage/
+
+# Python cache (for AI backend)
+__pycache__/
+*.pyc

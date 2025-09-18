@@ -2,322 +2,401 @@
 @tailwind components;
 @tailwind utilities;
 
-/* ===== PRESERVE ORIGINAL LIGHT MODE VARIABLES ===== */
-:root {
-  --text-primary-light: #111827;
-  --text-secondary-light: #6b7280;
-  --text-primary-dark: #ffffff;
-  --text-secondary-dark: #e5e7eb;
-  --bg-primary-light: #ffffff;
-  --bg-primary-dark: #1f2937;
-  --base-font-size: 16px;
-  --mobile-scale: 0.9;
-  --animation-duration: 0.3s;
+/* =========================================
+   DESKTOP-ONLY STYLES - Clean & Organized
+   Mobile styles are imported from mobile.css
+   ========================================= */
+
+/* Import mobile styles first */
+@import './mobile.css';
+
+/* ===================================
+   GLOBAL BASE STYLES
+   =================================== */
+
+* {
+  box-sizing: border-box;
+  max-width: 100%;
 }
 
-/* ===== LIGHT MODE STAYS EXACTLY THE SAME ===== */
-/* All your beautiful light mode colors are preserved! */
-
-/* ===== ONLY DARK MODE CHANGES (CLEAN BLACK & WHITE) ===== */
-.dark {
-  color-scheme: dark;
-  background-color: #0f172a;
-  color: #ffffff;
+html {
+  scroll-behavior: smooth;
+  font-size: 16px;
+  line-height: 1.6;
+  overflow-x: hidden;
+  width: 100%;
 }
 
-/* Professional dark mode text colors ONLY */
-.dark *,
-.dark h1, .dark h2, .dark h3, .dark h4, .dark h5, .dark h6,
-.dark p, .dark span, .dark div, .dark label, .dark button,
-.dark a, .dark li, .dark td, .dark th {
-  color: #ffffff !important;
+body {
+  margin: 0;
+  padding: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;
+  width: 100%;
+  max-width: 100vw;
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
-/* Fix specific gray text classes in DARK MODE ONLY */
-.dark .text-gray-900 { color: #ffffff !important; }
-.dark .text-gray-800 { color: #f3f4f6 !important; }
-.dark .text-gray-700 { color: #e5e7eb !important; }
-.dark .text-gray-600 { color: #d1d5db !important; }
-.dark .text-gray-500 { color: #9ca3af !important; }
-.dark .text-gray-400 { color: #9ca3af !important; }
-.dark .text-black { color: #ffffff !important; }
-
-/* ===== DARK MODE STATUS COLORS (SUBTLE & PROFESSIONAL) ===== */
-/* Success states - Clean gray with green accent */
-.dark .bg-green-50 {
-  background-color: #374151 !important;
-  color: #ffffff !important;
-  border: 1px solid #4ade80 !important;
-}
-.dark .bg-green-50 * { color: #ffffff !important; }
-.dark .bg-green-100 { background-color: #374151 !important; color: #ffffff !important; border: 1px solid #4ade80 !important; }
-.dark .text-green-900 { color: #ffffff !important; }
-.dark .text-green-800 { color: #ffffff !important; }
-.dark .text-green-700 { color: #ffffff !important; }
-.dark .text-green-600 { color: #4ade80 !important; }
-.dark .border-green-200 { border-color: #4ade80 !important; }
-
-/* Warning states - Clean gray with yellow accent */
-.dark .bg-yellow-50 {
-  background-color: #374151 !important;
-  color: #ffffff !important;
-  border: 1px solid #fbbf24 !important;
-}
-.dark .bg-yellow-50 * { color: #ffffff !important; }
-.dark .bg-yellow-100 { background-color: #374151 !important; color: #ffffff !important; border: 1px solid #fbbf24 !important; }
-.dark .bg-yellow-200 { background-color: #4b5563 !important; color: #ffffff !important; }
-.dark .text-yellow-800 { color: #ffffff !important; }
-.dark .text-yellow-600 { color: #fbbf24 !important; }
-.dark .border-yellow-200 { border-color: #fbbf24 !important; }
-
-/* Error states - Clean gray with red accent */
-.dark .bg-red-50 {
-  background-color: #374151 !important;
-  color: #ffffff !important;
-  border: 1px solid #ef4444 !important;
-}
-.dark .bg-red-50 * { color: #ffffff !important; }
-.dark .bg-red-100 { background-color: #374151 !important; color: #ffffff !important; border: 1px solid #ef4444 !important; }
-.dark .bg-red-200 { background-color: #4b5563 !important; color: #ffffff !important; }
-.dark .text-red-800 { color: #ffffff !important; }
-.dark .text-red-700 { color: #ffffff !important; }
-.dark .text-red-900 { color: #ffffff !important; }
-.dark .text-red-600 { color: #ef4444 !important; }
-.dark .border-red-200 { border-color: #ef4444 !important; }
-.dark .border-red-300 { border-color: #ef4444 !important; }
-
-/* Info states - Clean gray with blue accent */
-.dark .bg-blue-50 {
-  background-color: #374151 !important;
-  color: #ffffff !important;
-  border: 1px solid #3b82f6 !important;
-}
-.dark .bg-blue-50 * { color: #ffffff !important; }
-.dark .bg-blue-100 { background-color: #374151 !important; color: #ffffff !important; border: 1px solid #3b82f6 !important; }
-.dark .bg-blue-200 { background-color: #4b5563 !important; color: #ffffff !important; }
-.dark .text-blue-900 { color: #ffffff !important; }
-.dark .text-blue-800 { color: #ffffff !important; }
-.dark .text-blue-600 { color: #3b82f6 !important; }
-.dark .border-blue-200 { border-color: #3b82f6 !important; }
-
-/* Purple/accent states */
-.dark .bg-purple-50 {
-  background-color: #374151 !important;
-  color: #ffffff !important;
-  border: 1px solid #a855f7 !important;
-}
-.dark .bg-purple-50 * { color: #ffffff !important; }
-.dark .text-purple-600 { color: #a855f7 !important; }
-.dark .border-purple-200 { border-color: #a855f7 !important; }
-
-/* Orange states */
-.dark .bg-orange-50 {
-  background-color: #374151 !important;
-  color: #ffffff !important;
-  border: 1px solid #f97316 !important;
-}
-.dark .bg-orange-50 * { color: #ffffff !important; }
-
-/* ===== DARK MODE BACKGROUND FIXES ONLY ===== */
-.dark .bg-white {
-  background-color: #1f2937 !important;
-  color: #ffffff !important;
+#root {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 100vw;
+  overflow-x: hidden;
 }
 
-.dark .bg-gray-50 {
-  background-color: #374151 !important;
-  color: #ffffff !important;
-}
+/* ===================================
+   DESKTOP-SPECIFIC STYLES (769px+)
+   =================================== */
 
-.dark .bg-gray-100 {
-  background-color: #4b5563 !important;
-  color: #ffffff !important;
-}
-
-/* Fix all nested elements in DARK MODE ONLY */
-.dark .bg-white *,
-.dark .bg-gray-50 *,
-.dark .bg-gray-100 * {
-  color: #ffffff !important;
-}
-
-/* ===== DARK MODE FORM ELEMENTS ===== */
-.dark input,
-.dark textarea,
-.dark select {
-  background-color: #374151 !important;
-  color: #ffffff !important;
-  border-color: #4b5563 !important;
-}
-
-.dark input::placeholder,
-.dark textarea::placeholder {
-  color: #9ca3af !important;
-}
-
-.dark input:focus,
-.dark textarea:focus,
-.dark select:focus {
-  outline: none !important;
-  ring-color: #3b82f6 !important;
-  border-color: #3b82f6 !important;
-}
-
-/* ===== DARK MODE GRADIENTS ===== */
-.dark .bg-gradient-to-r.from-blue-50.via-purple-50.to-cyan-50 {
-  background: linear-gradient(to right, #374151, #4b5563, #374151) !important;
-  color: #ffffff !important;
-}
-
-.dark .bg-gradient-to-r.from-blue-50.via-purple-50.to-cyan-50 * {
-  color: #ffffff !important;
-}
-
-.dark .bg-gradient-to-r.from-purple-50.to-blue-50 {
-  background: linear-gradient(to right, #4b5563, #374151) !important;
-  color: #ffffff !important;
-}
-
-.dark .bg-gradient-to-r.from-purple-50.to-blue-50 * {
-  color: #ffffff !important;
-}
-
-.dark .bg-gradient-to-r.from-red-50.to-orange-50 {
-  background: linear-gradient(to right, #374151, #4b5563) !important;
-  color: #ffffff !important;
-  border: 1px solid #ef4444 !important;
-}
-
-.dark .bg-gradient-to-r.from-red-50.to-orange-50 * {
-  color: #ffffff !important;
-}
-
-/* ===== DARK MODE THREAT REPORT FORM FIXES ===== */
-.dark .bg-gradient-to-r.from-red-50.to-orange-50 input,
-.dark .bg-gradient-to-r.from-red-50.to-orange-50 textarea,
-.dark .bg-gradient-to-r.from-red-50.to-orange-50 select {
-  background-color: #374151 !important;
-  color: #ffffff !important;
-  border-color: #6b7280 !important;
-}
-
-.dark .bg-gradient-to-r.from-red-50.to-orange-50 input::placeholder,
-.dark .bg-gradient-to-r.from-red-50.to-orange-50 textarea::placeholder {
-  color: #9ca3af !important;
-}
-
-.dark .bg-gradient-to-r.from-red-50.to-orange-50 label {
-  color: #ffffff !important;
-}
-
-.dark .border-dashed.border-red-300 {
-  border-color: #ef4444 !important;
-  color: #ffffff !important;
-}
-
-.dark .hover\:border-red-500:hover {
-  border-color: #ef4444 !important;
-}
-
-/* ===== MOBILE NAVIGATION FIXES ===== */
-@media (max-width: 767px) {
-  .mobile-menu-dropdown {
-    z-index: 60 !important;
-  }
+@media (min-width: 769px) {
   
-  .desktop-nav {
-    display: none !important;
+  /* Desktop Navigation */
+  .bg-gradient-to-r.from-indigo-900.via-purple-900.to-pink-900,
+  nav[class*="bg-gradient-to-r"] {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    width: 100vw !important;
+    z-index: 9999 !important;
+    height: 64px !important;
+    background: linear-gradient(to right, #312e81, #581c87, #be185d) !important;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.3) !important;
+    backdrop-filter: blur(10px) !important;
   }
-  
-  .mobile-sidebar {
-    transform: translateX(-100%) !important;
-    transition: transform 0.3s ease-in-out;
-  }
-  
-  .mobile-sidebar.open {
-    transform: translateX(0) !important;
-  }
-  
-  .main-content {
-    margin-left: 0 !important;
-    width: 100% !important;
-    overflow-x: hidden;
-  }
-}
 
-@media (min-width: 768px) {
-  .mobile-menu-button {
-    display: none !important;
+  /* Desktop Content Spacing */
+  .desktop-content {
+    margin-top: 64px !important;
+    padding: 20px !important;
   }
-  
-  .mobile-menu-dropdown {
+
+  /* Desktop Layout with Sidebar */
+  .desktop-sidebar {
+    position: fixed !important;
+    top: 64px !important;
+    left: 0 !important;
+    height: calc(100vh - 64px) !important;
+    z-index: 40 !important;
+    width: 280px !important;
+    border-right: 1px solid rgba(0, 0, 0, 0.1) !important;
+    box-shadow: 2px 0 8px rgba(0, 0, 0, 0.1) !important;
+    transition: width 0.3s ease !important;
+    overflow-y: auto !important;
+    scrollbar-width: thin !important;
+  }
+
+  .desktop-sidebar::-webkit-scrollbar {
+    width: 6px !important;
+  }
+
+  .desktop-sidebar::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.05) !important;
+    border-radius: 3px !important;
+  }
+
+  .desktop-sidebar::-webkit-scrollbar-thumb {
+    background: rgba(147, 51, 234, 0.3) !important;
+    border-radius: 3px !important;
+  }
+
+  .desktop-sidebar::-webkit-scrollbar-thumb:hover {
+    background: rgba(147, 51, 234, 0.5) !important;
+  }
+
+  .main-content-with-sidebar {
+    margin-left: 280px !important;
+    margin-top: 0 !important;
+    transition: margin-left 0.3s ease !important;
+    min-height: calc(100vh - 64px) !important;
+    padding: 1rem !important;
+  }
+
+  /* Desktop Cards */
+  .desktop-card {
+    background: rgba(255, 255, 255, 0.1) !important;
+    backdrop-filter: blur(10px) !important;
+    border: 1px solid rgba(255, 255, 255, 0.2) !important;
+    border-radius: 16px !important;
+    padding: 24px !important;
+    margin: 16px 0 !important;
+  }
+
+  /* Desktop Forms */
+  .desktop-form input,
+  .desktop-form textarea,
+  .desktop-form select {
+    min-height: 44px !important;
+    padding: 12px 16px !important;
+    border-radius: 8px !important;
+    font-size: 14px !important;
+  }
+
+  /* Desktop Buttons */
+  .desktop-btn {
+    min-height: 44px !important;
+    padding: 12px 24px !important;
+    border-radius: 8px !important;
+    font-size: 14px !important;
+    font-weight: 500 !important;
+  }
+
+  /* Desktop Grid */
+  .desktop-grid {
+    display: grid !important;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)) !important;
+    gap: 20px !important;
+  }
+
+  /* Hide mobile-specific elements on desktop */
+  .mobile-header,
+  .mobile-nav-card,
+  .mobile-qr-btn,
+  .mobile-bottom-nav {
     display: none !important;
   }
 }
 
-@media (max-width: 767px) {
-  .mobile-nav-item {
-    min-height: 48px;
-    padding: 12px 16px;
-    font-size: 16px;
-  }
-  
-  .mobile-menu-button {
-    min-width: 48px;
-    min-height: 48px;
-  }
+/* ===================================
+   THEME OPTIMIZATION - ALL DEVICES
+   =================================== */
+
+/* Light Mode - Clean White Backgrounds */
+.home-section,
+.verify-section,
+.education-section,
+.community-section,
+.analytics-section,
+.settings-section,
+.about-section {
+  background: #ffffff !important;
+  color: #1f2937 !important;
+  transition: all 0.3s ease !important;
 }
 
-/* ===== DARK MODE RECHARTS FIX ===== */
-.dark .recharts-cartesian-axis-tick-value {
-  fill: #ffffff !important;
-}
-
-.dark .recharts-tooltip-label,
-.dark .recharts-tooltip-item-name,
-.dark .recharts-tooltip-item-value {
+/* Dark Mode - Beautiful Gradient Backgrounds */
+.dark .home-section,
+.dark .verify-section,
+.dark .education-section,
+.dark .community-section,
+.dark .analytics-section,
+.dark .settings-section,
+.dark .about-section {
+  background: linear-gradient(to bottom right, #111827, #1e40af, #7c3aed) !important;
   color: #ffffff !important;
 }
 
-.dark .recharts-legend-item-text {
-  fill: #e5e7eb !important;
+/* Special Sections - Unique Gradients */
+.dark .education-section {
+  background: linear-gradient(to bottom right, #0f172a, #1e1b4b, #581c87) !important;
 }
 
-.dark .recharts-cartesian-grid-horizontal line,
-.dark .recharts-cartesian-grid-vertical line {
-  stroke: #374151 !important;
+.dark .community-section {
+  background: linear-gradient(to bottom right, #111827, #1f2937, #374151) !important;
 }
 
-.dark .recharts-surface {
-  background-color: transparent !important;
+.dark .analytics-section {
+  background: linear-gradient(to bottom right, #0c0a09, #1c1917, #44403c) !important;
 }
 
-.dark .recharts-default-tooltip {
-  background-color: #1f2937 !important;
-  border: 1px solid #4b5563 !important;
+/* Text Colors - Perfect Contrast */
+.light-text {
+  color: #1f2937 !important;
 }
 
-.dark .recharts-tooltip-wrapper {
-  background-color: #1f2937 !important;
-  border: 1px solid #4b5563 !important;
+.dark .light-text,
+.dark .text-gray-900,
+.dark .text-gray-800,
+.dark h1,
+.dark h2,
+.dark h3,
+.dark h4,
+.dark h5,
+.dark h6 {
+  color: #ffffff !important;
 }
 
-/* ===== ORIGINAL ANIMATIONS (PRESERVED) ===== */
-@keyframes pulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.5; }
+.secondary-text {
+  color: #6b7280 !important;
 }
 
-@keyframes shake {
-  0%, 100% { transform: translateX(0); }
-  25% { transform: translateX(-5px); }
-  75% { transform: translateX(5px); }
+.dark .secondary-text,
+.dark .text-gray-600,
+.dark .text-gray-500,
+.dark .text-gray-400 {
+  color: #d1d5db !important;
 }
 
-@keyframes fade-in {
+/* Card Backgrounds - Theme Optimized */
+.theme-card {
+  background: rgba(255, 255, 255, 0.9) !important;
+  border: 1px solid rgba(0, 0, 0, 0.1) !important;
+  backdrop-filter: blur(10px) !important;
+  transition: all 0.3s ease !important;
+}
+
+.dark .theme-card,
+.dark .bg-white,
+.dark [class*="bg-gray"] {
+  background: rgba(31, 41, 55, 0.9) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  color: #ffffff !important;
+}
+
+/* ===================================
+   COORDINATED THEME TOGGLES
+   =================================== */
+
+/* Both Theme Changers - Identical Styling */
+.theme-toggle,
+.theme-toggle-btn,
+button[aria-label*="theme"],
+button[aria-label*="Theme"],
+.dark-mode-toggle,
+.appearance-toggle {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+  border: 2px solid rgba(255, 255, 255, 0.2) !important;
+  border-radius: 50px !important;
+  padding: 8px 16px !important;
+  min-width: 80px !important;
+  height: 40px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 8px !important;
+  cursor: pointer !important;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3) !important;
+  position: relative !important;
+  overflow: hidden !important;
+}
+
+/* Hover Effects - Coordinated */
+.theme-toggle:hover,
+.theme-toggle-btn:hover,
+button[aria-label*="theme"]:hover,
+button[aria-label*="Theme"]:hover,
+.dark-mode-toggle:hover,
+.appearance-toggle:hover {
+  transform: translateY(-2px) scale(1.05) !important;
+  box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4) !important;
+  border-color: rgba(255, 255, 255, 0.4) !important;
+}
+
+/* Dark Mode Theme Toggles */
+.dark .theme-toggle,
+.dark .theme-toggle-btn,
+.dark button[aria-label*="theme"],
+.dark button[aria-label*="Theme"],
+.dark .dark-mode-toggle,
+.dark .appearance-toggle {
+  background: linear-gradient(135deg, #8b5cf6 0%, #a855f7 100%) !important;
+  border-color: rgba(255, 255, 255, 0.3) !important;
+  box-shadow: 0 4px 15px rgba(139, 92, 246, 0.3) !important;
+}
+
+.dark .theme-toggle:hover,
+.dark .theme-toggle-btn:hover,
+.dark button[aria-label*="theme"]:hover,
+.dark button[aria-label*="Theme"]:hover,
+.dark .dark-mode-toggle:hover,
+.dark .appearance-toggle:hover {
+  box-shadow: 0 8px 25px rgba(139, 92, 246, 0.5) !important;
+  border-color: rgba(255, 255, 255, 0.5) !important;
+}
+
+/* Theme Changer Icons */
+.theme-toggle svg,
+.theme-toggle-btn svg,
+button[aria-label*="theme"] svg,
+button[aria-label*="Theme"] svg,
+.dark-mode-toggle svg,
+.appearance-toggle svg {
+  width: 18px !important;
+  height: 18px !important;
+  color: #ffffff !important;
+  transition: all 0.3s ease !important;
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2)) !important;
+}
+
+/* ===================================
+   NOTIFICATION TOASTS
+   =================================== */
+
+.notification-container {
+  position: fixed !important;
+  top: 80px !important;
+  right: 20px !important;
+  z-index: 9998 !important;
+  pointer-events: none !important;
+}
+
+.notification-toast {
+  pointer-events: auto !important;
+  margin-bottom: 12px !important;
+  max-width: 400px !important;
+  word-wrap: break-word !important;
+}
+
+/* ===================================
+   SCROLLBAR SOLUTION - DESKTOP ONLY
+   =================================== */
+
+/* Hide all scrollbars by default */
+* {
+  scrollbar-width: none !important;
+  -ms-overflow-style: none !important;
+}
+
+*::-webkit-scrollbar {
+  display: none !important;
+}
+
+/* Show scrollbar only on desktop sidebar */
+@media (min-width: 769px) {
+  .desktop-sidebar::-webkit-scrollbar {
+    display: block !important;
+  }
+}
+
+/* ===================================
+   UNIVERSAL OVERFLOW PREVENTION
+   =================================== */
+
+body, html, main, section, div, nav {
+  overflow-x: hidden !important;
+}
+
+.container,
+.max-w-7xl,
+.max-w-6xl,
+.max-w-5xl,
+.max-w-4xl,
+.max-w-3xl,
+.max-w-2xl,
+.max-w-xl,
+.w-full {
+  width: 100% !important;
+  max-width: 100% !important;
+  overflow-x: hidden !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
+}
+
+/* ===================================
+   ANIMATIONS - PERFORMANCE OPTIMIZED
+   =================================== */
+
+@keyframes fadeInUp {
   from {
     opacity: 0;
-    transform: translateY(20px);
+    transform: translateY(30px);
   }
   to {
     opacity: 1;
@@ -325,465 +404,402 @@
   }
 }
 
-.animate-fade-in {
-  animation: fade-in 0.5s ease-out;
+.animate-fadeInUp {
+  animation: fadeInUp 0.6s ease-out;
 }
 
-/* ===== RESPONSIVE FONT SIZING ===== */
-html {
-  font-size: var(--base-font-size, 16px);
-}
-
-@media (max-width: 768px) {
-  html {
-    font-size: calc(var(--base-font-size, 16px) * var(--mobile-scale, 0.9));
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
   }
 }
 
-/* ===== ENHANCED SCROLLBAR ===== */
-::-webkit-scrollbar {
-  width: 8px;
+.animate-pulse-slow {
+  animation: pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
 
-::-webkit-scrollbar-track {
-  background: #f1f1f1;
+/* ===================================
+   UTILITY CLASSES
+   =================================== */
+
+.flex-1 { flex: 1; }
+.min-h-screen { min-height: 100vh; }
+.overflow-hidden { overflow: hidden; }
+.overflow-x-hidden { overflow-x: hidden; }
+.word-break { word-wrap: break-word; overflow-wrap: break-word; }
+.h-screen-minus-nav { height: calc(100vh - 64px); }
+
+.p-safe {
+  padding: max(16px, env(safe-area-inset-top))
+           max(16px, env(safe-area-inset-right))
+           max(16px, env(safe-area-inset-bottom))
+           max(16px, env(safe-area-inset-left));
 }
 
-.dark ::-webkit-scrollbar-track {
-  background: #374151;
+.bg-purple-gradient {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
 }
 
-::-webkit-scrollbar-thumb {
-  background: #888;
-  border-radius: 4px;
+.text-gradient {
+  background: linear-gradient(45deg, #667eea, #764ba2);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
 }
 
-.dark ::-webkit-scrollbar-thumb {
-  background: #6b7280;
+.safe-area-bottom {
+  padding-bottom: env(safe-area-inset-bottom);
 }
 
-::-webkit-scrollbar-thumb:hover {
-  background: #555;
+/* ===================================
+   DARK MODE SUPPORT
+   =================================== */
+
+.dark {
+  color-scheme: dark;
 }
 
-.dark ::-webkit-scrollbar-thumb:hover {
-  background: #9ca3af;
+/* Force QR button visibility */
+button[data-qr-button="true"] {
+  display: flex !important;
+  visibility: visible !important;
+  opacity: 1 !important;
 }
 
-/* ===== CUSTOM UTILITIES ===== */
-.line-clamp-3 {
-  display: -webkit-box;
-  -webkit-line-clamp: 3;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
+/* ===================================
+   RESPONSIVE CONTAINERS
+   =================================== */
 
-/* ===== PROFESSIONAL MOBILE DESIGN ===== */
-@media (max-width: 768px) {
-  body {
-    margin: 0 !important;
-    padding: 0 !important;
-    -webkit-user-select: none;
-    -webkit-touch-callout: none;
-    -webkit-tap-highlight-color: transparent;
+@media (min-width: 1280px) {
+  .container {
+    max-width: 1200px;
   }
+}
 
-  .min-h-screen {
-    min-height: 100vh !important;
-    min-height: -webkit-fill-available !important;
+@media (min-width: 1536px) {
+  .container {
+    max-width: 1400px;
   }
+}
+/* =========================================
+   🚨 DESKTOP OVERFLOW FIX ONLY 
+   Keeps all existing design - just prevents overflow
+   ========================================= */
 
-  nav {
-    height: 60px !important;
-    backdrop-filter: blur(20px) !important;
-    -webkit-backdrop-filter: blur(20px) !important;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
+@media (min-width: 769px) {
+  
+  /* 🎯 DESKTOP LAYOUT CONTAINMENT - NO DESIGN CHANGES */
+  
+  /* Navigation - ensure it's properly positioned */
+  nav[class*="bg-gradient-to-r"],
+  .top-navigation,
+  header {
     position: fixed !important;
     top: 0 !important;
     left: 0 !important;
     right: 0 !important;
-    z-index: 1000 !important;
-  }
-
-  main {
-    padding-top: 60px !important;
-  }
-
-  .rounded-xl {
-    border-radius: 16px !important;
-  }
-
-  .shadow-sm {
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1) !important;
-  }
-
-  .p-6 {
-    padding: 1.25rem !important;
-  }
-
-  .p-4 {
-    padding: 1rem !important;
-  }
-
-  h1 {
-    font-size: 1.875rem !important;
-    line-height: 2.25rem !important;
-    font-weight: 700 !important;
-  }
-
-  h2 {
-    font-size: 1.5rem !important;
-    line-height: 2rem !important;
-    font-weight: 600 !important;
-  }
-
-  h3 {
-    font-size: 1.25rem !important;
-    line-height: 1.75rem !important;
-    font-weight: 600 !important;
-  }
-
-  button {
-    min-height: 44px !important;
-    border-radius: 12px !important;
-    font-weight: 500 !important;
-    transition: all 0.2s ease !important;
-  }
-
-  input, textarea, select {
-    min-height: 44px !important;
-    border-radius: 12px !important;
-    font-size: 16px !important;
-    padding: 12px 16px !important;
-  }
-
-  .grid {
-    gap: 1rem !important;
-  }
-
-  .md\:grid-cols-2 {
-    grid-template-columns: 1fr !important;
-  }
-
-  .md\:grid-cols-3 {
-    grid-template-columns: 1fr !important;
-  }
-
-  .md\:grid-cols-4 {
-    grid-template-columns: repeat(2, 1fr) !important;
-  }
-
-  .space-y-4 > * + * {
-    margin-top: 1rem !important;
-  }
-
-  .space-y-6 > * + * {
-    margin-top: 1.5rem !important;
-  }
-
-  .pt-safe {
-    padding-top: env(safe-area-inset-top) !important;
-  }
-
-  .pb-safe {
-    padding-bottom: env(safe-area-inset-bottom) !important;
-  }
-}
-
-/* ===== ACCESSIBILITY & POLISH ===== */
-@media (prefers-contrast: high) {
-  .dark {
-    color: #ffffff !important;
-  }
-  .dark * {
-    color: #ffffff !important;
-  }
-}
-
-.dark *:focus {
-  outline: 2px solid #3b82f6 !important;
-  outline-offset: 2px;
-}
-
-.sharp-nav {
-  -webkit-font-smoothing: antialiased !important;
-  -moz-osx-font-smoothing: grayscale !important;
-  text-rendering: optimizeLegibility !important;
-  transform: translateZ(0) !important;
-  backface-visibility: hidden !important;
-}
-
-.sharp-nav * {
-  -webkit-font-smoothing: antialiased !important;
-  -moz-osx-font-smoothing: grayscale !important;
-}
-
-.sharp-nav img {
-  image-rendering: -webkit-optimize-contrast !important;
-  image-rendering: crisp-edges !important;
-}
-
-@media (hover: none) and (pointer: coarse) {
-  button:hover {
-    transform: none !important;
-  }
-
-  button:active {
-    transform: scale(0.98) !important;
-    transition: transform 0.1s ease !important;
-  }
-}
-
-/* ===== STICKY FOOTER ===== */
-html, body, #root {
-  height: 100%;
-  margin: 0;
-  padding: 0;
-}
-
-.min-h-screen {
-  display: flex !important;
-  flex-direction: column !important;
-  min-height: 100vh !important;
-}
-
-main {
-  flex-grow: 1 !important;
-}
-
-footer {
-  margin-top: auto !important;
-  flex-shrink: 0 !important;
-  width: 100% !important;
-  display: block !important;
-  visibility: visible !important;
-  opacity: 1 !important;
-  position: relative !important;
-  z-index: 10 !important;
-}
-
-footer .bg-gradient-to-r {
-  background: linear-gradient(to right, #0f172a, #581c87, #0f172a) !important;
-  color: #ffffff !important;
-}
-
-footer * {
-  color: #ffffff !important;
-}
-
-@media screen and (max-width: 768px) {
-  footer {
-    padding-bottom: env(safe-area-inset-bottom, 20px) !important;
-  }
-}
-
-/* ===== DARK MODE FINAL OVERRIDES ===== */
-.dark [class*="bg-"][class*="50"],
-.dark [class*="bg-"][class*="100"],
-.dark [class*="bg-"][class*="200"] {
-  color: #ffffff !important;
-}
-
-.dark [class*="bg-"][class*="50"] *,
-.dark [class*="bg-"][class*="100"] *,
-.dark [class*="bg-"][class*="200"] * {
-  color: #ffffff !important;
-}
-
-.dark button {
-  color: inherit !important;
-}
-
-.dark .bg-white button {
-  color: #ffffff !important;
-}
-
-.dark * {
-  opacity: 1 !important;
-  visibility: visible !important;
-}
-
-/* Professional file upload styling */
-input[type="file"] {
-  color: transparent !important;
-}
-
-input[type="file"]::-webkit-file-upload-button {
-  visibility: hidden !important;
-}
-
-input[type="file"]::before {
-  content: 'Select File' !important;
-  color: #6b7280 !important;
-  display: inline-block !important;
-  background: #f3f4f6 !important;
-  border: 1px solid #d1d5db !important;
-  border-radius: 6px !important;
-  padding: 8px 12px !important;
-  cursor: pointer !important;
-}
-
-.dark input[type="file"]::before {
-  background: #374151 !important;
-  color: #d1d5db !important;
-  border-color: #4b5563 !important;
-}
-
-
-/* ===== ANALYSIS RESULTS CHART BOXES DARK MODE FIX ===== */
-
-/* Fix the three main result boxes in verify section */
-.dark .bg-gradient-to-br.from-gray-50.to-gray-100 {
-  background: linear-gradient(to bottom right, #374151, #4b5563) !important;
-  color: #ffffff !important;
-  border: 1px solid #6b7280 !important;
-}
-
-.dark .bg-gradient-to-br.from-gray-50.to-gray-100 * {
-  color: #ffffff !important;
-}
-
-/* Fix progress bars inside result boxes */
-.dark .bg-gray-200 {
-  background-color: #4b5563 !important;
-}
-
-/* Fix progress bar fills with proper colors */
-.dark .bg-green-500 {
-  background-color: #10b981 !important;
-}
-
-.dark .bg-yellow-500 {
-  background-color: #f59e0b !important;
-}
-
-.dark .bg-red-500 {
-  background-color: #ef4444 !important;
-}
-
-/* Fix the specific text classes in result boxes */
-.dark .text-green-600 {
-  color: #34d399 !important;
-}
-
-.dark .text-yellow-600 {
-  color: #fbbf24 !important;
-}
-
-.dark .text-red-600 {
-  color: #f87171 !important;
-}
-
-/* Fix percentage numbers visibility */
-.dark .text-5xl.font-bold {
-  color: #ffffff !important;
-}
-
-/* Fix "Credibility Score", "Threat Risk" labels */
-.dark .text-sm.font-medium {
-  color: #d1d5db !important;
-}
-
-/* Fix verdict text (Critical, High Risk, etc.) */
-.dark .text-lg.font-bold {
-  color: #ffffff !important;
-}
-
-/* Fix analysis result cards background */
-.dark .bg-white.rounded-xl.shadow-lg {
-  background-color: #1f2937 !important;
-  border: 1px solid #374151 !important;
-}
-
-.dark .bg-white.rounded-xl.shadow-lg * {
-  color: #ffffff !important;
-}
-
-/* ===== MOBILE NAVIGATION FIXES ===== */
-
-/* Mobile menu container */
-.mobile-menu-container {
-  position: relative;
-}
-
-/* Ensure mobile menu appears above everything */
-@media (max-width: 768px) {
-  .mobile-menu-dropdown {
-    position: absolute;
-    top: 100%;
-    left: 0;
-    right: 0;
+    width: 100vw !important;
     z-index: 9999 !important;
-    background: rgba(30, 41, 55, 0.98);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
+    height: 64px !important;
+  }
+
+  /* Sidebar - proper positioning and size */
+  .desktop-sidebar,
+  aside,
+  [class*="sidebar"] {
+    position: fixed !important;
+    top: 64px !important;
+    left: 0 !important;
+    height: calc(100vh - 64px) !important;
+    width: 280px !important;
+    z-index: 40 !important;
+    overflow-y: auto !important;
+  }
+
+  /* Main content - contained within available space */
+  main,
+  .main-content,
+  .app-content {
+    margin-left: 280px !important;
+    margin-top: 64px !important;
+    width: calc(100vw - 280px) !important;
+    max-width: calc(100vw - 280px) !important;
+    min-height: calc(100vh - 64px) !important;
+    overflow-x: hidden !important;
+    padding: 20px !important;
+    box-sizing: border-box !important;
+  }
+
+  /* All sections - fit within content area */
+  .home-section,
+  .verify-section,
+  .education-section,
+  .community-section,
+  .analytics-section,
+  .settings-section,
+  .about-section,
+  .protection-section {
+    width: 100% !important;
+    max-width: 100% !important;
+    overflow-x: hidden !important;
+    box-sizing: border-box !important;
+  }
+
+  /* Prevent any element from overflowing */
+  * {
+    box-sizing: border-box !important;
   }
   
-  /* Hide sidebar on mobile when menu is open */
-  .mobile-menu-open .sidebar {
+  /* Hide mobile elements on desktop */
+  .mobile-header,
+  .mobile-nav-card,
+  .mobile-qr-btn,
+  .mobile-bottom-nav {
     display: none !important;
   }
-  
-  /* Prevent scroll when mobile menu is open */
-  .mobile-menu-open body {
-    overflow: hidden;
+
+  /* Ensure containers don't overflow */
+  .container,
+  .max-w-7xl,
+  .max-w-6xl,
+  .max-w-5xl,
+  .max-w-4xl,
+  .max-w-3xl,
+  .max-w-2xl,
+  .max-w-xl,
+  .w-full {
+    width: 100% !important;
+    max-width: 100% !important;
+    overflow-x: hidden !important;
   }
 }
 
-/* Desktop logo optimizations */
-@media (min-width: 769px) {
-  .logo-container {
-    min-width: 200px; /* Prevent logo from looking cramped */
-  }
-  
-  .brand-text {
-    white-space: nowrap; /* Prevent text wrapping */
-  }
+/* Universal overflow prevention */
+body, html, #root {
+  overflow-x: hidden !important;
+  max-width: 100vw !important;
 }
 
-/* Mobile logo optimizations */
-@media (max-width: 768px) {
-  .logo-container {
-    min-width: 120px;
-  }
-  
-  .network-status {
-    font-size: 10px !important;
-    padding: 2px 6px !important;
+/* =========================================
+🎯 AUTOMATIC DARK MODE COLOR FIXES - PROTECTION SECTION
+========================================= */
+
+/* ✅ AUTOMATIC COLOR OVERRIDES FOR DARK MODE */
+.dark .text-red-800,
+.dark .text-orange-800,
+.dark .text-yellow-800,
+.dark .text-green-800,
+.dark .text-blue-800,
+.dark .text-indigo-800,
+.dark .text-purple-800,
+.dark .text-pink-800 {
+  color: #fbbf24 !important; /* Light yellow for all */
+}
+
+/* ✅ SPECIFIC COLOR FIXES FOR BETTER VISIBILITY */
+.dark .text-red-800 {
+  color: #fca5a5 !important; /* Light red */
+}
+
+.dark .text-orange-800 {
+  color: #fed7aa !important; /* Light orange */
+}
+
+.dark .text-green-800 {
+  color: #86efac !important; /* Light green */
+}
+
+.dark .text-blue-800 {
+  color: #93c5fd !important; /* Light blue */
+}
+
+.dark .text-indigo-800 {
+  color: #a5b4fc !important; /* Light indigo */
+}
+
+.dark .text-purple-800 {
+  color: #c4b5fd !important; /* Light purple */
+}
+
+.dark .text-pink-800 {
+  color: #f9a8d4 !important; /* Light pink */
+}
+
+/* ✅ PROTECTION SECTION SPECIFIC FIXES */
+.dark .protection-section h1,
+.dark .protection-section h2,
+.dark .protection-section h3,
+.dark .protection-section h4,
+.dark .protection-section h5 {
+  color: #ffffff !important;
+}
+
+/* ✅ EMERGENCY PROTOCOL COLORS - HIGH VISIBILITY */
+.dark .text-red-800.emergency-protocol {
+  color: #ff6b6b !important;
+  text-shadow: 0 0 10px rgba(255, 107, 107, 0.3) !important;
+}
+
+/* ✅ AI RECOMMENDATIONS - SPECIAL STYLING */
+.dark .ai-recommendations h4 {
+  color: #60a5fa !important;
+  text-shadow: 0 0 5px rgba(96, 165, 250, 0.2) !important;
+}
+
+/* ✅ STATUS INDICATORS - COLOR CODED */
+.dark .status-current {
+  color: #34d399 !important; /* Green for current status */
+}
+
+.dark .status-monitoring {
+  color: #60a5fa !important; /* Blue for monitoring */
+}
+
+.dark .status-learning {
+  color: #a78bfa !important; /* Purple for learning */
+}
+
+/* ✅ FALLBACK FOR ANY MISSED DARK COLORS */
+.dark [class*="text-"][class*="-800"] {
+  color: #e5e7eb !important;
+}
+
+/* ✅ ENSURE READABILITY ON ALL BACKGROUNDS */
+.dark .bg-gray-800 .text-gray-800,
+.dark .bg-gray-900 .text-gray-800 {
+  color: #ffffff !important;
+}
+
+/* ✅ PROTECTION CARDS - DARK MODE STYLING */
+.dark .protection-card {
+  background: rgba(31, 41, 55, 0.9) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  color: #ffffff !important;
+}
+
+.dark .protection-card h4 {
+  color: #ffffff !important;
+}
+
+/* ✅ HOVER EFFECTS FOR DARK MODE */
+.dark .protection-card:hover {
+  background: rgba(55, 65, 81, 0.9) !important;
+  border-color: rgba(255, 255, 255, 0.2) !important;
+  transform: translateY(-2px) !important;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3) !important;
+}
+/* =========================================
+🎯 FORCE DARK MODE COLOR FIXES - HIGH PRIORITY
+========================================= */
+
+/* ✅ FORCE OVERRIDE ALL DARK TEXT COLORS */
+html.dark .text-red-800,
+html.dark .text-orange-800,
+html.dark .text-yellow-800,
+html.dark .text-green-800,
+html.dark .text-blue-800,
+html.dark .text-indigo-800,
+html.dark .text-purple-800,
+html.dark .text-pink-800,
+body.dark .text-red-800,
+body.dark .text-orange-800,
+body.dark .text-yellow-800,
+body.dark .text-green-800,
+body.dark .text-blue-800,
+body.dark .text-indigo-800,
+body.dark .text-purple-800,
+body.dark .text-pink-800,
+.dark .text-red-800,
+.dark .text-orange-800,
+.dark .text-yellow-800,
+.dark .text-green-800,
+.dark .text-blue-800,
+.dark .text-indigo-800,
+.dark .text-purple-800,
+.dark .text-pink-800 {
+  color: #ffffff !important;
+}
+
+/* ✅ SPECIFIC COLOR OVERRIDES */
+html.dark .text-red-800,
+body.dark .text-red-800,
+.dark .text-red-800 {
+  color: #fca5a5 !important; /* Light red */
+}
+
+html.dark .text-orange-800,
+body.dark .text-orange-800,
+.dark .text-orange-800 {
+  color: #fed7aa !important; /* Light orange */
+}
+
+html.dark .text-green-800,
+body.dark .text-green-800,
+.dark .text-green-800 {
+  color: #86efac !important; /* Light green */
+}
+
+html.dark .text-blue-800,
+body.dark .text-blue-800,
+.dark .text-blue-800 {
+  color: #93c5fd !important; /* Light blue */
+}
+
+html.dark .text-indigo-800,
+body.dark .text-indigo-800,
+.dark .text-indigo-800 {
+  color: #a5b4fc !important; /* Light indigo */
+}
+
+html.dark .text-purple-800,
+body.dark .text-purple-800,
+.dark .text-purple-800 {
+  color: #c4b5fd !important; /* Light purple */
+}
+
+/* ✅ PROTECTION SECTION SPECIFIC */
+[data-theme="dark"] .text-red-800,
+[data-theme="dark"] .text-orange-800,
+[data-theme="dark"] .text-green-800,
+[data-theme="dark"] .text-blue-800,
+[data-theme="dark"] .text-indigo-800,
+[data-theme="dark"] .text-purple-800 {
+  color: #ffffff !important;
+}
+
+/* ✅ TAILWIND OVERRIDE */
+@media (prefers-color-scheme: dark) {
+  .text-red-800,
+  .text-orange-800,
+  .text-green-800,
+  .text-blue-800,
+  .text-indigo-800,
+  .text-purple-800 {
+    color: #ffffff !important;
   }
 }
-/* Mobile-first improvements */
-@media (max-width: 768px) {
-  .mobile-optimized {
-    padding: 1rem;
-    font-size: 0.875rem;
-  }
-  
-  .mobile-nav {
-    position: fixed;
-    top: 4rem;
-    left: 0;
-    right: 0;
-    background: rgba(15, 23, 42, 0.95);
-    backdrop-filter: blur(10px);
-    z-index: 50;
-    padding: 1rem;
-    transform: translateY(-100%);
-    transition: transform 0.3s ease-in-out;
-  }
-  
-  .mobile-nav.open {
-    transform: translateY(0);
-  }
-  
-  .mobile-button {
-    min-height: 44px; /* Apple's recommended touch target */
-    padding: 0.75rem 1rem;
-    font-size: 1rem;
-  }
-  
-  .mobile-input {
-    font-size: 16px; /* Prevents zoom on iOS */
-    padding: 0.75rem;
-  }
+/* =========================================
+🎯 DARK MODE CARD BACKGROUND FIXES
+========================================= */
+
+.dark .bg-white {
+  background-color: #1f2937 !important; /* gray-800 */
+}
+
+.dark .border-gray-200 {
+  border-color: #4b5563 !important; /* gray-600 */
+}
+
+.dark .bg-blue-50 {
+  background-color: rgba(59, 130, 246, 0.1) !important; /* blue-900/10 */
+}
+
+.dark .text-gray-800 {
+  color: #ffffff !important;
+}
+
+.dark .text-gray-900 {
+  color: #ffffff !important;
 }
