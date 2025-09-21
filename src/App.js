@@ -13,15 +13,46 @@ import LoadingSpinner from './components/UI/LoadingSpinner';
 import ErrorBoundary from './components/Common/ErrorBoundary';
 import Footer from './components/Layout/Footer';
 
-// Voice Control Component - FIXED PATH
+// Voice Control Component
 import VoiceControlPanel from './components/VoiceControl/VoiceControlPanel';
 
 // Hooks
 import { useAuth } from './hooks/useAuth';
 import { useResponsive } from './hooks/useResponsive';
 
-// UI Components
-import { NotificationToast, NotificationProvider } from './components/UI/NotificationToast';
+// UI Components - FIXED IMPORT
+import { NotificationProvider } from './components/UI/NotificationToast';
+
+// Add this after your imports and before the App component
+const APP_VERSION = process.env.REACT_APP_BUILD_TIME || '1.0.0';
+
+const checkForUpdates = () => {
+  const currentVersion = localStorage.getItem('xist_app_version');
+  if (currentVersion && currentVersion !== APP_VERSION) {
+    console.log('🔄 App version updated, clearing caches...');
+    
+    // Clear all caches
+    if ('caches' in window) {
+      caches.keys().then(names => {
+        names.forEach(name => {
+          console.log('🗑️ Deleting cache:', name);
+          caches.delete(name);
+        });
+      });
+    }
+    
+    // Clear localStorage cache indicators
+    localStorage.removeItem('xist_cache_version');
+    localStorage.setItem('xist_app_version', APP_VERSION);
+    
+    // Reload without cache
+    setTimeout(() => {
+      window.location.reload(true);
+    }, 1000);
+  } else {
+    localStorage.setItem('xist_app_version', APP_VERSION);
+  }
+};
 
 const App = () => {
   // Auth and user management
@@ -41,7 +72,7 @@ const App = () => {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [showVoiceControl, setShowVoiceControl] = useState(false);
 
-  // Analysis data management for Analytics section - FIXED!
+  // Analysis data management for Analytics section
   const [analysisHistory, setAnalysisHistory] = useState([]);
   const [analysisResult, setAnalysisResult] = useState(null);
 
@@ -54,7 +85,7 @@ const App = () => {
   const [isMobile, setIsMobile] = useState(false);
   const [isTablet, setIsTablet] = useState(false);
 
-  // Analysis Collection Function - FIXED!
+  // Analysis Collection Function
   const handleAnalysisComplete = React.useCallback((analysisData) => {
     // Add to analysis history
     setAnalysisHistory(prev => [
@@ -65,10 +96,9 @@ const App = () => {
       },
       ...prev.slice(0, 49) // Keep last 50 analyses
     ]);
-    
+
     // Update current result
     setAnalysisResult(analysisData);
-    
     console.log('Analysis data collected for analytics:', analysisData);
   }, []);
 
@@ -98,7 +128,6 @@ const App = () => {
   // APPLY GLOBAL FONT SIZE CHANGES
   useEffect(() => {
     const root = document.documentElement;
-
     switch (globalSettings.fontSize) {
       case 'small':
         root.style.setProperty('--app-font-size', '14px');
@@ -112,7 +141,6 @@ const App = () => {
         root.style.setProperty('--app-font-size', '16px');
         root.style.setProperty('--app-font-scale', '1');
     }
-
     root.className = root.className.replace(/font-size-\w+/g, '');
     root.classList.add(`font-size-${globalSettings.fontSize}`);
   }, [globalSettings.fontSize]);
@@ -120,7 +148,6 @@ const App = () => {
   // FUNCTION TO UPDATE GLOBAL SETTINGS FROM SETTINGS COMPONENT
   const updateGlobalSettings = (newSettings) => {
     setGlobalSettings(newSettings);
-    
     if (newSettings.theme) {
       setTheme(newSettings.theme);
     }
@@ -135,7 +162,6 @@ const App = () => {
 
     checkDevice();
     window.addEventListener('resize', checkDevice);
-
     return () => window.removeEventListener('resize', checkDevice);
   }, []);
 
@@ -169,7 +195,6 @@ const App = () => {
     try {
       const updatedStats = { ...userStats, ...newStats };
       console.log('Stats updated:', updatedStats);
-
       if (updateUserStats) {
         updateUserStats(updatedStats);
       }
@@ -181,8 +206,8 @@ const App = () => {
   // Loading state
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-gray-50 dark:bg-gray-900">
-        <LoadingSpinner />
+      <div className="min-h-screen bg-slate-900 flex items-center justify-center">
+        <LoadingSpinner size="large" />
       </div>
     );
   }
@@ -190,31 +215,30 @@ const App = () => {
   return (
     <ErrorBoundary>
       <NotificationProvider>
-        <div className={`min-h-screen transition-colors duration-200 ${
-          theme === 'dark' ? 'bg-gray-900 text-white' : 'bg-gray-50 text-gray-900'
+        <div className={`app min-h-screen transition-colors duration-300 ${
+          theme === 'dark' ? 'dark bg-slate-900' : 'bg-slate-50'
         }`}>
           
           {/* Top Navigation */}
           <TopNavigation
             user={user}
             userStats={userStats}
-            login={login}
-            logout={logout}
-            theme={theme}
-            setTheme={setTheme}
             currentSection={currentSection}
             setCurrentSection={setCurrentSection}
             mobileMenuOpen={mobileMenuOpen}
             setMobileMenuOpen={setMobileMenuOpen}
-            sidebarCollapsed={sidebarCollapsed}
-            setSidebarCollapsed={setSidebarCollapsed}
+            login={login}
+            logout={logout}
+            theme={theme}
+            setTheme={setTheme}
             isMobile={isMobile}
-            isTablet={isTablet}
-            showVoiceControl={showVoiceControl}
             setShowVoiceControl={setShowVoiceControl}
+            showVoiceControl={showVoiceControl}
           />
 
-          <div className="flex">
+          {/* Main Layout */}
+          <div className="flex relative">
+            
             {/* Desktop Sidebar */}
             {!isMobile && (
               <DesktopSidebar
@@ -222,38 +246,45 @@ const App = () => {
                 userStats={userStats}
                 currentSection={currentSection}
                 setCurrentSection={setCurrentSection}
-                theme={theme}
                 collapsed={sidebarCollapsed}
                 setCollapsed={setSidebarCollapsed}
+                theme={theme}
               />
             )}
 
-            {/* Main Content */}
-            <main className={`flex-1 transition-all duration-200 ${
-              !isMobile && !sidebarCollapsed ? 'ml-64' : 
-              !isMobile && sidebarCollapsed ? 'ml-16' : 'ml-0'
-            } ${isMobile ? 'pb-16' : ''}`}>
+            {/* Main Content Area */}
+            <main className={`flex-1 transition-all duration-300 ${
+              !isMobile && !sidebarCollapsed ? 'ml-64' : !isMobile ? 'ml-16' : 'ml-0'
+            } ${isMobile ? 'pb-20' : 'pb-4'}`}>
               
-              <SectionRouter
-                currentSection={currentSection}
-                setCurrentSection={setCurrentSection}
-                user={user}
-                userStats={userStats}
-                onUpdateStats={handleUpdateUserStats}
-                onAnalysisComplete={handleAnalysisComplete}  // FIXED!
-                analysisHistory={analysisHistory}  // FIXED!
-                theme={theme}
-                globalSettings={globalSettings}
-                updateGlobalSettings={updateGlobalSettings}
-                logout={logout}
-                isMobile={isMobile}
-                setTheme={setTheme}
-              />
+              <div className="container mx-auto px-4 py-6">
+                <SectionRouter
+                  currentSection={currentSection}
+                  setCurrentSection={setCurrentSection}
+                  user={user}
+                  userStats={userStats}
+                  updateUserStats={handleUpdateUserStats}
+                  analysisHistory={analysisHistory}
+                  analysisResult={analysisResult}
+                  onAnalysisComplete={handleAnalysisComplete}
+                  globalSettings={globalSettings}
+                  updateGlobalSettings={updateGlobalSettings}
+                  theme={theme}
+                  setTheme={setTheme}
+                  isMobile={isMobile}
+                  isTablet={isTablet}
+                />
+              </div>
 
-              {/* Footer - Only on desktop and in certain sections */}
-              {!isMobile && ['about', 'contact'].includes(currentSection) && (
-                <Footer theme={theme} />
+              {/* Footer */}
+              {!isMobile && (
+                <Footer
+                  currentSection={currentSection}
+                  setCurrentSection={setCurrentSection}
+                  theme={theme}
+                />
               )}
+              
             </main>
           </div>
 
@@ -267,43 +298,59 @@ const App = () => {
             />
           )}
 
-          {/* Voice Control Panel - Floating - FIXED JARVIS-LIKE UI! */}
+          {/* Voice Control Panel */}
           {showVoiceControl && (
-            <div className="fixed inset-0 bg-black bg-opacity-80 z-50 flex items-center justify-center p-4">
-              <div className="bg-gradient-to-br from-gray-900 via-blue-900 to-purple-900 rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto border border-cyan-400 shadow-2xl shadow-cyan-400/20">
-                <div className="p-6">
-                  <div className="flex justify-between items-center mb-6">
-                    <div className="flex items-center space-x-3">
-                      <div className="w-3 h-3 rounded-full bg-cyan-400 animate-pulse"></div>
-                      <h2 className="text-2xl font-bold text-cyan-400 font-mono tracking-wide">
-                        VANTA AI VOICE COMMAND CENTER
-                      </h2>
-                      <div className="w-3 h-3 rounded-full bg-cyan-400 animate-pulse"></div>
-                    </div>
-                    <button
-                      onClick={() => setShowVoiceControl(false)}
-                      className="p-2 hover:bg-cyan-400/20 rounded-lg text-cyan-400 hover:text-white transition-colors"
-                    >
-                      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                      </svg>
-                    </button>
-                  </div>
-                  <VoiceControlPanel user={user} theme="dark" />
-                </div>
-              </div>
-            </div>
+            <VoiceControlPanel
+              isOpen={showVoiceControl}
+              onClose={() => setShowVoiceControl(false)}
+              onSectionChange={setCurrentSection}
+              theme={theme}
+              user={user}
+            />
           )}
 
-          {/* Toast Notifications */}
+          {/* Global Toast Notifications */}
           <Toaster
             position="top-right"
             toastOptions={{
               duration: 4000,
               style: {
-                background: theme === 'dark' ? '#374151' : '#ffffff',
-                color: theme === 'dark' ? '#f3f4f6' : '#111827',
-                border: `1px solid ${theme === 'dark' ? '#4b5563' : '#e5e7eb'}`,
+                background: theme === 'dark' ? '#1e293b' : '#ffffff',
+                color: theme === 'dark' ? '#f1f5f9' : '#0f172a',
+                border: `1px solid ${theme === 'dark' ? '#334155' : '#e2e8f0'}`,
+                fontSize: '14px',
+                fontWeight: '500',
+                borderRadius: '8px',
+                boxShadow: theme === 'dark' 
+                  ? '0 10px 25px rgba(0, 0, 0, 0.3)' 
+                  : '0 10px 25px rgba(0, 0, 0, 0.1)',
+              },
+              success: {
+                iconTheme: {
+                  primary: '#10b981',
+                  secondary: theme === 'dark' ? '#1e293b' : '#ffffff',
+                },
+                style: {
+                  border: '1px solid #10b981',
+                },
+              },
+              error: {
+                iconTheme: {
+                  primary: '#ef4444',
+                  secondary: theme === 'dark' ? '#1e293b' : '#ffffff',
+                },
+                style: {
+                  border: '1px solid #ef4444',
+                },
+              },
+              loading: {
+                iconTheme: {
+                  primary: '#3b82f6',
+                  secondary: theme === 'dark' ? '#1e293b' : '#ffffff',
+                },
+                style: {
+                  border: '1px solid #3b82f6',
+                },
               },
             }}
           />

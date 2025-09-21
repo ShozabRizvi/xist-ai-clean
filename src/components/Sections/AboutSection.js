@@ -24,7 +24,7 @@ const AboutSection = () => {
     {
       name: 'Shozab Rizvi',
       role: 'Lead Developer',
-      image: 'Shozab.png',
+      image: 'Shozab-v2.png',
       icon: CodeBracketIcon,
       isTeam: false,
       experience: '3rd Year Student',

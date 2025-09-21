@@ -9,7 +9,7 @@ import {
   CalendarIcon, MapPinIcon, UsersIcon, DocumentTextIcon,
   BellIcon, MegaphoneIcon, FireIcon, SparklesIcon
 } from '@heroicons/react/24/outline';
-import { useAuth } from '../../context/AuthContext';
+import { useAuth } from '../../hooks/useAuth';
 import { showNotification } from '../UI/NotificationToast';
 
 const HealthSection = () => {

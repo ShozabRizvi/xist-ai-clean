@@ -272,6 +272,12 @@ setQuickActions([
         
         <div className="relative z-10">
           <div className="w-20 h-20 mx-auto mb-6 rounded-2xl flex items-center justify-center">
+             <motion.div
+                      initial={{ scale: 0 }}
+                      animate={{ scale: 1 }}
+                      transition={{ type: "spring", duration: 0.8 }}
+                      className="relative inline-block"
+                    >
             <img
               src="/logo.png"
               alt="Xist AI Network Protection"
@@ -281,6 +287,7 @@ setQuickActions([
                 e.target.nextElementSibling.style.display = 'flex';
               }}
             />
+            </motion.div>
             <div className="w-20 h-20 bg-gradient-to-br from-cyan-400 via-blue-500 to-purple-600 rounded-2xl hidden items-center justify-center shadow-lg">
               <SparklesIcon className="w-12 h-12 text-white" />
             </div>
@@ -291,7 +298,7 @@ setQuickActions([
           </h1>
           
           <p className="text-xl md:text-2xl opacity-95 mb-3 font-light text-cyan-100">
-            Everything That's XIST
+            Illuminating the Truth in Everything That Exists
           </p>
           
           <p className="text-base md:text-lg opacity-80 mb-8 text-purple-200 max-w-3xl mx-auto">

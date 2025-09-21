@@ -2,40 +2,30 @@
 @tailwind components;
 @tailwind utilities;
 
-/* =========================================
-   DESKTOP-ONLY STYLES - Clean & Organized
-   Mobile styles are imported from mobile.css
-   ========================================= */
-
 /* Import mobile styles first */
 @import './mobile.css';
 
-/* ===================================
-   GLOBAL BASE STYLES
-   =================================== */
-
+/* Global Base Styles */
 * {
   box-sizing: border-box;
   max-width: 100%;
+  overflow-x: hidden !important;
 }
 
 html {
   scroll-behavior: smooth;
   font-size: 16px;
   line-height: 1.6;
-  overflow-x: hidden;
   width: 100%;
 }
 
 body {
   margin: 0;
   padding: 0;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-    sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen,
+    Ubuntu, Cantarell, 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  overflow-x: hidden;
   width: 100%;
   max-width: 100vw;
   transition: background-color 0.3s ease, color 0.3s ease;
@@ -47,37 +37,24 @@ body {
   flex-direction: column;
   width: 100%;
   max-width: 100vw;
-  overflow-x: hidden;
 }
 
-/* ===================================
-   DESKTOP-SPECIFIC STYLES (769px+)
-   =================================== */
-
+/* Desktop-Specific Styles */
 @media (min-width: 769px) {
-  
-  /* Desktop Navigation */
-  .bg-gradient-to-r.from-indigo-900.via-purple-900.to-pink-900,
-  nav[class*="bg-gradient-to-r"] {
+  /* Fixed Navigation Bar */
+  nav[class*="bg-gradient-to-r"],
+  .top-navigation,
+  header {
     position: fixed !important;
     top: 0 !important;
     left: 0 !important;
     right: 0 !important;
     width: 100vw !important;
-    z-index: 9999 !important;
     height: 64px !important;
-    background: linear-gradient(to right, #312e81, #581c87, #be185d) !important;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.3) !important;
-    backdrop-filter: blur(10px) !important;
+    z-index: 9999 !important;
   }
 
-  /* Desktop Content Spacing */
-  .desktop-content {
-    margin-top: 64px !important;
-    padding: 20px !important;
-  }
-
-  /* Desktop Layout with Sidebar */
+  /* Sidebar Base */
   .desktop-sidebar {
     position: fixed !important;
     top: 64px !important;
@@ -89,72 +66,88 @@ body {
     box-shadow: 2px 0 8px rgba(0, 0, 0, 0.1) !important;
     transition: width 0.3s ease !important;
     overflow-y: auto !important;
-    scrollbar-width: thin !important;
   }
 
-  .desktop-sidebar::-webkit-scrollbar {
-    width: 6px !important;
+  /* Collapsed / Expanded Variants */
+ .desktop-sidebar.collapsed {
+  width: 60px !important; /* Match the animated width in React */
+}
+
+  .desktop-sidebar.expanded {
+    width: 280px !important;
   }
 
-  .desktop-sidebar::-webkit-scrollbar-track {
-    background: rgba(0, 0, 0, 0.05) !important;
-    border-radius: 3px !important;
+  /* Sidebar Toggle Button */
+  .sidebar-toggle-btn {
+    position: absolute !important;
+    top: 16px !important;
+    right: -12px !important;
+    width: 24px !important;
+    height: 24px !important;
+    background: rgba(147, 51, 234, 0.9) !important;
+    border: 2px solid rgba(255, 255, 255, 0.2) !important;
+    border-radius: 50% !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    z-index: 50 !important;
+    transition: all 0.3s ease !important;
+  }
+  .sidebar-toggle-btn:hover {
+    background: rgba(147, 51, 234, 1) !important;
+    transform: scale(1.1) !important;
+  }
+  .sidebar-toggle-btn svg {
+    width: 12px !important;
+    height: 12px !important;
+    color: #fff !important;
   }
 
-  .desktop-sidebar::-webkit-scrollbar-thumb {
-    background: rgba(147, 51, 234, 0.3) !important;
-    border-radius: 3px !important;
+  /* Navigation Items */
+  .sidebar-nav-item {
+    display: flex !important;
+    align-items: center !important;
+    width: 100% !important;
+    transition: all 0.2s ease !important;
   }
-
-  .desktop-sidebar::-webkit-scrollbar-thumb:hover {
-    background: rgba(147, 51, 234, 0.5) !important;
+  .desktop-sidebar.collapsed .sidebar-nav-item {
+    justify-content: flex-start !important;
+    padding: 0 16px !important;
   }
+  .sidebar-nav-item svg {
+    flex-shrink: 0 !important;
+    width: 20px !important;
+    height: 20px !important;
+  }
+.desktop-sidebar.collapsed .sidebar-nav-item svg {
+  width: 20px !important; /* or w-5/h-5 size */
+  height: 20px !important;
+}
+.main-content-with-sidebar {
+  margin-left: 280px !important;
+  margin-top: 64px !important;
+  transition: margin-left 0.3s ease !important;
+  padding: 1rem !important;
+  min-height: calc(100vh - 64px) !important;
+}
 
+.main-content-with-sidebar.collapsed {
+  margin-left: 80px !important;
+}
+
+  /* Main Content Wrapper */
   .main-content-with-sidebar {
     margin-left: 280px !important;
-    margin-top: 0 !important;
+    margin-top: 64px !important;
     transition: margin-left 0.3s ease !important;
-    min-height: calc(100vh - 64px) !important;
     padding: 1rem !important;
+    min-height: calc(100vh - 64px) !important;
+  }
+  .main-content-with-sidebar.collapsed {
+    margin-left: 80px !important;
   }
 
-  /* Desktop Cards */
-  .desktop-card {
-    background: rgba(255, 255, 255, 0.1) !important;
-    backdrop-filter: blur(10px) !important;
-    border: 1px solid rgba(255, 255, 255, 0.2) !important;
-    border-radius: 16px !important;
-    padding: 24px !important;
-    margin: 16px 0 !important;
-  }
-
-  /* Desktop Forms */
-  .desktop-form input,
-  .desktop-form textarea,
-  .desktop-form select {
-    min-height: 44px !important;
-    padding: 12px 16px !important;
-    border-radius: 8px !important;
-    font-size: 14px !important;
-  }
-
-  /* Desktop Buttons */
-  .desktop-btn {
-    min-height: 44px !important;
-    padding: 12px 24px !important;
-    border-radius: 8px !important;
-    font-size: 14px !important;
-    font-weight: 500 !important;
-  }
-
-  /* Desktop Grid */
-  .desktop-grid {
-    display: grid !important;
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)) !important;
-    gap: 20px !important;
-  }
-
-  /* Hide mobile-specific elements on desktop */
+  /* Hide mobile elements */
   .mobile-header,
   .mobile-nav-card,
   .mobile-qr-btn,
@@ -163,11 +156,7 @@ body {
   }
 }
 
-/* ===================================
-   THEME OPTIMIZATION - ALL DEVICES
-   =================================== */
-
-/* Light Mode - Clean White Backgrounds */
+/* Theme Optimization - All Devices */
 .home-section,
 .verify-section,
 .education-section,
@@ -175,12 +164,15 @@ body {
 .analytics-section,
 .settings-section,
 .about-section {
-  background: #ffffff !important;
+  background: #fff !important;
   color: #1f2937 !important;
-  transition: all 0.3s ease !important;
+  transition: background 0.3s ease, color 0.3s ease;
 }
 
-/* Dark Mode - Beautiful Gradient Backgrounds */
+/* Dark Mode */
+.dark {
+  color-scheme: dark;
+}
 .dark .home-section,
 .dark .verify-section,
 .dark .education-section,
@@ -189,210 +181,17 @@ body {
 .dark .settings-section,
 .dark .about-section {
   background: linear-gradient(to bottom right, #111827, #1e40af, #7c3aed) !important;
-  color: #ffffff !important;
+  color: #fff !important;
 }
 
-/* Special Sections - Unique Gradients */
-.dark .education-section {
-  background: linear-gradient(to bottom right, #0f172a, #1e1b4b, #581c87) !important;
+/* Utility Classes */
+.h-screen-minus-nav {
+  height: calc(100vh - 64px) !important;
 }
-
-.dark .community-section {
-  background: linear-gradient(to bottom right, #111827, #1f2937, #374151) !important;
-}
-
-.dark .analytics-section {
-  background: linear-gradient(to bottom right, #0c0a09, #1c1917, #44403c) !important;
-}
-
-/* Text Colors - Perfect Contrast */
-.light-text {
-  color: #1f2937 !important;
-}
-
-.dark .light-text,
-.dark .text-gray-900,
-.dark .text-gray-800,
-.dark h1,
-.dark h2,
-.dark h3,
-.dark h4,
-.dark h5,
-.dark h6 {
-  color: #ffffff !important;
-}
-
-.secondary-text {
-  color: #6b7280 !important;
-}
-
-.dark .secondary-text,
-.dark .text-gray-600,
-.dark .text-gray-500,
-.dark .text-gray-400 {
-  color: #d1d5db !important;
-}
-
-/* Card Backgrounds - Theme Optimized */
-.theme-card {
-  background: rgba(255, 255, 255, 0.9) !important;
-  border: 1px solid rgba(0, 0, 0, 0.1) !important;
-  backdrop-filter: blur(10px) !important;
-  transition: all 0.3s ease !important;
-}
-
-.dark .theme-card,
-.dark .bg-white,
-.dark [class*="bg-gray"] {
-  background: rgba(31, 41, 55, 0.9) !important;
-  border: 1px solid rgba(255, 255, 255, 0.1) !important;
-  color: #ffffff !important;
-}
-
-/* ===================================
-   COORDINATED THEME TOGGLES
-   =================================== */
-
-/* Both Theme Changers - Identical Styling */
-.theme-toggle,
-.theme-toggle-btn,
-button[aria-label*="theme"],
-button[aria-label*="Theme"],
-.dark-mode-toggle,
-.appearance-toggle {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
-  border: 2px solid rgba(255, 255, 255, 0.2) !important;
-  border-radius: 50px !important;
-  padding: 8px 16px !important;
-  min-width: 80px !important;
-  height: 40px !important;
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  gap: 8px !important;
-  cursor: pointer !important;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
-  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3) !important;
-  position: relative !important;
-  overflow: hidden !important;
-}
-
-/* Hover Effects - Coordinated */
-.theme-toggle:hover,
-.theme-toggle-btn:hover,
-button[aria-label*="theme"]:hover,
-button[aria-label*="Theme"]:hover,
-.dark-mode-toggle:hover,
-.appearance-toggle:hover {
-  transform: translateY(-2px) scale(1.05) !important;
-  box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4) !important;
-  border-color: rgba(255, 255, 255, 0.4) !important;
-}
-
-/* Dark Mode Theme Toggles */
-.dark .theme-toggle,
-.dark .theme-toggle-btn,
-.dark button[aria-label*="theme"],
-.dark button[aria-label*="Theme"],
-.dark .dark-mode-toggle,
-.dark .appearance-toggle {
-  background: linear-gradient(135deg, #8b5cf6 0%, #a855f7 100%) !important;
-  border-color: rgba(255, 255, 255, 0.3) !important;
-  box-shadow: 0 4px 15px rgba(139, 92, 246, 0.3) !important;
-}
-
-.dark .theme-toggle:hover,
-.dark .theme-toggle-btn:hover,
-.dark button[aria-label*="theme"]:hover,
-.dark button[aria-label*="Theme"]:hover,
-.dark .dark-mode-toggle:hover,
-.dark .appearance-toggle:hover {
-  box-shadow: 0 8px 25px rgba(139, 92, 246, 0.5) !important;
-  border-color: rgba(255, 255, 255, 0.5) !important;
-}
-
-/* Theme Changer Icons */
-.theme-toggle svg,
-.theme-toggle-btn svg,
-button[aria-label*="theme"] svg,
-button[aria-label*="Theme"] svg,
-.dark-mode-toggle svg,
-.appearance-toggle svg {
-  width: 18px !important;
-  height: 18px !important;
-  color: #ffffff !important;
-  transition: all 0.3s ease !important;
-  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2)) !important;
-}
-
-/* ===================================
-   NOTIFICATION TOASTS
-   =================================== */
-
-.notification-container {
-  position: fixed !important;
-  top: 80px !important;
-  right: 20px !important;
-  z-index: 9998 !important;
-  pointer-events: none !important;
-}
-
-.notification-toast {
-  pointer-events: auto !important;
-  margin-bottom: 12px !important;
-  max-width: 400px !important;
-  word-wrap: break-word !important;
-}
-
-/* ===================================
-   SCROLLBAR SOLUTION - DESKTOP ONLY
-   =================================== */
-
-/* Hide all scrollbars by default */
-* {
-  scrollbar-width: none !important;
-  -ms-overflow-style: none !important;
-}
-
-*::-webkit-scrollbar {
-  display: none !important;
-}
-
-/* Show scrollbar only on desktop sidebar */
-@media (min-width: 769px) {
-  .desktop-sidebar::-webkit-scrollbar {
-    display: block !important;
-  }
-}
-
-/* ===================================
-   UNIVERSAL OVERFLOW PREVENTION
-   =================================== */
-
-body, html, main, section, div, nav {
+.overflow-x-hidden {
   overflow-x: hidden !important;
 }
-
-.container,
-.max-w-7xl,
-.max-w-6xl,
-.max-w-5xl,
-.max-w-4xl,
-.max-w-3xl,
-.max-w-2xl,
-.max-w-xl,
-.w-full {
-  width: 100% !important;
-  max-width: 100% !important;
-  overflow-x: hidden !important;
-  margin-left: auto !important;
-  margin-right: auto !important;
-}
-
-/* ===================================
-   ANIMATIONS - PERFORMANCE OPTIMIZED
-   =================================== */
-
+/* Animations */
 @keyframes fadeInUp {
   from {
     opacity: 0;
@@ -421,172 +220,86 @@ body, html, main, section, div, nav {
   animation: pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
 
-/* ===================================
-   UTILITY CLASSES
-   =================================== */
-
-.flex-1 { flex: 1; }
-.min-h-screen { min-height: 100vh; }
-.overflow-hidden { overflow: hidden; }
-.overflow-x-hidden { overflow-x: hidden; }
-.word-break { word-wrap: break-word; overflow-wrap: break-word; }
-.h-screen-minus-nav { height: calc(100vh - 64px); }
-
-.p-safe {
-  padding: max(16px, env(safe-area-inset-top))
-           max(16px, env(safe-area-inset-right))
-           max(16px, env(safe-area-inset-bottom))
-           max(16px, env(safe-area-inset-left));
-}
-
-.bg-purple-gradient {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-}
-
-.text-gradient {
-  background: linear-gradient(45deg, #667eea, #764ba2);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-}
-
-.safe-area-bottom {
-  padding-bottom: env(safe-area-inset-bottom);
-}
-
-/* ===================================
-   DARK MODE SUPPORT
-   =================================== */
-
-.dark {
-  color-scheme: dark;
-}
-
-/* Force QR button visibility */
-button[data-qr-button="true"] {
+/* Theme Toggles */
+.theme-toggle,
+.theme-toggle-btn,
+button[aria-label*="theme"] {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+  border: 2px solid rgba(255,255,255,0.2) !important;
+  border-radius: 50px !important;
+  padding: 8px 16px !important;
+  height: 40px !important;
   display: flex !important;
-  visibility: visible !important;
-  opacity: 1 !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 8px !important;
+  cursor: pointer !important;
+  box-shadow: 0 4px 15px rgba(102,126,234,0.3) !important;
+  transition: all 0.3s ease !important;
+}
+.theme-toggle:hover,
+.theme-toggle-btn:hover,
+button[aria-label*="theme"]:hover {
+  transform: translateY(-2px) scale(1.05) !important;
+  box-shadow: 0 8px 25px rgba(102,126,234,0.4) !important;
+  border-color: rgba(255,255,255,0.4) !important;
+}
+.dark .theme-toggle,
+.dark .theme-toggle-btn,
+.dark button[aria-label*="theme"] {
+  background: linear-gradient(135deg, #8b5cf6 0%, #a855f7 100%) !important;
+  border-color: rgba(255,255,255,0.3) !important;
+  box-shadow: 0 4px 15px rgba(139,92,246,0.3) !important;
+}
+.dark .theme-toggle:hover,
+.dark .theme-toggle-btn:hover,
+.dark button[aria-label*="theme"]:hover {
+  box-shadow: 0 8px 25px rgba(139,92,246,0.5) !important;
+  border-color: rgba(255,255,255,0.5) !important;
 }
 
-/* ===================================
-   RESPONSIVE CONTAINERS
-   =================================== */
-
-@media (min-width: 1280px) {
-  .container {
-    max-width: 1200px;
-  }
+/* Notification Toasts */
+.notification-container {
+  position: fixed !important;
+  top: 80px !important;
+  right: 20px !important;
+  z-index: 9998 !important;
+  pointer-events: none !important;
+}
+.notification-toast {
+  pointer-events: auto !important;
+  margin-bottom: 12px !important;
+  max-width: 400px !important;
+  word-wrap: break-word !important;
 }
 
-@media (min-width: 1536px) {
-  .container {
-    max-width: 1400px;
-  }
+/* Scrollbar Solution */
+* {
+  scrollbar-width: none !important;
+  -ms-overflow-style: none !important;
 }
-/* =========================================
-   🚨 DESKTOP OVERFLOW FIX ONLY 
-   Keeps all existing design - just prevents overflow
-   ========================================= */
-
+*::-webkit-scrollbar {
+  display: none !important;
+}
 @media (min-width: 769px) {
-  
-  /* 🎯 DESKTOP LAYOUT CONTAINMENT - NO DESIGN CHANGES */
-  
-  /* Navigation - ensure it's properly positioned */
-  nav[class*="bg-gradient-to-r"],
-  .top-navigation,
-  header {
-    position: fixed !important;
-    top: 0 !important;
-    left: 0 !important;
-    right: 0 !important;
-    width: 100vw !important;
-    z-index: 9999 !important;
-    height: 64px !important;
+  .desktop-sidebar::-webkit-scrollbar {
+    display: block !important;
+    width: 6px !important;
   }
-
-  /* Sidebar - proper positioning and size */
-  .desktop-sidebar,
-  aside,
-  [class*="sidebar"] {
-    position: fixed !important;
-    top: 64px !important;
-    left: 0 !important;
-    height: calc(100vh - 64px) !important;
-    width: 280px !important;
-    z-index: 40 !important;
-    overflow-y: auto !important;
+  .desktop-sidebar::-webkit-scrollbar-track {
+    background: rgba(0,0,0,0.05) !important;
+    border-radius: 3px !important;
   }
-
-  /* Main content - contained within available space */
-  main,
-  .main-content,
-  .app-content {
-    margin-left: 280px !important;
-    margin-top: 64px !important;
-    width: calc(100vw - 280px) !important;
-    max-width: calc(100vw - 280px) !important;
-    min-height: calc(100vh - 64px) !important;
-    overflow-x: hidden !important;
-    padding: 20px !important;
-    box-sizing: border-box !important;
+  .desktop-sidebar::-webkit-scrollbar-thumb {
+    background: rgba(147,51,234,0.3) !important;
+    border-radius: 3px !important;
   }
-
-  /* All sections - fit within content area */
-  .home-section,
-  .verify-section,
-  .education-section,
-  .community-section,
-  .analytics-section,
-  .settings-section,
-  .about-section,
-  .protection-section {
-    width: 100% !important;
-    max-width: 100% !important;
-    overflow-x: hidden !important;
-    box-sizing: border-box !important;
-  }
-
-  /* Prevent any element from overflowing */
-  * {
-    box-sizing: border-box !important;
-  }
-  
-  /* Hide mobile elements on desktop */
-  .mobile-header,
-  .mobile-nav-card,
-  .mobile-qr-btn,
-  .mobile-bottom-nav {
-    display: none !important;
-  }
-
-  /* Ensure containers don't overflow */
-  .container,
-  .max-w-7xl,
-  .max-w-6xl,
-  .max-w-5xl,
-  .max-w-4xl,
-  .max-w-3xl,
-  .max-w-2xl,
-  .max-w-xl,
-  .w-full {
-    width: 100% !important;
-    max-width: 100% !important;
-    overflow-x: hidden !important;
+  .desktop-sidebar::-webkit-scrollbar-thumb:hover {
+    background: rgba(147,51,234,0.5) !important;
   }
 }
 
-/* Universal overflow prevention */
-body, html, #root {
-  overflow-x: hidden !important;
-  max-width: 100vw !important;
-}
-
-/* =========================================
-🎯 AUTOMATIC DARK MODE COLOR FIXES - PROTECTION SECTION
-========================================= */
-
-/* ✅ AUTOMATIC COLOR OVERRIDES FOR DARK MODE */
+/* Dark-Mode Text Color Overrides */
 .dark .text-red-800,
 .dark .text-orange-800,
 .dark .text-yellow-800,
@@ -595,181 +308,72 @@ body, html, #root {
 .dark .text-indigo-800,
 .dark .text-purple-800,
 .dark .text-pink-800 {
-  color: #fbbf24 !important; /* Light yellow for all */
+  color: #fff !important;
 }
+.dark .text-red-800 { color: #fca5a5 !important; }
+.dark .text-orange-800 { color: #fed7aa !important; }
+.dark .text-green-800 { color: #86efac !important; }
+.dark .text-blue-800 { color: #93c5fd !important; }
+.dark .text-indigo-800 { color: #a5b4fc !important; }
+.dark .text-purple-800 { color: #c4b5fd !important; }
+.dark .text-pink-800 { color: #f9a8d4 !important; }
 
-/* ✅ SPECIFIC COLOR FIXES FOR BETTER VISIBILITY */
-.dark .text-red-800 {
-  color: #fca5a5 !important; /* Light red */
-}
-
-.dark .text-orange-800 {
-  color: #fed7aa !important; /* Light orange */
-}
-
-.dark .text-green-800 {
-  color: #86efac !important; /* Light green */
-}
-
-.dark .text-blue-800 {
-  color: #93c5fd !important; /* Light blue */
-}
-
-.dark .text-indigo-800 {
-  color: #a5b4fc !important; /* Light indigo */
-}
-
-.dark .text-purple-800 {
-  color: #c4b5fd !important; /* Light purple */
-}
-
-.dark .text-pink-800 {
-  color: #f9a8d4 !important; /* Light pink */
-}
-
-/* ✅ PROTECTION SECTION SPECIFIC FIXES */
+/* Protection Section Overrides */
 .dark .protection-section h1,
 .dark .protection-section h2,
 .dark .protection-section h3,
 .dark .protection-section h4,
 .dark .protection-section h5 {
-  color: #ffffff !important;
+  color: #fff !important;
 }
-
-/* ✅ EMERGENCY PROTOCOL COLORS - HIGH VISIBILITY */
 .dark .text-red-800.emergency-protocol {
   color: #ff6b6b !important;
-  text-shadow: 0 0 10px rgba(255, 107, 107, 0.3) !important;
+  text-shadow: 0 0 10px rgba(255,107,107,0.3) !important;
 }
-
-/* ✅ AI RECOMMENDATIONS - SPECIAL STYLING */
 .dark .ai-recommendations h4 {
   color: #60a5fa !important;
-  text-shadow: 0 0 5px rgba(96, 165, 250, 0.2) !important;
+  text-shadow: 0 0 5px rgba(96,165,250,0.2) !important;
 }
-
-/* ✅ STATUS INDICATORS - COLOR CODED */
-.dark .status-current {
-  color: #34d399 !important; /* Green for current status */
-}
-
-.dark .status-monitoring {
-  color: #60a5fa !important; /* Blue for monitoring */
-}
-
-.dark .status-learning {
-  color: #a78bfa !important; /* Purple for learning */
-}
-
-/* ✅ FALLBACK FOR ANY MISSED DARK COLORS */
+.dark .status-current { color: #34d399 !important; }
+.dark .status-monitoring { color: #60a5fa !important; }
+.dark .status-learning { color: #a78bfa !important; }
+/* Fallback for any missed dark text colors */
 .dark [class*="text-"][class*="-800"] {
   color: #e5e7eb !important;
 }
 
-/* ✅ ENSURE READABILITY ON ALL BACKGROUNDS */
-.dark .bg-gray-800 .text-gray-800,
-.dark .bg-gray-900 .text-gray-800 {
+/* Dark Mode Card Background Fixes */
+.dark .bg-white {
+  background-color: #1f2937 !important;
+}
+.dark .border-gray-200 {
+  border-color: #4b5563 !important;
+}
+.dark .bg-blue-50 {
+  background-color: rgba(59,130,246,0.1) !important;
+}
+.dark .text-gray-800,
+.dark .text-gray-900 {
   color: #ffffff !important;
 }
 
-/* ✅ PROTECTION CARDS - DARK MODE STYLING */
+/* Protection Cards */
 .dark .protection-card {
-  background: rgba(31, 41, 55, 0.9) !important;
-  border: 1px solid rgba(255, 255, 255, 0.1) !important;
-  color: #ffffff !important;
+  background: rgba(31,41,55,0.9) !important;
+  border: 1px solid rgba(255,255,255,0.1) !important;
+  color: #fff !important;
 }
-
 .dark .protection-card h4 {
-  color: #ffffff !important;
+  color: #fff !important;
 }
-
-/* ✅ HOVER EFFECTS FOR DARK MODE */
 .dark .protection-card:hover {
-  background: rgba(55, 65, 81, 0.9) !important;
-  border-color: rgba(255, 255, 255, 0.2) !important;
+  background: rgba(55,65,81,0.9) !important;
+  border-color: rgba(255,255,255,0.2) !important;
   transform: translateY(-2px) !important;
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3) !important;
-}
-/* =========================================
-🎯 FORCE DARK MODE COLOR FIXES - HIGH PRIORITY
-========================================= */
-
-/* ✅ FORCE OVERRIDE ALL DARK TEXT COLORS */
-html.dark .text-red-800,
-html.dark .text-orange-800,
-html.dark .text-yellow-800,
-html.dark .text-green-800,
-html.dark .text-blue-800,
-html.dark .text-indigo-800,
-html.dark .text-purple-800,
-html.dark .text-pink-800,
-body.dark .text-red-800,
-body.dark .text-orange-800,
-body.dark .text-yellow-800,
-body.dark .text-green-800,
-body.dark .text-blue-800,
-body.dark .text-indigo-800,
-body.dark .text-purple-800,
-body.dark .text-pink-800,
-.dark .text-red-800,
-.dark .text-orange-800,
-.dark .text-yellow-800,
-.dark .text-green-800,
-.dark .text-blue-800,
-.dark .text-indigo-800,
-.dark .text-purple-800,
-.dark .text-pink-800 {
-  color: #ffffff !important;
+  box-shadow: 0 8px 25px rgba(0,0,0,0.3) !important;
 }
 
-/* ✅ SPECIFIC COLOR OVERRIDES */
-html.dark .text-red-800,
-body.dark .text-red-800,
-.dark .text-red-800 {
-  color: #fca5a5 !important; /* Light red */
-}
-
-html.dark .text-orange-800,
-body.dark .text-orange-800,
-.dark .text-orange-800 {
-  color: #fed7aa !important; /* Light orange */
-}
-
-html.dark .text-green-800,
-body.dark .text-green-800,
-.dark .text-green-800 {
-  color: #86efac !important; /* Light green */
-}
-
-html.dark .text-blue-800,
-body.dark .text-blue-800,
-.dark .text-blue-800 {
-  color: #93c5fd !important; /* Light blue */
-}
-
-html.dark .text-indigo-800,
-body.dark .text-indigo-800,
-.dark .text-indigo-800 {
-  color: #a5b4fc !important; /* Light indigo */
-}
-
-html.dark .text-purple-800,
-body.dark .text-purple-800,
-.dark .text-purple-800 {
-  color: #c4b5fd !important; /* Light purple */
-}
-
-/* ✅ PROTECTION SECTION SPECIFIC */
-[data-theme="dark"] .text-red-800,
-[data-theme="dark"] .text-orange-800,
-[data-theme="dark"] .text-green-800,
-[data-theme="dark"] .text-blue-800,
-[data-theme="dark"] .text-indigo-800,
-[data-theme="dark"] .text-purple-800 {
-  color: #ffffff !important;
-}
-
-/* ✅ TAILWIND OVERRIDE */
+/* Tailwind dark-scheme override */
 @media (prefers-color-scheme: dark) {
   .text-red-800,
   .text-orange-800,
@@ -780,26 +384,100 @@ body.dark .text-purple-800,
     color: #ffffff !important;
   }
 }
-/* =========================================
-🎯 DARK MODE CARD BACKGROUND FIXES
-========================================= */
-
-.dark .bg-white {
-  background-color: #1f2937 !important; /* gray-800 */
+/* Universal Overflow Prevention */
+body, html, main, section, div, nav {
+  overflow-x: hidden !important;
 }
 
-.dark .border-gray-200 {
-  border-color: #4b5563 !important; /* gray-600 */
+/* Responsive Containers */
+.container, .max-w-7xl, .max-w-6xl, .max-w-5xl,
+.max-w-4xl, .max-w-3xl, .max-w-2xl, .max-w-xl, .w-full {
+  width: 100% !important;
+  max-width: 100% !important;
+  overflow-x: hidden !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
 }
 
-.dark .bg-blue-50 {
-  background-color: rgba(59, 130, 246, 0.1) !important; /* blue-900/10 */
+/* Large Screens Container Limits */
+@media (min-width: 1280px) {
+  .container {
+    max-width: 1200px;
+  }
+}
+@media (min-width: 1536px) {
+  .container {
+    max-width: 1400px;
+  }
 }
 
-.dark .text-gray-800 {
-  color: #ffffff !important;
+/* 🚨 Desktop Overflow Fix Only */
+@media (min-width: 769px) {
+  /* Navigation and Header Containment */
+  nav[class*="bg-gradient-to-r"],
+  .top-navigation,
+  header {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    width: 100vw !important;
+    height: 64px !important;
+  }
+
+  /* Sidebar Containment */
+  .desktop-sidebar,
+  aside,
+  [class*="sidebar"] {
+    position: fixed !important;
+    top: 64px !important;
+    left: 0 !important;
+    height: calc(100vh - 64px) !important;
+    width: 280px !important;
+    overflow-y: auto !important;
+  }
+
+  /* Content Area Containment */
+  main, .main-content, .app-content {
+    margin-left: 280px !important;
+    margin-top: 64px !important;
+    width: calc(100vw - 280px) !important;
+    max-width: calc(100vw - 280px) !important;
+    min-height: calc(100vh - 64px) !important;
+    padding: 20px !important;
+    overflow-x: hidden !important;
+    box-sizing: border-box !important;
+  }
+
+  /* Section Containment */
+  .home-section, .verify-section, .education-section,
+  .community-section, .analytics-section,
+  .settings-section, .about-section, .protection-section {
+    width: 100% !important;
+    max-width: 100% !important;
+    overflow-x: hidden !important;
+    box-sizing: border-box !important;
+  }
+
+  /* Box-Sizing Enforcement */
+  * {
+    box-sizing: border-box !important;
+  }
+
+  /* Hide Mobile on Desktop */
+  .mobile-header, .mobile-nav-card,
+  .mobile-qr-btn, .mobile-bottom-nav {
+    display: none !important;
+  }
+
+  /* Container Width Enforcement */
+  .container, .max-w-7xl, .max-w-6xl,
+  .max-w-5xl, .max-w-4xl, .max-w-3xl,
+  .max-w-2xl, .max-w-xl, .w-full {
+    width: 100% !important;
+    max-width: 100% !important;
+    overflow-x: hidden !important;
+  }
 }
 
-.dark .text-gray-900 {
-  color: #ffffff !important;
-}
+/* End of index.css */

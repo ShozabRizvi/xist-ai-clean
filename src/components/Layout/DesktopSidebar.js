@@ -98,16 +98,20 @@ const DesktopSidebar = ({ currentSection, setCurrentSection, user, userStats, co
 
   return (
     <motion.div
-      initial={false}
-      animate={{ 
-        width: collapsed ? '80px' : '280px' 
-      }}
-      transition={{ 
-        duration: 0.3, 
-        ease: 'easeInOut' 
-      }}
-      className="desktop-sidebar bg-white dark:bg-gray-800 flex flex-col fixed top-16 left-0 h-screen-minus-nav border-r border-gray-200 dark:border-gray-700 z-40"
-    >
+  initial={false}
+  animate={{ 
+    width: collapsed ? '60px' : '280px',
+    x: 0
+  }}
+  transition={{ 
+    duration: 0.3, 
+    ease: 'easeInOut' 
+  }}
+  className={`desktop-sidebar bg-white dark:bg-gray-800 flex flex-col fixed top-16 left-0 h-screen-minus-nav border-r border-gray-200 dark:border-gray-700 z-40 ${collapsed ? 'collapsed' : 'expanded'}`}
+>
+
+
+
 
       {/* Simple Collapse Toggle */}
       <div className="p-4 border-b border-gray-200 dark:border-gray-700">
@@ -129,152 +133,85 @@ const DesktopSidebar = ({ currentSection, setCurrentSection, user, userStats, co
       {/* NAVIGATION ITEMS - FULLY ANIMATED */}
       <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
         {navigationItems.map((item, index) => {
-          const Icon = item.icon;
-          const isActive = currentSection === item.id;
-          
-          return (
-            <motion.button
-              key={item.id}
-              onClick={() => setCurrentSection(item.id)}
-              className={`w-full flex items-center px-3 py-3 rounded-lg font-medium transition-all group ${
-                collapsed ? 'justify-center' : 'space-x-3'
-              } ${
-                isActive
-                  ? 'bg-gradient-to-r from-purple-600 to-blue-600 text-white shadow-lg'
-                  : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
-              }`}
-              whileHover={{ 
-                scale: 1.02,
-                x: collapsed ? 0 : 4
-              }}
-              whileTap={{ scale: 0.98 }}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ 
-                delay: index * 0.05,
-                duration: 0.2 
-              }}
-              title={collapsed ? `${item.label} - ${item.description}` : ''}
-            >
-              <Icon className={`w-5 h-5 flex-shrink-0 ${
-                isActive 
-                  ? 'text-white' 
-                  : 'text-gray-500 dark:text-gray-400 group-hover:text-gray-700 dark:group-hover:text-gray-200'
-              }`} />
-              
-              {/* Label and Description - Animated */}
-              <AnimatePresence>
-                {!collapsed && (
-                  <motion.div
-                    initial={{ opacity: 0, width: 0 }}
-                    animate={{ opacity: 1, width: 'auto' }}
-                    exit={{ opacity: 0, width: 0 }}
-                    transition={{ duration: 0.2 }}
-                    className="flex-1 text-left overflow-hidden"
-                  >
-                    <div className="text-sm font-medium">{item.label}</div>
-                    {item.description && (
-                      <div className={`text-xs mt-0.5 ${
-                        isActive 
-                          ? 'text-white/80' 
-                          : 'text-gray-400 dark:text-gray-500 group-hover:text-gray-500 dark:group-hover:text-gray-400'
-                      }`}>
-                        {item.description}
-                      </div>
-                    )}
-                  </motion.div>
-                )}
-              </AnimatePresence>
-              
-              {/* Active Indicator for Collapsed State */}
-              {collapsed && isActive && (
-                <motion.div
-                  initial={{ scale: 0 }}
-                  animate={{ scale: 1 }}
-                  className="w-2 h-2 bg-white rounded-full absolute right-2"
-                />
-              )}
-            </motion.button>
-          );
-        })}
+  const IconComponent = item.icon;
+  const isActive = currentSection === item.id;
+
+  return (
+    <button
+      key={item.id}
+      onClick={() => setCurrentSection(item.id)}
+      className={`w-full flex items-center rounded-lg group relative overflow-hidden transition-all duration-200
+          ${isActive ? "bg-gradient-to-r from-cyan-500 to-purple-600 text-white shadow-lg" : "text-gray-300 hover:text-white hover:bg-purple-800/20"}
+          ${collapsed ? "justify-center px-2 py-3" : "px-3 py-3 space-x-3"}
+        `}
+      title={collapsed ? `${item.label}` : ""}
+    >
+      {/* Icon only when collapsed */}
+      <IconComponent className={`flex-shrink-0 ${collapsed ? "w-5 h-5" : "w-6 h-6"}`} />
+      {/* Text only when expanded */}
+      {!collapsed && (
+        <div className="flex-1 min-w-0 text-left">
+          <div className="font-medium truncate">{item.label}</div>
+          <div className="text-xs opacity-70 truncate">{item.description}</div>
+        </div>
+      )}
+      {/* Active indicator (optional) */}
+      {isActive && !collapsed && (
+        <div className="absolute right-0 top-0 bottom-0 w-1 bg-white rounded-l-full" />
+      )}
+    </button>
+  );
+})}
+
       </nav>
 
       {/* USER SECTION - SMART PROFILE DISPLAY */}
-      <motion.div 
-        className="p-4 border-t border-gray-200 dark:border-gray-700"
-        layout
-      >
-        <motion.div 
-          className={`flex items-center ${collapsed ? 'justify-center' : 'space-x-3'}`}
-          whileHover={{ scale: 1.02 }}
-          whileTap={{ scale: 0.98 }}
-        >
-          {/* User Avatar - ALWAYS VISIBLE, RESPONSIVE SIZE */}
-          <UserAvatar 
-            user={user} 
-            size={collapsed ? "md" : "lg"} 
-            className="flex-shrink-0"
-          />
-          
-          {/* User Info - Animated Show/Hide */}
-          <AnimatePresence>
-            {!collapsed && (
-              <motion.div
-                initial={{ opacity: 0, width: 0 }}
-                animate={{ opacity: 1, width: 'auto' }}
-                exit={{ opacity: 0, width: 0 }}
-                transition={{ duration: 0.2 }}
-                className="flex-1 min-w-0 overflow-hidden"
-              >
-                <div className="text-sm font-medium text-gray-900 dark:text-white truncate">
-                  {user?.displayName || user?.email?.split('@')[0] || 'User'}
-                </div>
-                <div className="text-xs text-gray-500 dark:text-gray-400 truncate">
-                  {user?.email}
-                </div>
-                <div className="text-xs text-green-600 dark:text-green-400 flex items-center mt-1">
-                  <div className="w-2 h-2 bg-green-500 rounded-full mr-1 animate-pulse"></div>
-                  Online
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </motion.div>
+      {!collapsed && (
+  <motion.div 
+    className="p-4 border-t border-gray-200 dark:border-gray-700"
+    layout
+  >
+    <motion.div 
+      className="flex items-center pl-4"
+      whileHover={{ scale: 1.02 }}
+      whileTap={{ scale: 0.98 }}
+    >
+      <div className="text-sm font-medium text-gray-900 dark:text-white truncate">
+        {user?.displayName || user?.email?.split('@')[0] || 'User'}
+      </div>
+    </motion.div>
 
-        {/* User Stats Preview - Only when expanded */}
-        <AnimatePresence>
-          {!collapsed && (
-            <motion.div
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: 'auto' }}
-              exit={{ opacity: 0, height: 0 }}
-              transition={{ duration: 0.2, delay: 0.1 }}
-              className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-700"
-            >
-              <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400">
-                <div className="text-center">
-                  <div className="font-semibold text-purple-600 dark:text-purple-400">
-                    {userStats?.totalAnalyses || 0}
-                  </div>
-                  <div>Analyses</div>
-                </div>
-                <div className="text-center">
-                  <div className="font-semibold text-blue-600 dark:text-blue-400">
-                    {userStats?.threatsDetected || 0}
-                  </div>
-                  <div>Threats</div>
-                </div>
-                <div className="text-center">
-                  <div className="font-semibold text-green-600 dark:text-green-400">
-                    {Math.floor((userStats?.totalAnalyses || 0) / 7) || 0}
-                  </div>
-                  <div>Days</div>
-                </div>
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </motion.div>
+    <motion.div
+      initial={{ opacity: 0, height: 0 }}
+      animate={{ opacity: 1, height: 'auto' }}
+      exit={{ opacity: 0, height: 0 }}
+      transition={{ duration: 0.2, delay: 0.1 }}
+      className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-700"
+    >
+      <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400">
+        <div className="text-center">
+          <div className="font-semibold text-purple-600 dark:text-purple-400">
+            {userStats?.totalAnalyses || 0}
+          </div>
+          <div>Analyses</div>
+        </div>
+        <div className="text-center">
+          <div className="font-semibold text-blue-600 dark:text-blue-400">
+            {userStats?.threatsDetected || 0}
+          </div>
+          <div>Threats</div>
+        </div>
+        <div className="text-center">
+          <div className="font-semibold text-green-600 dark:text-green-400">
+            {Math.floor((userStats?.totalAnalyses || 0) / 7) || 0}
+          </div>
+          <div>Days</div>
+        </div>
+      </div>
+    </motion.div>
+  </motion.div>
+)}
+
     </motion.div>
   );
 };

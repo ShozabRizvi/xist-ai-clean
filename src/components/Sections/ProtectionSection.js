@@ -802,11 +802,18 @@ Provide analysis in this JSON format:
     <div className={`min-h-screen relative overflow-hidden ${theme === 'dark' ? 'bg-gray-900' : 'bg-gray-50'}`}>
       {/* Header */}
       
-        <div className="max-w-7xl mx-auto">
+       
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
               
-                <ShieldExclamationIcon className="w-12 h-12 text-purple-600" />
+                <motion.div
+                            initial={{ scale: 0 }}
+                            animate={{ scale: 1 }}
+                            transition={{ type: "spring", duration: 0.8 }}
+                            className="relative inline-block"
+                          >
+                            <ShieldExclamationIcon className="w-12 h-12 md:w-16 md:h-16 mx-auto mb-4 text-purple-600" />
+                   </motion.div> 
               
               <div>
                 <h1 className="text-3xl font-bold">AI-Powered Emergency Protection</h1>
@@ -820,7 +827,7 @@ Provide analysis in this JSON format:
               Threat Level: {currentThreatLevel.toUpperCase()}
             </div>
           </div>
-        </div>
+        
       
 
       {/* Navigation Tabs */}

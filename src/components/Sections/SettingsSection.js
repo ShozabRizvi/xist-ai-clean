@@ -468,11 +468,12 @@ useEffect(() => {
       {/* HEADER */}
       <div className="text-center space-y-4">
         <motion.div
-          initial={{ scale: 1, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          className="w-16 h-16 mx-auto  rounded-full flex items-center justify-center"
+          initial={{ scale: 0 }}
+          animate={{ scale: 1 }}
+          transition={{ type: "spring", duration: 0.8 }}
+          className="relative inline-block"
         >
-          <Cog6ToothIcon className="w-12 h-12  mx-auto mb-4 text-purple-600" />
+          <Cog6ToothIcon className="w-12 h-12 md:w-16 md:h-16 mx-auto mb-4 text-purple-600" />
         </motion.div>
         
         <div>

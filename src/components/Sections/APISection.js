@@ -9,7 +9,7 @@ import {
   RocketLaunchIcon, UserGroupIcon, ChartBarIcon, LockClosedIcon,
   ClipboardIcon, SparklesIcon, FireIcon, TrophyIcon
 } from '@heroicons/react/24/outline';
-import { useAuth } from '../../context/AuthContext';
+import { useAuth } from '../../hooks/useAuth';
 import { showNotification } from '../UI/NotificationToast';
 
 const APISection = () => {

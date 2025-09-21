@@ -1,934 +1,933 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { 
+  LineChart, Line, AreaChart, Area, BarChart, Bar, PieChart, Pie, Cell,
+  XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer 
+} from 'recharts';
+import { useAuth } from '../../hooks/useAuth';
+import { showNotification } from '../UI/NotificationToast';
 import {
-  ChartBarIcon, ArrowTrendingUpIcon,
-  ArrowTrendingDownIcon, ShieldCheckIcon,
+  ChartBarIcon, ArrowTrendingUpIcon, ArrowTrendingDownIcon, ShieldCheckIcon,
   GlobeAltIcon, UserGroupIcon, ClockIcon, ExclamationTriangleIcon,
   CheckCircleIcon, XCircleIcon, EyeIcon, FireIcon, BoltIcon,
   ArrowPathIcon, CalendarIcon, FunnelIcon, ShareIcon, ArrowDownTrayIcon,
   MapIcon, DevicePhoneMobileIcon, ComputerDesktopIcon, ServerIcon,
-  MagnifyingGlassIcon, CpuChipIcon, WifiIcon, SignalIcon, DocumentTextIcon, SparklesIcon
+  MagnifyingGlassIcon, CpuChipIcon, WifiIcon, SignalIcon,
+  DocumentTextIcon, SparklesIcon, UserIcon, BuildingOfficeIcon,
+  AcademicCapIcon, NewspaperIcon, PhoneIcon, EnvelopeIcon
 } from '@heroicons/react/24/outline';
-import { useAuth } from '../../context/AuthContext';
-import { showNotification } from '../UI/NotificationToast';
 
-
-const AnalyticsSection = ({ analysisData = [] }) => {
-
-  // Helper function for threat level colors
-  const getThreatColor = (threatLevel) => {
-    switch (threatLevel?.toUpperCase()) {
-      case 'HIGH':
-      case 'CRITICAL':
-        return 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200';
-      case 'MEDIUM':
-        return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200';
-      case 'LOW':
-        return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200';
-      default:
-        return 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200';
-    }
-  };
-
-  // Auth context
+const AnalyticsSection = ({ 
+  analysisData = [], 
+  localAnalysisHistory = [], 
+  performanceMetrics = {} 
+}) => {
   const { user } = useAuth();
-
+  
   // State management
-  const [selectedTimeRange, setSelectedTimeRange] = useState('7days');
+  const [selectedTimeRange, setSelectedTimeRange] = useState('24hours');
+  const [selectedView, setSelectedView] = useState('overview'); // 'overview', 'personal', 'public'
   const [selectedMetric, setSelectedMetric] = useState('all');
   const [isRealTimeEnabled, setIsRealTimeEnabled] = useState(true);
   const [analyticsData, setAnalyticsData] = useState({});
   const [isLoading, setIsLoading] = useState(true);
   const [lastUpdated, setLastUpdated] = useState(new Date());
-  const [filterType, setFilterType] = useState('all');
-  const [viewMode, setViewMode] = useState('overview'); // overview, detailed, comparison
 
   // Time range options
   const TIME_RANGES = {
-    '1hour': { label: '1 Hour', days: 0, hours: 1 },
-    '24hours': { label: '24 Hours', days: 1, hours: 0 },
-    '7days': { label: '7 Days', days: 7, hours: 0 },
-    '30days': { label: '30 Days', days: 30, hours: 0 },
-    '90days': { label: '3 Months', days: 90, hours: 0 },
-    '1year': { label: '1 Year', days: 365, hours: 0 }
+    '1hour': { label: '1 Hour', hours: 1 },
+    '6hours': { label: '6 Hours', hours: 6 },
+    '24hours': { label: '24 Hours', hours: 24 },
+    '7days': { label: '7 Days', hours: 168 },
+    '30days': { label: '30 Days', hours: 720 }
   };
 
-  // Metric categories
-  const METRIC_TYPES = {
-    'all': { label: 'All Metrics', color: 'blue' },
-    'threats': { label: 'Threat Detection', color: 'red' },
-    'misinformation': { label: 'Misinformation', color: 'orange' },
-    'performance': { label: 'Performance', color: 'green' },
-    'users': { label: 'User Activity', color: 'purple' },
-    'accuracy': { label: 'AI Accuracy', color: 'indigo' }
+  // View modes
+  const VIEW_MODES = {
+    'overview': { label: 'Overview', icon: ChartBarIcon, color: 'blue' },
+    'personal': { label: 'Your Analytics', icon: UserIcon, color: 'green' },
+    'public': { label: 'Public Analytics', icon: GlobeAltIcon, color: 'purple' }
   };
 
-  // Process real analysis data or fallback to mock
-const processAnalyticsData = () => {
-  // If we have real analysis data, process it
-  if (analysisData && analysisData.length > 0) {
+  // Process user's personal analysis data
+  const processPersonalAnalytics = () => {
     const now = new Date();
+    const timeRange = TIME_RANGES[selectedTimeRange];
+    const cutoffTime = new Date(now.getTime() - timeRange.hours * 60 * 60 * 1000);
     
-    // Create hourly buckets for last 24 hours
-    const hourlyData = Array.from({ length: 24 }, (_, i) => {
-      const hour = new Date(now.getTime() - (23 - i) * 60 * 60 * 1000);
+    // Combine both current session and stored history
+    const allPersonalData = [
+      ...analysisData,
+      ...(localAnalysisHistory || [])
+    ].filter(analysis => 
+      analysis && analysis.timestamp && new Date(analysis.timestamp) > cutoffTime
+    );
+
+    // Create time buckets
+    const bucketCount = selectedTimeRange === '1hour' ? 12 : 
+                       selectedTimeRange === '6hours' ? 12 :
+                       selectedTimeRange === '24hours' ? 24 : 
+                       selectedTimeRange === '7days' ? 7 : 30;
+
+    const bucketSize = timeRange.hours * 60 * 60 * 1000 / bucketCount;
+
+    const timeBuckets = Array.from({ length: bucketCount }, (_, i) => {
+      const bucketTime = new Date(now.getTime() - (bucketCount - 1 - i) * bucketSize);
       return {
-        time: `${String(hour.getHours()).padStart(2, '0')}:00`,
-        threats: 0,
+        time: formatTimeLabel(bucketTime, selectedTimeRange),
+        timestamp: bucketTime,
         analyses: 0,
+        threats: 0,
         blocked: 0,
-        accuracy: 0
+        accuracy: 0,
+        accuracyCount: 0,
+        phishing: 0,
+        scams: 0,
+        misinformation: 0,
+        legitimate: 0
       };
     });
 
-    // Process real analysis data into hourly buckets
-    analysisData.forEach(analysis => {
-      const analysisHour = new Date(analysis.timestamp).getHours();
-      const bucket = hourlyData.find(h => h.time === `${String(analysisHour).padStart(2, '0')}:00`);
-      if (bucket) {
-        bucket.analyses++;
-        if (analysis.overallTreatLevel === 'HIGH' || analysis.overallTreatLevel === 'CRITICAL') {
-          bucket.threats++;
+    // Process personal data into buckets
+    allPersonalData.forEach(analysis => {
+      const analysisTime = new Date(analysis.timestamp);
+      const bucketIndex = Math.floor((now.getTime() - analysisTime.getTime()) / bucketSize);
+      const targetBucket = timeBuckets[bucketCount - 1 - bucketIndex];
+      
+      if (targetBucket && bucketIndex >= 0 && bucketIndex < bucketCount) {
+        targetBucket.analyses++;
+        
+        // Categorize threats
+        const riskLevel = analysis.overallRiskLevel || analysis.riskLevel || 'LOW';
+        if (riskLevel === 'HIGH' || riskLevel === 'CRITICAL') {
+          targetBucket.threats++;
         }
-        if (analysis.recommendation === 'block') {
-          bucket.blocked++;
+        
+        if (analysis.recommendation === 'block' || analysis.action === 'block') {
+          targetBucket.blocked++;
         }
-        bucket.accuracy += (analysis.confidence || 0);
+        
+        // Add accuracy/confidence
+        if (analysis.confidence || analysis.overallConfidence) {
+          const confidence = analysis.confidence || analysis.overallConfidence;
+          targetBucket.accuracy += typeof confidence === 'number' ? confidence : 0.8;
+          targetBucket.accuracyCount++;
+        }
+        
+        // Categorize by type
+        const category = (analysis.category || analysis.type || '').toLowerCase();
+        if (category.includes('phishing')) {
+          targetBucket.phishing++;
+        } else if (category.includes('scam') || category.includes('fraud')) {
+          targetBucket.scams++;
+        } else if (category.includes('misinformation') || category.includes('fake')) {
+          targetBucket.misinformation++;
+        } else if (riskLevel === 'LOW' || riskLevel === 'SAFE') {
+          targetBucket.legitimate++;
+        }
       }
     });
 
     // Calculate averages
-    hourlyData.forEach(bucket => {
-      if (bucket.analyses > 0) {
-        bucket.accuracy = (bucket.accuracy / bucket.analyses) * 100;
-      }
+    timeBuckets.forEach(bucket => {
+      bucket.accuracy = bucket.accuracyCount > 0 ? 
+        Math.round((bucket.accuracy / bucket.accuracyCount) * 100) : 0;
+      delete bucket.accuracyCount;
+      delete bucket.timestamp;
     });
 
     return {
-      // Real overview metrics
-      totalAnalyses: analysisData.length,
-      threatsDetected: analysisData.filter(a => 
-        a.overallTreatLevel === 'HIGH' || a.overallTreatLevel === 'CRITICAL'
+      totalAnalyses: allPersonalData.length,
+      threatsDetected: allPersonalData.filter(a => 
+        (a.overallRiskLevel === 'HIGH' || a.overallRiskLevel === 'CRITICAL') ||
+        (a.riskLevel === 'HIGH' || a.riskLevel === 'CRITICAL')
       ).length,
-      threatsBlocked: analysisData.filter(a => a.recommendation === 'block').length,
-      accuracyRate: analysisData.length > 0 
-        ? (analysisData.reduce((sum, a) => sum + (a.confidence || 0), 0) / analysisData.length) * 100
-        : 0,
-      activeUsers: 12847 + Math.floor(Math.random() * 200), // Keep mock for now
-      
-      // Real time series data
-      timeSeriesData: hourlyData,
-      
-      // Keep other sections as mock for now (you can process these later)
-      threatCategories: [
-        { name: 'Phishing', count: 5847 + Math.floor(Math.random() * 100), trend: 'up' },
-        { name: 'Romance Scams', count: 3492 + Math.floor(Math.random() * 50), trend: 'up' },
-        { name: 'Investment Fraud', count: 2941 + Math.floor(Math.random() * 75), trend: 'down' },
-        { name: 'Tech Support Scams', count: 2156 + Math.floor(Math.random() * 40), trend: 'stable' },
-        { name: 'Health Misinformation', count: 1847 + Math.floor(Math.random() * 30), trend: 'up' },
-        { name: 'Political Disinformation', count: 1634 + Math.floor(Math.random() * 25), trend: 'down' }
-      ],
-      
-      geographicData: [
-        { country: 'United States', threats: 4234, blocked: 4102 },
-        { country: 'United Kingdom', threats: 2156, blocked: 2089 },
-        { country: 'Canada', threats: 1847, blocked: 1791 },
-        { country: 'Australia', threats: 1456, blocked: 1398 },
-        { country: 'Germany', threats: 1298, blocked: 1245 },
-        { country: 'France', threats: 1147, blocked: 1098 }
-      ],
-      
-      platformData: [
-        { platform: 'Web Browser', percentage: 68.4, threats: 12459 },
-        { platform: 'Mobile App', percentage: 23.7, threats: 4312 },
-        { platform: 'API Integration', percentage: 7.9, threats: 1623 }
-      ],
-      
-      modelPerformance: [
-        { model: 'XIST-GPT-4o', accuracy: 97.2, speed: 1.2, threats: 8934 },
-        { model: 'XIST-Claude-3', accuracy: 96.8, speed: 0.9, threats: 7123 },
-        { model: 'XIST-Gemini-Pro', accuracy: 95.9, speed: 1.5, threats: 2337 }
-      ]
+      threatsBlocked: allPersonalData.filter(a => 
+        a.recommendation === 'block' || a.action === 'block'
+      ).length,
+      averageAccuracy: allPersonalData.length > 0 ? 
+        Math.round(allPersonalData.reduce((sum, a) => 
+          sum + ((a.confidence || a.overallConfidence || 0.8) * 100), 0
+        ) / allPersonalData.length) : 0,
+      timeSeriesData: timeBuckets,
+      categoryData: getCategoryBreakdown(allPersonalData),
+      performanceData: performanceMetrics
     };
-  }
-  
-  // Fallback to mock data when no real analysis data
-  return generateMockAnalytics();
-};
-
-
-// Keep original generateMockAnalytics for fallback
-const generateMockAnalytics = () => {
-  const now = new Date();
-  
-  return {
-    totalAnalyses: 245689 + Math.floor(Math.random() * 1000),
-    threatsDetected: 18394 + Math.floor(Math.random() * 100),
-    threatsBlocked: 17892 + Math.floor(Math.random() * 100),
-    accuracyRate: 96.8 + (Math.random() * 0.4 - 0.2),
-    activeUsers: 12847 + Math.floor(Math.random() * 200),
-    
-    timeSeriesData: Array.from({ length: 24 }, (_, i) => ({
-      time: `${String(now.getHours() - 23 + i).padStart(2, '0')}:00`,
-      threats: Math.floor(Math.random() * 50) + 10,
-      analyses: Math.floor(Math.random() * 200) + 50,
-      blocked: Math.floor(Math.random() * 45) + 8,
-      accuracy: 94 + Math.random() * 6
-    })),
-    
-    // ... rest of original mock data
   };
-};
 
+  // Generate public/community analytics
+  const generatePublicAnalytics = () => {
+    const now = new Date();
+    const timeRange = TIME_RANGES[selectedTimeRange];
+    const bucketCount = selectedTimeRange === '7days' ? 7 : 
+                       selectedTimeRange === '30days' ? 30 : 24;
+
+    // Mock public data based on time range (in real app, this would come from API)
+    const publicTimeSeriesData = Array.from({ length: bucketCount }, (_, i) => {
+      const bucketTime = new Date(now.getTime() - (bucketCount - 1 - i) * 
+        (timeRange.hours * 60 * 60 * 1000 / bucketCount));
+      
+      // Simulate realistic public usage patterns
+      const baseAnalyses = selectedTimeRange === '30days' ? 
+        Math.floor(Math.random() * 5000) + 2000 :
+        selectedTimeRange === '7days' ? 
+        Math.floor(Math.random() * 1500) + 800 :
+        Math.floor(Math.random() * 300) + 100;
+      
+      return {
+        time: formatTimeLabel(bucketTime, selectedTimeRange),
+        analyses: baseAnalyses,
+        threats: Math.floor(baseAnalyses * (0.15 + Math.random() * 0.1)), // 15-25% threat rate
+        blocked: Math.floor(baseAnalyses * (0.12 + Math.random() * 0.08)), // 12-20% blocked
+        accuracy: Math.round((92 + Math.random() * 6) * 100) / 100, // 92-98% accuracy
+        users: Math.floor(baseAnalyses * 0.3), // ~30% unique users
+        countries: Math.floor(Math.random() * 50) + 20
+      };
+    });
+
+    return {
+      totalAnalyses: 2847569 + Math.floor(Math.random() * 10000),
+      threatsDetected: 456892 + Math.floor(Math.random() * 1000),
+      threatsBlocked: 441203 + Math.floor(Math.random() * 1000),
+      globalAccuracy: 96.3 + (Math.random() * 0.8 - 0.4),
+      activeUsers: 89247 + Math.floor(Math.random() * 5000),
+      countriesServed: 147,
+      timeSeriesData: publicTimeSeriesData,
+      categoryData: getGlobalCategoryData(),
+      geographicData: getGlobalGeographicData(),
+      platformData: getGlobalPlatformData(),
+      modelPerformance: getGlobalModelPerformance()
+    };
+  };
+
+  // Helper functions
+  const formatTimeLabel = (date, timeRange) => {
+    if (timeRange === '1hour' || timeRange === '6hours') {
+      return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+    } else if (timeRange === '24hours') {
+      return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+    } else if (timeRange === '7days') {
+      return date.toLocaleDateString('en-US', { weekday: 'short' });
+    } else {
+      return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    }
+  };
+
+  const getCategoryBreakdown = (data) => {
+    const categories = {};
+    data.forEach(analysis => {
+      const category = analysis.category || analysis.type || 'Unknown';
+      categories[category] = (categories[category] || 0) + 1;
+    });
+    
+    return Object.entries(categories)
+      .map(([name, count]) => ({ name, count, value: count }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 6);
+  };
+
+  const getGlobalCategoryData = () => [
+    { name: 'Phishing Attempts', count: 156829, value: 156829 },
+    { name: 'Financial Scams', count: 98432, value: 98432 },
+    { name: 'Romance Scams', count: 67234, value: 67234 },
+    { name: 'Tech Support Scams', count: 54123, value: 54123 },
+    { name: 'Health Misinformation', count: 43567, value: 43567 },
+    { name: 'Political Misinformation', count: 36707, value: 36707 }
+  ];
+
+  const getGlobalGeographicData = () => [
+    { country: 'United States', threats: 89234, blocked: 86543, users: 23456 },
+    { country: 'United Kingdom', threats: 45678, blocked: 44321, users: 12890 },
+    { country: 'Canada', threats: 32145, blocked: 31234, users: 8765 },
+    { country: 'Australia', threats: 28976, blocked: 28123, users: 7432 },
+    { country: 'Germany', threats: 25843, blocked: 25001, users: 6789 },
+    { country: 'India', threats: 67890, blocked: 65432, users: 18765 }
+  ];
+
+  const getGlobalPlatformData = () => [
+    { platform: 'Web Browser', percentage: 62.4, value: 1776890 },
+    { platform: 'Mobile App', percentage: 28.7, value: 817247 },
+    { platform: 'API Integration', percentage: 8.9, value: 253432 }
+  ];
+
+  const getGlobalModelPerformance = () => [
+    { model: 'Xist-GPT-4o', accuracy: 97.8, speed: 1.1, analyses: 1234567 },
+    { model: 'Xist-Claude-3', accuracy: 96.9, speed: 0.8, analyses: 892341 },
+    { model: 'Xist-Gemini-Pro', accuracy: 95.7, speed: 1.4, analyses: 720861 }
+  ];
+
+  // Process and combine data based on selected view
+  const processAnalyticsData = () => {
+    const personalData = processPersonalAnalytics();
+    const publicData = generatePublicAnalytics();
+
+    if (selectedView === 'personal') {
+      return personalData;
+    } else if (selectedView === 'public') {
+      return publicData;
+    } else {
+      // Overview combines both
+      return {
+        ...publicData,
+        personalData,
+        hasPersonalData: personalData.totalAnalyses > 0
+      };
+    }
+  };
 
   // Real-time data updates
   useEffect(() => {
-   const generateInitialData = () => {
-  setAnalyticsData(processAnalyticsData());
-  setIsLoading(false);
-  setLastUpdated(new Date());
-};
+    const updateData = () => {
+      setAnalyticsData(processAnalyticsData());
+      setIsLoading(false);
+      setLastUpdated(new Date());
+    };
 
-    generateInitialData();
+    updateData();
 
     let interval;
     if (isRealTimeEnabled) {
-      interval = setInterval(() => {
-  setAnalyticsData(processAnalyticsData());
-  setLastUpdated(new Date());
-}, 5000);
- // Update every 5 seconds
+      interval = setInterval(updateData, 10000); // Update every 10 seconds
     }
 
     return () => {
       if (interval) clearInterval(interval);
     };
-  }, [selectedTimeRange, isRealTimeEnabled]);
+  }, [selectedTimeRange, selectedView, analysisData.length, localAnalysisHistory.length]);
 
-  // Filtered metrics based on selection
-  const filteredMetrics = useMemo(() => {
-    if (!analyticsData.timeSeriesData) return [];
-    
-    return analyticsData.timeSeriesData.map(item => {
-      switch (selectedMetric) {
-        case 'threats':
-          return { ...item, value: item.threats, label: 'Threats Detected' };
-        case 'analyses':
-          return { ...item, value: item.analyses, label: 'Total Analyses' };
-        case 'accuracy':
-          return { ...item, value: item.accuracy, label: 'Accuracy Rate' };
-        default:
-          return { ...item, value: item.threats, label: 'All Metrics' };
-      }
-    });
-  }, [analyticsData.timeSeriesData, selectedMetric]);
+  // Chart colors
+  const COLORS = {
+    primary: '#3b82f6',
+    secondary: '#10b981', 
+    danger: '#ef4444',
+    warning: '#f59e0b',
+    info: '#06b6d4',
+    purple: '#8b5cf6'
+  };
 
-  // Export analytics data
+  const CHART_COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4'];
+
+  // Export function
   const exportAnalytics = (format) => {
     const exportData = {
       exportDate: new Date().toISOString(),
       timeRange: selectedTimeRange,
+      view: selectedView,
+      userScope: user ? 'authenticated' : 'anonymous',
       data: analyticsData
     };
-    
-    const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+
+    const blob = new Blob([JSON.stringify(exportData, null, 2)], { 
+      type: 'application/json' 
+    });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `xist-analytics-${selectedTimeRange}-${Date.now()}.json`;
+    a.download = `xist-analytics-${selectedView}-${selectedTimeRange}-${Date.now()}.json`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
     
-    showNotification(`📊 Analytics exported as ${format.toUpperCase()}`, 'success');
+    showNotification(`📊 Analytics exported (${selectedView} view)`, 'success');
   };
 
+  // Loading state
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 dark:from-gray-900 dark:via-blue-900/20 dark:to-purple-900/20 py-8">
-        <div className="max-w-7xl mx-auto px-6">
-          <div className="flex items-center justify-center min-h-[60vh]">
-            <motion.div
-              animate={{ rotate: 360 }}
-              transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-              className="w-16 h-16 border-4 border-blue-500 border-t-transparent rounded-full"
-            />
-            <span className="ml-4 text-xl font-semibold text-gray-700 dark:text-gray-300">
-              Loading Analytics Dashboard...
-            </span>
-          </div>
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-4 md:p-6">
+        <div className="flex items-center justify-center min-h-96">
+          <motion.div
+            animate={{ rotate: 360 }}
+            transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+            className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full"
+          />
+          <span className="ml-3 text-lg text-gray-600 dark:text-gray-300">
+            Loading Xist AI Analytics...
+          </span>
         </div>
       </div>
     );
   }
 
+  // Get stats array based on selected view
+  const getStatsArray = () => {
+    if (selectedView === 'personal' || selectedView === 'overview') {
+      return [
+        { 
+          title: 'Your Analyses', 
+          value: analyticsData.personalData?.totalAnalyses?.toLocaleString() || 
+                 analyticsData.totalAnalyses?.toLocaleString() || '0', 
+          change: '+12.5%', 
+          icon: DocumentTextIcon, 
+          color: 'blue',
+          subtitle: 'Content you\'ve verified'
+        },
+        { 
+          title: 'Threats Found', 
+          value: analyticsData.personalData?.threatsDetected?.toLocaleString() || 
+                 analyticsData.threatsDetected?.toLocaleString() || '0', 
+          change: '+8.2%', 
+          icon: ExclamationTriangleIcon, 
+          color: 'red',
+          subtitle: 'In your analyses'
+        },
+        { 
+          title: 'Blocked Content', 
+          value: analyticsData.personalData?.threatsBlocked?.toLocaleString() || 
+                 analyticsData.threatsBlocked?.toLocaleString() || '0', 
+          change: '+15.3%', 
+          icon: ShieldCheckIcon, 
+          color: 'green',
+          subtitle: 'Successfully prevented'
+        },
+        { 
+          title: 'Your Accuracy', 
+          value: `${analyticsData.personalData?.averageAccuracy || 
+                   analyticsData.averageAccuracy || 0}%`, 
+          change: '+2.1%', 
+          icon: SparklesIcon, 
+          color: 'purple',
+          subtitle: 'Detection precision'
+        }
+      ];
+    } else {
+      return [
+        { 
+          title: 'Global Analyses', 
+          value: analyticsData.totalAnalyses?.toLocaleString() || '0', 
+          change: '+18.7%', 
+          icon: GlobeAltIcon, 
+          color: 'blue',
+          subtitle: 'Worldwide verifications'
+        },
+        { 
+          title: 'Threats Detected', 
+          value: analyticsData.threatsDetected?.toLocaleString() || '0', 
+          change: '+14.3%', 
+          icon: ExclamationTriangleIcon, 
+          color: 'red',
+          subtitle: 'Global threat detection'
+        },
+        { 
+          title: 'Active Users', 
+          value: analyticsData.activeUsers?.toLocaleString() || '0', 
+          change: '+22.1%', 
+          icon: UserGroupIcon, 
+          color: 'green',
+          subtitle: `Across ${analyticsData.countriesServed || 0} countries`
+        },
+        { 
+          title: 'System Accuracy', 
+          value: `${Math.round(analyticsData.globalAccuracy || 0)}%`, 
+          change: '+0.8%', 
+          icon: CpuChipIcon, 
+          color: 'purple',
+          subtitle: 'AI model performance'
+        }
+      ];
+    }
+  };
+
   return (
-    <div className="min-h-screen py-8">
-      <div className="max-w-7xl mx-auto px-6 space-y-8">
-        
-        {/* Header Section */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8"
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-4 md:p-6">
+      
+      {/* Header Section */}
+      <motion.div 
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="mb-8"
+      >
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900 dark:text-white flex items-center gap-3">
+              <motion.div
+          initial={{ scale: 0 }}
+          animate={{ scale: 1 }}
+          transition={{ type: "spring", duration: 0.8 }}
+          className="relative inline-block"
         >
-          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between space-y-6 lg:space-y-0">
-            <div className="flex items-center space-x-4">
-              <div className="p-4  rounded-2xl">
-                <ChartBarIcon className="w-12 h-12 text-purple-600" />
-              </div>
-              <div>
-                <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-                  Analytics Dashboard
-                </h1>
-                <p className="text-gray-600 dark:text-gray-400 mt-1">
-                  Real-time threat intelligence and performance metrics
-                </p>
-                <div className="flex items-center space-x-4 mt-2">
-                  <div className="flex items-center space-x-2">
-                    <div className={`w-2 h-2 rounded-full ${isRealTimeEnabled ? 'bg-green-500 animate-pulse' : 'bg-gray-400'}`} />
-                    <span className="text-sm text-gray-600 dark:text-gray-400">
-                      {isRealTimeEnabled ? 'Live Updates' : 'Static Data'}
-                    </span>
-                  </div>
-                  <div className="text-sm text-gray-500 dark:text-gray-400">
-                    Last updated: {lastUpdated.toLocaleTimeString()}
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Controls */}
-            <div className="flex flex-col sm:flex-row items-stretch sm:items-center space-y-3 sm:space-y-0 sm:space-x-3">
-              {/* Time Range Selector */}
-              <select
-                value={selectedTimeRange}
-                onChange={(e) => setSelectedTimeRange(e.target.value)}
-                className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                {Object.entries(TIME_RANGES).map(([key, range]) => (
-                  <option key={key} value={key}>{range.label}</option>
-                ))}
-              </select>
-
-              {/* Metric Filter */}
-              <select
-                value={selectedMetric}
-                onChange={(e) => setSelectedMetric(e.target.value)}
-                className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                <option value="all">All Metrics</option>
-                <option value="threats">Threats</option>
-                <option value="analyses">Analyses</option>
-                <option value="accuracy">Accuracy</option>
-              </select>
-
-              {/* Real-time Toggle */}
-              <motion.button
-                onClick={() => setIsRealTimeEnabled(!isRealTimeEnabled)}
-                className={`flex items-center space-x-2 px-4 py-2 rounded-lg font-medium transition-all ${
-                  isRealTimeEnabled 
-                    ? 'bg-green-100 text-green-700 dark:bg-green-900/20 dark:text-green-400' 
-                    : 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300'
-                }`}
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-              >
-                <WifiIcon className={`w-4 h-4 ${isRealTimeEnabled ? 'animate-pulse' : ''}`} />
-                <span>{isRealTimeEnabled ? 'Live' : 'Static'}</span>
-              </motion.button>
-
-              {/* Export Button */}
-              <motion.button
-                onClick={() => exportAnalytics('json')}
-                className="flex items-center space-x-2 bg-blue-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-blue-700 transition-colors"
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-              >
-                <ArrowDownTrayIcon className="w-4 h-4" />
-                <span>Export</span>
-              </motion.button>
-            </div>
+          <ChartBarIcon className="w-12 h-12 md:w-16 md:h-16 mx-auto mb-4 text-purple-600" />
+          </motion.div>
+              Analytics
+              {selectedView === 'personal' && user && (
+                <span className="text-sm px-3 py-1 bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200 rounded-full">
+                  Personal
+                </span>
+              )}
+              {selectedView === 'public' && (
+                <span className="text-sm px-3 py-1 bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200 rounded-full">
+                  Global
+                </span>
+              )}
+            </h1>
+            <p className="text-gray-600 dark:text-gray-300 mt-2 flex items-center gap-2">
+              {isRealTimeEnabled && (
+                <span className="flex items-center gap-1">
+                  <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                  Live
+                </span>
+              )}
+              Last updated: {lastUpdated.toLocaleTimeString()}
+              {selectedView === 'overview' && ' • Combined analytics'}
+              {selectedView === 'personal' && user && ' • Your analysis data'}
+              {selectedView === 'public' && ' • Community data'}
+            </p>
           </div>
-        </motion.div>
-
-        {/* Key Metrics Overview */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1 }}
-          className="grid grid-cols-2 lg:grid-cols-5 gap-6"
-        >
-          {[
-            {
-              title: 'Total Analyses',
-              value: analyticsData.totalAnalyses?.toLocaleString(),
-              change: '+12.5%',
-              trend: 'up',
-              icon: MagnifyingGlassIcon,
-              color: 'blue'
-            },
-            {
-              title: 'Threats Detected',
-              value: analyticsData.threatsDetected?.toLocaleString(),
-              change: '+8.3%',
-              trend: 'up',
-              icon: ExclamationTriangleIcon,
-              color: 'red'
-            },
-            {
-              title: 'Threats Blocked',
-              value: analyticsData.threatsBlocked?.toLocaleString(),
-              change: '+9.1%',
-              trend: 'up',
-              icon: ShieldCheckIcon,
-              color: 'green'
-            },
-            {
-              title: 'Accuracy Rate',
-              value: `${analyticsData.accuracyRate?.toFixed(1)}%`,
-              change: '+0.3%',
-              trend: 'up',
-              icon: SparklesIcon,
-              color: 'purple'
-            },
-            {
-              title: 'Active Users',
-              value: analyticsData.activeUsers?.toLocaleString(),
-              change: '+15.7%',
-              trend: 'up',
-              icon: UserGroupIcon,
-              color: 'indigo'
-            }
-          ].map((metric, index) => (
-            <motion.div
-              key={index}
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: 0.1 + index * 0.05 }}
-              className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-lg hover:shadow-xl transition-all"
-            >
-              <div className="flex items-center justify-between mb-4">
-                <div className={`p-3 rounded-lg bg-gradient-to-r ${
-                  metric.color === 'blue' ? 'from-blue-500 to-blue-600' :
-                  metric.color === 'red' ? 'from-red-500 to-red-600' :
-                  metric.color === 'green' ? 'from-green-500 to-green-600' :
-                  metric.color === 'purple' ? 'from-purple-500 to-purple-600' :
-                  'from-indigo-500 to-indigo-600'
-                }`}>
-                  <metric.icon className="w-6 h-6 text-white" />
-                </div>
-                <div className={`flex items-center space-x-1 text-sm font-medium ${
-                  metric.trend === 'up' ? 'text-green-600 dark:text-green-400' :
-                  metric.trend === 'down' ? 'text-red-600 dark:text-red-400' :
-                  'text-gray-600 dark:text-gray-400'
-                }`}>
-                  {metric.trend === 'up' ? (
-                    <ArrowTrendingUpIcon className="w-4 h-4" />
-                  ) : metric.trend === 'down' ? (
-                    <ArrowTrendingDownIcon  className="w-4 h-4" />
-                  ) : (
-                    <div className="w-4 h-4 bg-gray-400 rounded-full" />
-                  )}
-                  <span>{metric.change}</span>
-                </div>
-              </div>
-              <div className="space-y-1">
-                <h3 className="text-2xl font-bold text-gray-900 dark:text-white">
-                  {metric.value}
-                </h3>
-                <p className="text-sm text-gray-600 dark:text-gray-400">
-                  {metric.title}
-                </p>
-              </div>
-            </motion.div>
-          ))}
-        </motion.div>
-
-        {/* Real-time Chart */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2 }}
-          className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8"
-        >
-          <div className="flex items-center justify-between mb-6">
-            <div>
-              <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
-                Real-time Threat Detection
-              </h2>
-              <p className="text-gray-600 dark:text-gray-400">
-                Live monitoring of threat detection across the last 24 hours
-              </p>
-            </div>
-            <div className="flex items-center space-x-2">
-              <div className="flex items-center space-x-2 text-sm text-gray-500 dark:text-gray-400">
-                <div className="w-3 h-3 bg-red-500 rounded-full"></div>
-                <span>Threats</span>
-              </div>
-              <div className="flex items-center space-x-2 text-sm text-gray-500 dark:text-gray-400">
-                <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
-                <span>Analyses</span>
-              </div>
-              <div className="flex items-center space-x-2 text-sm text-gray-500 dark:text-gray-400">
-                <div className="w-3 h-3 bg-green-500 rounded-full"></div>
-                <span>Blocked</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Simple Chart Visualization */}
-          <div className="h-80 flex items-end justify-between space-x-2">
-            {analyticsData.timeSeriesData?.map((dataPoint, index) => {
-              const maxValue = Math.max(
-                ...analyticsData.timeSeriesData.map(d => Math.max(d.threats, d.analyses / 4, d.blocked))
-              );
-              
-              return (
-                <div key={index} className="flex-1 flex flex-col items-center space-y-2">
-                  <div className="flex flex-col items-center justify-end h-64 space-y-1">
-                    {/* Analyses bar */}
-                    <motion.div
-                      initial={{ height: 0 }}
-                      animate={{ height: `${(dataPoint.analyses / 4 / maxValue) * 240}px` }}
-                      transition={{ delay: index * 0.05, duration: 0.8 }}
-                      className="w-full bg-gradient-to-t from-blue-400 to-blue-500 rounded-t opacity-60 min-h-[4px]"
-                      title={`Analyses: ${dataPoint.analyses}`}
-                    />
-                    
-                    {/* Threats bar */}
-                    <motion.div
-                      initial={{ height: 0 }}
-                      animate={{ height: `${(dataPoint.threats / maxValue) * 240}px` }}
-                      transition={{ delay: index * 0.05, duration: 0.8 }}
-                      className="w-full bg-gradient-to-t from-red-400 to-red-500 rounded-t min-h-[4px]"
-                      title={`Threats: ${dataPoint.threats}`}
-                    />
-                    
-                    {/* Blocked bar */}
-                    <motion.div
-                      initial={{ height: 0 }}
-                      animate={{ height: `${(dataPoint.blocked / maxValue) * 240}px` }}
-                      transition={{ delay: index * 0.05, duration: 0.8 }}
-                      className="w-full bg-gradient-to-t from-green-400 to-green-500 rounded-t min-h-[4px]"
-                      title={`Blocked: ${dataPoint.blocked}`}
-                    />
-                  </div>
-                  
-                  <div className="text-xs text-gray-500 dark:text-gray-400 transform -rotate-45 origin-left">
-                    {dataPoint.time}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </motion.div>
-
-        {/* Threat Categories & Geographic Distribution */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           
-          {/* Threat Categories */}
-          <motion.div
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.3 }}
-            className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8"
-          >
-            <div className="flex items-center justify-between mb-6">
-              <div>
-                <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
-                  Threat Categories
-                </h2>
-                <p className="text-gray-600 dark:text-gray-400">
-                  Distribution of detected threats by category
-                </p>
-              </div>
-              <FireIcon className="w-8 h-8 text-red-500" />
+          <div className="flex flex-wrap items-center gap-3">
+            {/* View Mode Selector */}
+            <div className="flex bg-white dark:bg-gray-800 rounded-lg p-1 border border-gray-200 dark:border-gray-700">
+              {Object.entries(VIEW_MODES).map(([key, mode]) => (
+                <button
+                  key={key}
+                  onClick={() => setSelectedView(key)}
+                  className={`px-3 py-1 text-xs rounded-md transition-all duration-200 flex items-center gap-1 ${
+                    selectedView === key
+                      ? `bg-${mode.color}-500 text-white shadow-sm`
+                      : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
+                  }`}
+                >
+                  <mode.icon className="w-3 h-3" />
+                  {mode.label}
+                </button>
+              ))}
             </div>
 
-            <div className="space-y-4">
-              {analyticsData.threatCategories?.map((category, index) => {
-                const maxCount = Math.max(...analyticsData.threatCategories.map(c => c.count));
-                const percentage = (category.count / maxCount) * 100;
+            {/* Time Range Selector */}
+            <div className="flex bg-white dark:bg-gray-800 rounded-lg p-1 border border-gray-200 dark:border-gray-700">
+              {Object.entries(TIME_RANGES).map(([key, range]) => (
+                <button
+                  key={key}
+                  onClick={() => setSelectedTimeRange(key)}
+                  className={`px-3 py-1 text-xs rounded-md transition-all duration-200 ${
+                    selectedTimeRange === key
+                      ? 'bg-blue-500 text-white shadow-sm'
+                      : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
+                  }`}
+                >
+                  {range.label}
+                </button>
+              ))}
+            </div>
+
+            {/* Real-time Toggle */}
+            <button
+              onClick={() => setIsRealTimeEnabled(!isRealTimeEnabled)}
+              className={`p-2 rounded-lg transition-colors ${
+                isRealTimeEnabled
+                  ? 'bg-green-100 text-green-600 dark:bg-green-900 dark:text-green-400'
+                  : 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400'
+              }`}
+              title={isRealTimeEnabled ? 'Disable real-time updates' : 'Enable real-time updates'}
+            >
+              <ArrowPathIcon className={`w-4 h-4 ${isRealTimeEnabled ? 'animate-spin' : ''}`} />
+            </button>
+            
+            {/* Export Button */}
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={() => exportAnalytics('json')}
+              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2"
+            >
+              <ArrowDownTrayIcon className="w-4 h-4" />
+              Export
+            </motion.button>
+          </div>
+        </div>
+      </motion.div>
+
+      {/* Stats Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        {getStatsArray().map((stat, index) => (
+          <motion.div
+            key={index}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: index * 0.1 }}
+            className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 border border-gray-200 dark:border-gray-700 hover:shadow-xl transition-shadow"
+          >
+            <div className="flex items-center justify-between">
+              <div className="flex-1">
+                <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                  {stat.title}
+                </p>
+                <p className="text-2xl font-bold text-gray-900 dark:text-white mt-1">
+                  {stat.value}
+                </p>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                  {stat.subtitle}
+                </p>
+                <p className={`text-sm flex items-center gap-1 mt-2 ${
+                  stat.change.startsWith('+') ? 'text-green-600' : 'text-red-600'
+                }`}>
+                  {stat.change.startsWith('+') ? 
+                    <ArrowTrendingUpIcon className="w-4 h-4" /> : 
+                    <ArrowTrendingDownIcon className="w-4 h-4" />
+                  }
+                  {stat.change} vs last period
+                </p>
+              </div>
+              <div className={`p-3 rounded-lg bg-${stat.color}-100 dark:bg-${stat.color}-900/20`}>
+                <stat.icon className={`w-6 h-6 text-${stat.color}-600 dark:text-${stat.color}-400`} />
+              </div>
+            </div>
+          </motion.div>
+        ))}
+      </div>
+
+      {/* Main Charts Grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+        
+        {/* Time Series Chart - Takes 2/3 width */}
+        <div className="lg:col-span-2 bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 border border-gray-200 dark:border-gray-700">
+          <div className="flex items-center justify-between mb-6">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+              {selectedView === 'personal' ? 'Your Analysis Timeline' : 
+               selectedView === 'public' ? 'Global Analysis Timeline' : 
+               'Combined Analysis Timeline'}
+            </h3>
+            <span className="text-sm text-gray-500 dark:text-gray-400">
+              {selectedView === 'overview' && analyticsData.hasPersonalData && 
+                'Personal + Global data'}
+            </span>
+          </div>
+          
+          <div className="h-80">
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={analyticsData.timeSeriesData || []}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                <XAxis 
+                  dataKey="time" 
+                  stroke="#6b7280"
+                  fontSize={12}
+                  interval="preserveStartEnd"
+                />
+                <YAxis stroke="#6b7280" fontSize={12} />
+                <Tooltip 
+                  contentStyle={{
+                    backgroundColor: 'rgb(31 41 55)',
+                    border: 'none',
+                    borderRadius: '8px',
+                    color: '#fff'
+                  }}
+                />
+                <Legend />
+                <Line 
+                  type="monotone" 
+                  dataKey="analyses" 
+                  stroke={COLORS.primary} 
+                  strokeWidth={3}
+                  name="Total Analyses"
+                  dot={{ fill: COLORS.primary, strokeWidth: 2, r: 4 }}
+                  activeDot={{ r: 6 }}
+                />
+                <Line 
+                  type="monotone" 
+                  dataKey="threats" 
+                  stroke={COLORS.danger} 
+                  strokeWidth={2}
+                  name="Threats Detected"
+                  dot={{ fill: COLORS.danger, strokeWidth: 2, r: 4 }}
+                  activeDot={{ r: 6 }}
+                />
+                <Line 
+                  type="monotone" 
+                  dataKey="blocked" 
+                  stroke={COLORS.secondary} 
+                  strokeWidth={2}
+                  name="Threats Blocked"
+                  dot={{ fill: COLORS.secondary, strokeWidth: 2, r: 4 }}
+                  activeDot={{ r: 6 }}
+                />
+                {selectedView === 'public' && (
+                  <Line 
+                    type="monotone" 
+                    dataKey="users" 
+                    stroke={COLORS.purple} 
+                    strokeWidth={2}
+                    name="Active Users"
+                    dot={{ fill: COLORS.purple, strokeWidth: 2, r: 4 }}
+                    activeDot={{ r: 6 }}
+                  />
+                )}
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+
+        {/* Category Distribution Pie Chart */}
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 border border-gray-200 dark:border-gray-700">
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-6">
+            {selectedView === 'personal' ? 'Your Threat Categories' : 'Threat Categories'}
+          </h3>
+          <div className="h-80">
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie
+                  data={analyticsData.categoryData || []}
+                  cx="50%"
+                  cy="50%"
+                  labelLine={false}
+                  label={({ name, percent }) => `${name.split(' ')[0]} ${(percent * 100).toFixed(0)}%`}
+                  outerRadius={80}
+                  fill="#8884d8"
+                  dataKey="value"
+                >
+                  {(analyticsData.categoryData || []).map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={CHART_COLORS[index % CHART_COLORS.length]} />
+                  ))}
+                </Pie>
+                <Tooltip 
+                  contentStyle={{
+                    backgroundColor: 'rgb(31 41 55)',
+                    border: 'none',
+                    borderRadius: '8px',
+                    color: '#fff'
+                  }}
+                />
+              </PieChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+      </div>
+
+      {/* Additional Charts for Public View */}
+      {(selectedView === 'public' || selectedView === 'overview') && (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+          
+          {/* Geographic Distribution */}
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 border border-gray-200 dark:border-gray-700">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-6 flex items-center gap-2">
+              <MapIcon className="w-5 h-5 text-blue-600" />
+              Global Distribution
+            </h3>
+            <div className="h-80">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={analyticsData.geographicData || []}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                  <XAxis 
+                    dataKey="country" 
+                    stroke="#6b7280"
+                    fontSize={12}
+                    interval={0}
+                    angle={-45}
+                    textAnchor="end"
+                    height={80}
+                  />
+                  <YAxis stroke="#6b7280" fontSize={12} />
+                  <Tooltip 
+                    contentStyle={{
+                      backgroundColor: 'rgb(31 41 55)',
+                      border: 'none',
+                      borderRadius: '8px',
+                      color: '#fff'
+                    }}
+                  />
+                  <Legend />
+                  <Bar dataKey="threats" fill={COLORS.danger} name="Threats Detected" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="users" fill={COLORS.primary} name="Active Users" radius={[4, 4, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+
+          {/* Platform Distribution */}
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 border border-gray-200 dark:border-gray-700">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-6 flex items-center gap-2">
+              <DevicePhoneMobileIcon className="w-5 h-5 text-green-600" />
+              Platform Usage
+            </h3>
+            <div className="h-80">
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={analyticsData.platformData || []}
+                    cx="50%"
+                    cy="50%"
+                    labelLine={false}
+                    label={({ platform, percentage }) => `${platform} ${percentage}%`}
+                    outerRadius={80}
+                    fill="#8884d8"
+                    dataKey="percentage"
+                  >
+                    {(analyticsData.platformData || []).map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={CHART_COLORS[index % CHART_COLORS.length]} />
+                    ))}
+                  </Pie>
+                  <Tooltip 
+                    contentStyle={{
+                      backgroundColor: 'rgb(31 41 55)',
+                      border: 'none',
+                      borderRadius: '8px',
+                      color: '#fff'
+                    }}
+                  />
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* AI Model Performance Chart (Public View) */}
+      {(selectedView === 'public' || selectedView === 'overview') && (
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 mb-8 border border-gray-200 dark:border-gray-700">
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-6 flex items-center gap-2">
+            <CpuChipIcon className="w-5 h-5 text-purple-600" />
+            Xist AI Model Performance
+          </h3>
+          <div className="h-80">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={analyticsData.modelPerformance || []}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                <XAxis dataKey="model" stroke="#6b7280" fontSize={12} />
+                <YAxis stroke="#6b7280" fontSize={12} />
+                <Tooltip 
+                  contentStyle={{
+                    backgroundColor: 'rgb(31 41 55)',
+                    border: 'none',
+                    borderRadius: '8px',
+                    color: '#fff'
+                  }}
+                />
+                <Legend />
+                <Bar dataKey="accuracy" fill={COLORS.primary} name="Accuracy %" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="speed" fill={COLORS.warning} name="Speed (s)" radius={[4, 4, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+      )}
+
+      {/* Recent Activity Feed */}
+      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 border border-gray-200 dark:border-gray-700">
+        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-6 flex items-center gap-2">
+          <ClockIcon className="w-5 h-5 text-indigo-600" />
+          {selectedView === 'personal' ? 'Your Recent Analysis Activity' : 
+           selectedView === 'public' ? 'Recent Global Activity' :
+           'Recent Activity Overview'}
+        </h3>
+        <div className="space-y-4 max-h-96 overflow-y-auto">
+          <AnimatePresence>
+            {selectedView === 'personal' ? (
+              // Show personal analysis history
+              (analysisData.slice(-10) || []).reverse().map((analysis, index) => (
+                <motion.div
+                  key={analysis.id || index}
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: 20 }}
+                  transition={{ delay: index * 0.1 }}
+                  className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700 rounded-lg border border-gray-100 dark:border-gray-600"
+                >
+                  <div className="flex items-center space-x-4">
+                    <div className={`p-2 rounded-lg ${
+                      (analysis.overallRiskLevel === 'HIGH' || analysis.overallRiskLevel === 'CRITICAL') ||
+                      (analysis.riskLevel === 'HIGH' || analysis.riskLevel === 'CRITICAL') ?
+                      'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200' :
+                      'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
+                    }`}>
+                      {(analysis.overallRiskLevel === 'HIGH' || analysis.overallRiskLevel === 'CRITICAL') ||
+                       (analysis.riskLevel === 'HIGH' || analysis.riskLevel === 'CRITICAL') ? 
+                        <ExclamationTriangleIcon className="w-4 h-4" /> :
+                        <CheckCircleIcon className="w-4 h-4" />
+                      }
+                    </div>
+                    <div>
+                      <p className="font-medium text-gray-900 dark:text-white">
+                        {analysis.category || analysis.type || 'Content Analysis'}
+                      </p>
+                      <p className="text-sm text-gray-600 dark:text-gray-300">
+                        {analysis.summary || `Risk Level: ${analysis.overallRiskLevel || analysis.riskLevel || 'LOW'}`}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-sm text-gray-600 dark:text-gray-300">
+                      {new Date(analysis.timestamp).toLocaleTimeString()}
+                    </p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">
+                      {Math.round(((analysis.confidence || analysis.overallConfidence || 0.8) * 100))}% confidence
+                    </p>
+                  </div>
+                </motion.div>
+              ))
+            ) : (
+              // Show mock global activity
+              Array.from({ length: 8 }, (_, index) => {
+                const activities = [
+                  { type: 'Phishing Email', country: 'United States', risk: 'HIGH' },
+                  { type: 'Romance Scam', country: 'United Kingdom', risk: 'CRITICAL' },
+                  { type: 'Tech Support Scam', country: 'Canada', risk: 'HIGH' },
+                  { type: 'Investment Fraud', country: 'Australia', risk: 'CRITICAL' },
+                  { type: 'Health Misinformation', country: 'Germany', risk: 'MEDIUM' },
+                  { type: 'Legitimate Content', country: 'France', risk: 'LOW' },
+                  { type: 'Political Misinformation', country: 'India', risk: 'MEDIUM' },
+                  { type: 'Financial Scam', country: 'Brazil', risk: 'HIGH' }
+                ];
+                const activity = activities[index];
                 
                 return (
                   <motion.div
                     key={index}
                     initial={{ opacity: 0, x: -20 }}
                     animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: 0.1 + index * 0.05 }}
-                    className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors"
+                    exit={{ opacity: 0, x: 20 }}
+                    transition={{ delay: index * 0.1 }}
+                    className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700 rounded-lg border border-gray-100 dark:border-gray-600"
                   >
-                    <div className="flex-1">
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="font-medium text-gray-900 dark:text-white">
-                          {category.name}
-                        </span>
-                        <div className="flex items-center space-x-2">
-                          <span className="text-sm font-bold text-gray-700 dark:text-gray-300">
-                            {category.count.toLocaleString()}
-                          </span>
-                          {category.trend === 'up' ? (
-                            <ArrowTrendingUpIcon className="w-4 h-4 text-red-500" />
-                          ) : category.trend === 'down' ? (
-                            <ArrowTrendingDownIcon  className="w-4 h-4 text-green-500" />
-                          ) : (
-                            <div className="w-4 h-4 bg-gray-400 rounded-full" />
-                          )}
-                        </div>
+                    <div className="flex items-center space-x-4">
+                      <div className={`p-2 rounded-lg ${
+                        activity.risk === 'HIGH' || activity.risk === 'CRITICAL' ?
+                        'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200' :
+                        activity.risk === 'MEDIUM' ?
+                        'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200' :
+                        'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
+                      }`}>
+                        {activity.risk === 'HIGH' || activity.risk === 'CRITICAL' ? 
+                          <ExclamationTriangleIcon className="w-4 h-4" /> :
+                          activity.risk === 'MEDIUM' ?
+                          <ExclamationTriangleIcon className="w-4 h-4" /> :
+                          <CheckCircleIcon className="w-4 h-4" />
+                        }
                       </div>
-                      <div className="w-full bg-gray-200 dark:bg-gray-600 rounded-full h-2">
-                        <motion.div
-                          initial={{ width: 0 }}
-                          animate={{ width: `${percentage}%` }}
-                          transition={{ delay: 0.2 + index * 0.05, duration: 1 }}
-                          className="h-2 rounded-full bg-gradient-to-r from-red-500 to-red-600"
-                        />
+                      <div>
+                        <p className="font-medium text-gray-900 dark:text-white">
+                          {activity.type}
+                        </p>
+                        <p className="text-sm text-gray-600 dark:text-gray-300">
+                          Detected in {activity.country}
+                        </p>
                       </div>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-sm text-gray-600 dark:text-gray-300">
+                        {new Date(Date.now() - index * 60000 * Math.random() * 10).toLocaleTimeString()}
+                      </p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">
+                        {Math.round(95 + Math.random() * 5)}% confidence
+                      </p>
                     </div>
                   </motion.div>
                 );
-              })}
-            </div>
-          </motion.div>
-
-          {/* Geographic Distribution */}
-          <motion.div
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.3 }}
-            className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8"
-          >
-            <div className="flex items-center justify-between mb-6">
-              <div>
-                <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
-                  Global Threat Map
-                </h2>
-                <p className="text-gray-600 dark:text-gray-400">
-                  Geographic distribution of threats detected
-                </p>
-              </div>
-              <GlobeAltIcon className="w-8 h-8 text-blue-500" />
-            </div>
-
-            <div className="space-y-4">
-              {analyticsData.geographicData?.map((country, index) => {
-                const blockRate = (country.blocked / country.threats) * 100;
-                
-                return (
-                  <motion.div
-                    key={index}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.1 + index * 0.05 }}
-                    className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700 rounded-lg"
-                  >
-                    <div className="flex-1">
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="font-medium text-gray-900 dark:text-white">
-                          {country.country}
-                        </span>
-                        <span className="text-sm text-gray-600 dark:text-gray-400">
-                          {country.threats.toLocaleString()} threats
-                        </span>
-                      </div>
-                      <div className="flex items-center space-x-4 text-sm">
-                        <div className="flex items-center space-x-2">
-                          <div className="w-2 h-2 bg-red-500 rounded-full"></div>
-                          <span className="text-gray-600 dark:text-gray-400">
-                            Detected: {country.threats.toLocaleString()}
-                          </span>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                          <span className="text-gray-600 dark:text-gray-400">
-                            Blocked: {country.blocked.toLocaleString()} ({blockRate.toFixed(1)}%)
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                  </motion.div>
-                );
-              })}
-            </div>
-          </motion.div>
-        </div>
-
-        {/* Platform Analytics & AI Model Performance */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+              })
+            )}
+          </AnimatePresence>
           
-          {/* Platform Distribution */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.4 }}
-            className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8"
-          >
-            <div className="flex items-center justify-between mb-6">
-              <div>
-                <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
-                  Platform Usage
-                </h2>
-                <p className="text-gray-600 dark:text-gray-400">
-                  Distribution across different platforms
-                </p>
-              </div>
-              <DevicePhoneMobileIcon className="w-8 h-8 text-green-500" />
-            </div>
-
-            <div className="space-y-6">
-              {analyticsData.platformData?.map((platform, index) => (
-                <motion.div
-                  key={index}
-                  initial={{ opacity: 0, scale: 0.9 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  transition={{ delay: 0.1 + index * 0.1 }}
-                  className="flex items-center space-x-4"
-                >
-                  <div className={`p-3 rounded-lg ${
-                    platform.platform === 'Web Browser' ? 'bg-blue-100 dark:bg-blue-900/20' :
-                    platform.platform === 'Mobile App' ? 'bg-green-100 dark:bg-green-900/20' :
-                    'bg-purple-100 dark:bg-purple-900/20'
-                  }`}>
-                    {platform.platform === 'Web Browser' ? (
-                      <ComputerDesktopIcon className="w-6 h-6 text-blue-600 dark:text-blue-400" />
-                    ) : platform.platform === 'Mobile App' ? (
-                      <DevicePhoneMobileIcon className="w-6 h-6 text-green-600 dark:text-green-400" />
-                    ) : (
-                      <ServerIcon className="w-6 h-6 text-purple-600 dark:text-purple-400" />
-                    )}
-                  </div>
-                  <div className="flex-1">
-                    <div className="flex items-center justify-between mb-1">
-                      <span className="font-medium text-gray-900 dark:text-white">
-                        {platform.platform}
-                      </span>
-                      <span className="text-sm font-bold text-gray-700 dark:text-gray-300">
-                        {platform.percentage}%
-                      </span>
-                    </div>
-                    <div className="w-full bg-gray-200 dark:bg-gray-600 rounded-full h-2 mb-1">
-                      <motion.div
-                        initial={{ width: 0 }}
-                        animate={{ width: `${platform.percentage}%` }}
-                        transition={{ delay: 0.3 + index * 0.1, duration: 1 }}
-                        className={`h-2 rounded-full ${
-                          platform.platform === 'Web Browser' ? 'bg-gradient-to-r from-blue-500 to-blue-600' :
-                          platform.platform === 'Mobile App' ? 'bg-gradient-to-r from-green-500 to-green-600' :
-                          'bg-gradient-to-r from-purple-500 to-purple-600'
-                        }`}
-                      />
-                    </div>
-                    <span className="text-xs text-gray-500 dark:text-gray-400">
-                      {platform.threats.toLocaleString()} threats detected
-                    </span>
-                  </div>
-                </motion.div>
-              ))}
-            </div>
-          </motion.div>
-
-          {/* AI Model Performance */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.4 }}
-            className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8"
-          >
-            <div className="flex items-center justify-between mb-6">
-              <div>
-                <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
-                  AI Model Performance
-                </h2>
-                <p className="text-gray-600 dark:text-gray-400">
-                  Comparison of different AI models
-                </p>
-              </div>
-              <CpuChipIcon className="w-8 h-8 text-purple-500" />
-            </div>
-
-            <div className="space-y-6">
-              {analyticsData.modelPerformance?.map((model, index) => (
-                <motion.div
-                  key={index}
-                  initial={{ opacity: 0, x: 20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: 0.1 + index * 0.1 }}
-                  className="p-4 bg-gray-50 dark:bg-gray-700 rounded-lg"
-                >
-                  <div className="flex items-center justify-between mb-3">
-                    <span className="font-medium text-gray-900 dark:text-white">
-                      {model.model}
-                    </span>
-                    <span className="text-sm text-gray-600 dark:text-gray-400">
-                      {model.threats.toLocaleString()} detections
-                    </span>
-                  </div>
-                  
-                  <div className="space-y-3">
-                    {/* Accuracy */}
-                    <div>
-                      <div className="flex items-center justify-between text-sm mb-1">
-                        <span className="text-gray-600 dark:text-gray-400">Accuracy</span>
-                        <span className="font-bold text-gray-900 dark:text-white">{model.accuracy}%</span>
-                      </div>
-                      <div className="w-full bg-gray-200 dark:bg-gray-600 rounded-full h-2">
-                        <motion.div
-                          initial={{ width: 0 }}
-                          animate={{ width: `${model.accuracy}%` }}
-                          transition={{ delay: 0.3 + index * 0.1, duration: 1 }}
-                          className="h-2 rounded-full bg-gradient-to-r from-green-500 to-emerald-600"
-                        />
-                      </div>
-                    </div>
-                    
-                    {/* Speed */}
-                    <div>
-                      <div className="flex items-center justify-between text-sm mb-1">
-                        <span className="text-gray-600 dark:text-gray-400">Speed</span>
-                        <span className="font-bold text-gray-900 dark:text-white">{model.speed}s avg</span>
-                      </div>
-                      <div className="w-full bg-gray-200 dark:bg-gray-600 rounded-full h-2">
-                        <motion.div
-                          initial={{ width: 0 }}
-                          animate={{ width: `${100 - (model.speed * 20)}%` }}
-                          transition={{ delay: 0.4 + index * 0.1, duration: 1 }}
-                          className="h-2 rounded-full bg-gradient-to-r from-blue-500 to-cyan-600"
-                        />
-                      </div>
-                    </div>
-                  </div>
-                </motion.div>
-              ))}
-            </div>
-          </motion.div>
-        </div>
-
-        {/* Real-time Activity Feed */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.5 }}
-          className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8"
-        >
-          <div className="flex items-center justify-between mb-6">
-            <div>
-              <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
-                Live Activity Feed
-              </h2>
-              <p className="text-gray-600 dark:text-gray-400">
-                Real-time threat detection events
+          {selectedView === 'personal' && (!analysisData || analysisData.length === 0) && (
+            <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+              <DocumentTextIcon className="w-12 h-12 mx-auto mb-4 opacity-50" />
+              <p>No personal analysis activity to display</p>
+              <p className="text-sm mt-2">
+                Start analyzing content in the Verify section to see your activity here
               </p>
             </div>
-            <div className="flex items-center space-x-2">
-              <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-              <span className="text-sm text-gray-600 dark:text-gray-400">Live</span>
-            </div>
-          </div>
-
-          <div className="space-y-3 max-h-64 overflow-y-auto">
-            {Array.from({ length: 8 }, (_, index) => {
-              const activities = [
-                { type: 'threat_blocked', message: 'Phishing attempt blocked from suspicious domain', severity: 'high', time: `${index + 1} min ago` },
-                { type: 'analysis_complete', message: 'Bulk analysis completed: 247 items processed', severity: 'info', time: `${index + 2} min ago` },
-                { type: 'threat_detected', message: 'Romance scam pattern identified in email content', severity: 'medium', time: `${index + 3} min ago` },
-                { type: 'user_alert', message: 'User reported suspicious investment offer', severity: 'warning', time: `${index + 4} min ago` }
-              ];
-              const activity = activities[index % 4];
-              
-              return (
-                <motion.div
-                  key={index}
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: index * 0.1 }}
-                  className="flex items-center space-x-4 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg"
-                >
-                  <div className={`w-3 h-3 rounded-full ${
-                    activity.severity === 'high' ? 'bg-red-500' :
-                    activity.severity === 'medium' ? 'bg-orange-500' :
-                    activity.severity === 'warning' ? 'bg-yellow-500' :
-                    'bg-blue-500'
-                  }`} />
-                  <div className="flex-1">
-                    <p className="text-sm text-gray-900 dark:text-white">{activity.message}</p>
-                    <p className="text-xs text-gray-500 dark:text-gray-400">{activity.time}</p>
-                  </div>
-                  <div className={`px-2 py-1 rounded text-xs font-medium ${
-                    activity.severity === 'high' ? 'bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400' :
-                    activity.severity === 'medium' ? 'bg-orange-100 text-orange-800 dark:bg-orange-900/20 dark:text-orange-400' :
-                    activity.severity === 'warning' ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-400' :
-                    'bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-400'
-                  }`}>
-                    {activity.type.replace('_', ' ')}
-                  </div>
-                </motion.div>
-              );
-            })}
-          </div>
-        </motion.div>
-
-        {/* Recent Analysis Results - NEW SECTION */}
-        {analysisData && analysisData.length > 0 && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 1.1 }}
-            className="bg-white dark:bg-gray-800 rounded-2xl p-6 border border-gray-200 dark:border-gray-700 shadow-lg"
-          >
-            <div className="flex items-center justify-between mb-6">
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center">
-                <DocumentTextIcon className="w-5 h-5 mr-2 text-blue-500" />
-                Recent Analysis Results
-              </h3>
-              <span className="text-sm text-gray-500 dark:text-gray-400">
-                Last {Math.min(analysisData.length, 5)} analyses
-              </span>
-            </div>
-            
-            <div className="space-y-3">
-              {analysisData.slice(0, 5).map((analysis, index) => (
-                <div
-                  key={analysis.analysisId || index}
-                  className="p-4 bg-gray-50 dark:bg-gray-700 rounded-lg analysis-result-item border-l-4 border-blue-400"
-                  style={{ animationDelay: `${index * 0.1}s` }}
-                >
-                  <div className="flex items-center justify-between mb-2">
-                    <div className="flex items-center space-x-2">
-                      <span className={`text-xs font-medium px-2 py-1 rounded-full ${getThreatColor(analysis.threatLevel)}`}>
-                        {analysis.threatLevel || 'UNKNOWN'}
-                      </span>
-                      <span className="text-xs text-gray-600 dark:text-gray-400">
-                        Mode: {analysis.analysisMode || 'standard'}
-                      </span>
-                    </div>
-                    <span className="text-xs text-gray-500 dark:text-gray-400">
-                      {analysis.timestamp ? new Date(analysis.timestamp).toLocaleDateString() : 'Recent'}
-                    </span>
-                  </div>
-                  
-                  <div className="flex items-center justify-between text-xs">
-                    <span className="text-gray-700 dark:text-gray-300">
-                      Confidence: <span className="font-semibold">{analysis.confidence || 0}%</span>
-                    </span>
-                    <span className="text-gray-500 dark:text-gray-400">
-                      {analysis.responseTime ? `${Math.round(analysis.responseTime)}ms` : 'N/A'}
-                    </span>
-                  </div>
-                  
-                  {analysis.quickSummary && (
-                    <p className="text-xs text-gray-600 dark:text-gray-400 mt-2 line-clamp-2">
-                      {analysis.quickSummary}
-                    </p>
-                  )}
-                </div>
-              ))}
-            </div>
-          </motion.div>
-        )}
-
+          )}
+        </div>
       </div>
+
     </div>
   );
 };

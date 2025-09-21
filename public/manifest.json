@@ -1,31 +1,40 @@
 {
-  "manifest_version": 3,
-  "name": "Xist AI Guardian",
-  "version": "1.0.0",
-  "description": "Real-time threat protection while browsing",
+  "name": "Xist AI - Digital Security Platform",
+  "short_name": "Xist AI",
+  "description": "Advanced AI-powered misinformation detection and digital security platform",
+  "start_url": ".",
+  "display": "standalone",
+  "theme_color": "#00ffff",
+  "background_color": "#0f172a", 
+  "orientation": "portrait-primary",
+  "scope": "/",
   "icons": [
     {
       "src": "favicon.ico",
-      "sizes": "64x64 32x32 24x24 16x16",
+      "sizes": "64x64 32x32 24x24 16x16", 
       "type": "image/x-icon"
+    },
+    {
+  "src": "android-chrome-192x192.jpg",
+  "sizes": "192x192",
+  "type": "image/jpeg",
+  "purpose": "maskable any"
+},
+
+    {
+      "src": "android-chrome-512x512.png",
+      "sizes": "512x512", 
+      "type": "image/png",
+      "purpose": "maskable any"
     }
   ],
-  "short_name": "Xist AI",
-  "start_url": ".",
-  "display": "standalone",
-  "theme_color": "#8b5cf6",
-  "background_color": "#ffffff",
-  "permissions": [
-    "activeTab", "storage", "background", "webRequest", "tabs"
-  ],
-  "background": {
-    "service_worker": "background.js"
-  },
-  "content_scripts": [{
-    "matches": ["<all_urls>"],
-    "js": ["content.js"]
-  }],
-  "action": {
-    "default_popup": "popup.html"
-  }
+  "categories": ["security", "productivity", "utilities"],
+  "shortcuts": [
+    {
+      "name": "Quick Analysis",
+      "short_name": "Analyze", 
+      "description": "Instantly analyze content for threats",
+      "url": "/?action=analyze"
+    }
+  ]
 }

@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { toast } from 'react-hot-toast';
 import { 
   ShieldCheckIcon, ExclamationTriangleIcon, CheckCircleIcon, XCircleIcon, 
   InformationCircleIcon, ChartBarIcon, DocumentTextIcon, GlobeAltIcon, 
@@ -60,6 +61,7 @@ import {
   ShieldExclamationIcon as ShieldExclamationSolid
 } from '@heroicons/react/24/solid';
 
+
 // Continue with the rest of the code exactly as before...
 
 
@@ -76,7 +78,7 @@ const ANALYSIS_MODES = {
     darkBgGradient: 'from-yellow-900/20 to-orange-900/20',
     borderColor: 'border-yellow-200',
     textColor: 'text-yellow-600',
-    maxTokens: 300,
+    maxTokens: 800,
     temperature: 0.1,
     priority: 'speed',
     features: ['basic_threats', 'risk_score', 'immediate_action'],
@@ -90,23 +92,30 @@ Content to analyze: "{content}"
 
 Provide IMMEDIATE threat assessment in this EXACT format:
 
-THREAT LEVEL: [HIGH/MEDIUM/LOW/SAFE]
+THREAT LEVEL: [CRITICAL/HIGH/MEDIUM/LOW/SAFE]
 
-PRIMARY THREAT: [Phishing/Scam/Malware/Misinformation/Spam/Safe]
-
-IMMEDIATE ACTION:
-- [One critical action user should take RIGHT NOW]
-- [Secondary protective measure if needed]
+PRIMARY THREAT: [Phishing/Investment Scam/Health Misinformation/Political Misinformation/Technical Scam/Social Engineering/Malware/Spam/Safe Content]
 
 CREDIBILITY VERDICT: [TRUE/FALSE/MIXED/UNVERIFIABLE]
 
-EXPLANATION PARAGRAPH:
-[2-3 sentences clearly explaining WHY this content is credible or not credible. State the specific evidence that supports your conclusion. Explain what makes this trustworthy or suspicious without using * or # symbols.]
+DETAILED EXPLANATION PARAGRAPH: [Write exactly 200-220 words explaining WHY this content is credible or not credible. State specific evidence that supports your conclusion. Explain what makes this trustworthy or suspicious. Include psychological manipulation techniques if present, real-world impact of similar content, and why people fall for this type of content. Discuss the broader implications for digital safety and provide educational context about this threat type. DO NOT use asterisks or hashtag symbols anywhere in your response.]
 
-CONFIDENCE SCORE: [0-100%]
-Sources checked: [Brief mention of verification methods used]
+CONFIDENCE SCORE: [85-98%]
 
-Keep response under 150 words. Focus on SPEED and ACCURACY.`
+IMMEDIATE ACTION REQUIRED:
+1. [One critical action user should take RIGHT NOW with specific reasoning]
+2. [Secondary protective measure with implementation details]
+3. [Community awareness step if threat is significant]
+
+SOURCES VERIFICATION: [List 2-3 specific verification methods used in analysis]
+
+COMMUNITY IMPACT ASSESSMENT: [If threat level is CRITICAL or HIGH, explain why this poses risk to public safety and why community should be alerted. If MEDIUM/LOW/SAFE, explain general awareness value for community protection.]
+
+PROTECTIVE CONTEXT: [Brief explanation of how this fits into broader digital security landscape and what users should learn from this example]
+
+SHOW_COMMUNITY_BUTTON: [YES if threat level is CRITICAL/HIGH, NO otherwise]
+
+Keep technical analysis under 150 words but ensure educational explanation meets 200+ word requirement. Focus on SPEED, ACCURACY, and COMMUNITY SAFETY.`
   },
   comprehensive: {
     label: 'Comprehensive Analysis',
@@ -119,7 +128,7 @@ Keep response under 150 words. Focus on SPEED and ACCURACY.`
     darkBgGradient: 'from-blue-900/20 to-cyan-900/20',
     borderColor: 'border-blue-200',
     textColor: 'text-blue-600',
-    maxTokens: 1500,
+    maxTokens: 2000,
     temperature: 0.3,
     priority: 'balance',
     features: ['threat_analysis', 'evidence_reasoning', 'context', 'recommendations'],
@@ -136,40 +145,48 @@ Provide detailed analysis in this EXACT format:
 SECURITY ASSESSMENT
 Threat Level: [CRITICAL/HIGH/MEDIUM/LOW/SAFE]
 Primary Threat Type: [Phishing/Investment Scam/Health Misinformation/Political Misinformation/Technical Scam/Social Engineering/Safe Content]
-CREDIBILITY VERDICT: [TRUE/FALSE/MIXED/UNVERIFIABLE]
-EXPLANATION PARAGRAPH:
-[2-3 sentences clearly explaining WHY this content is credible or not credible. State the specific evidence that supports your conclusion. Explain what makes this trustworthy or suspicious without using * or # symbols.]
-CONFIDENCE SCORE: [0-100%]
 
-Sources checked: [Brief mention of verification methods used]
+CREDIBILITY VERDICT: [TRUE/FALSE/MIXED/UNVERIFIABLE]
+
+DETAILED EXPLANATION PARAGRAPH: [Write exactly 250-300 words explaining WHY this content is credible or not credible. State specific evidence that supports your conclusion. Explain what makes this trustworthy or suspicious. Include psychological manipulation techniques if present, real-world impact of similar content, and why people fall for this type of content. Discuss the broader implications and provide educational context about this threat type. Include historical examples of similar cases and their outcomes. Explain the psychology behind why this type of content spreads and how it exploits human cognitive biases. DO NOT use asterisks or hashtag symbols anywhere in your response.]
+
+CONFIDENCE SCORE: [85-98%]
+
+SOURCES VERIFICATION: [List 3-4 specific sources or verification methods used in analysis]
+
+COMMUNITY IMPACT ASSESSMENT: [If threat level is CRITICAL/HIGH/MEDIUM, explain why this poses risk to public safety and why community should be alerted. Include specific examples of how similar content has harmed communities. If LOW/SAFE, explain general awareness value for community protection and digital literacy.]
 
 DETAILED ANALYSIS
 Evidence Found:
-• [Specific red flags or safety indicators]
-• [Pattern recognition results]
-• [Language analysis findings]
+• [Specific red flags or safety indicators with detailed explanations]
+• [Pattern recognition results with context and examples]  
+• [Language analysis findings with psychological insights]
 
 Risk Factors:
-• [Psychological manipulation techniques if present]
-• [Technical inconsistencies if applicable]
-• [Source credibility issues if found]
+• [Psychological manipulation techniques if present with explanation of how they work]
+• [Technical inconsistencies if applicable with details on what they reveal]
+• [Source credibility issues if found with reasoning and verification attempts]
 
 CONTEXT & EXPLANATION
-Why this matters: [Educational explanation of the threat/safety]
-Historical context: [Similar cases or patterns if relevant]
-Target demographic: [Who this typically targets]
+Why this matters: [Educational explanation of the threat/safety with real-world examples and broader implications for digital security]
+Historical context: [Similar cases or patterns if relevant with outcomes and lessons learned]
+Target demographic: [Who this typically targets and why they're vulnerable, including psychological and social factors]
 
 PROTECTIVE ACTIONS
 Immediate steps:
-1. [First critical action]
-2. [Second important action]
-3. [Third preventive measure]
+1. [First critical action with reasoning and step-by-step implementation]
+2. [Second important action with explanation of why it's necessary]
+3. [Third preventive measure with context about ongoing protection]
 
 Long-term protection:
-• [Ongoing security measures]
-• [Awareness tips]
+• [Ongoing security measures with implementation details and timeline]
+• [Awareness tips with specific examples and recognition techniques]
 
-`
+COMMUNITY AWARENESS
+Education Value: [How this case can be used to educate others about digital threats]
+Sharing Guidelines: [Safe ways to share this information to protect others without spreading the threat]
+
+SHOW_COMMUNITY_BUTTON: [YES if threat level is CRITICAL/HIGH/MEDIUM, NO otherwise]`
   },
   expert: {
     label: 'Expert Deep Dive',
@@ -182,7 +199,7 @@ Long-term protection:
     darkBgGradient: 'from-purple-900/20 to-pink-900/20',
     borderColor: 'border-purple-200',
     textColor: 'text-purple-600',
-    maxTokens: 2500,
+    maxTokens: 3000,
     temperature: 0.4,
     priority: 'depth',
     features: ['technical_analysis', 'historical_context', 'advanced_patterns', 'forensic_details'],
@@ -200,66 +217,61 @@ FORENSIC OVERVIEW
 Classification: [Threat category with technical specificity]
 Sophistication Level: [Amateur/Intermediate/Professional/Nation-State]
 Attack Vector: [Technical delivery method analysis]
+
 CREDIBILITY VERDICT: [TRUE/FALSE/MIXED/UNVERIFIABLE]
-EXPLANATION PARAGRAPH:
-[2-3 sentences clearly explaining WHY this content is credible or not credible. State the specific evidence that supports your conclusion. Explain what makes this trustworthy or suspicious without using * or # symbols.]
-CONFIDENCE SCORE: [0-100%]
-Sources checked: [Brief mention of verification methods used]
- with margin of error
+
+EXPERT EXPLANATION PARAGRAPH: [Write exactly 300-350 words providing forensic-level analysis of WHY this content is credible or not credible. Include technical indicators, behavioral psychology analysis, attribution clues, campaign analysis, and detailed threat modeling. Explain sophisticated attack techniques, social engineering psychology, and infrastructure analysis. Discuss threat actor profiling and operational security patterns. Provide predictive analysis of threat evolution and countermeasures. Include analysis of linguistic patterns, metadata indicators, and technical artifacts. Explain how this fits into broader threat landscapes and what security professionals can learn from this case. DO NOT use asterisks or hashtag symbols anywhere.]
+
+CONFIDENCE SCORE: [90-98%] with margin of error [±2-5%]
+
+TECHNICAL VERIFICATION SOURCES: [List 4-6 specific technical analysis methods and intelligence sources used]
+
+COMMUNITY THREAT ASSESSMENT: [If threat level warrants community alert, provide detailed justification including scale, scope, and urgency. Include recommended community response protocols and escalation procedures. Explain potential for viral spread and network effects.]
 
 TECHNICAL DEEP DIVE
 Pattern Recognition:
-• [Advanced linguistic patterns detected]
-• [Behavioral psychology elements used]
-• [Technical infrastructure analysis]
+• [Advanced linguistic patterns detected with technical details and signature analysis]
+• [Behavioral psychology elements used with exploitation methods and cognitive bias targeting]
+• [Technical infrastructure analysis with IOCs and attribution indicators]
 
 Social Engineering Breakdown:
-• [Psychological manipulation techniques]
-• [Cognitive bias exploitation methods]
-• [Emotional trigger analysis]
+• [Psychological manipulation techniques with cognitive bias analysis and exploitation frameworks]
+• [Emotional trigger analysis with target psychology and persuasion mechanisms]
+• [Trust exploitation methods with persuasion frameworks and social proof manipulation]
 
 Historical Context:
-• [Similar attack campaigns]
-• [Evolution of this threat type]
-• [Attribution indicators if present]
+• [Similar attack campaigns with attribution and evolution patterns over time]
+• [Threat intelligence correlations with timeline analysis and campaign tracking]
+• [Defensive lessons learned with implementation guidance and effectiveness metrics]
 
 THREAT MODELING
 Likely Threat Actor Profile:
-• [Skill level and resources]
-• [Probable motivation]
-• [Geographic/cultural indicators]
+• [Skill level assessment with capability analysis and resource requirements]
+• [Resource requirements with operational infrastructure and funding indicators]
+• [Geographic and cultural attribution indicators with behavioral signatures]
 
 Campaign Analysis:
-• [Scale and scope assessment]
-• [Timeline and persistence patterns]
-• [Cross-platform distribution analysis]
+• [Scale and scope assessment with victim profiling and targeting analysis]
+• [Timeline patterns with persistence analysis and operational cycles]
+• [Cross-platform distribution with reach assessment and amplification methods]
 
 ADVANCED COUNTERMEASURES
 Technical Defenses:
-1. [Network-level protections]
-2. [Endpoint security measures]
-3. [Behavioral analysis tools]
-
-Organizational Responses:
-• [Policy recommendations]
-• [Training program suggestions]
-• [Incident response protocols]
+1. [Network-level protections with implementation details and configuration guidance]
+2. [Endpoint security measures with detection signatures and behavioral analytics]
+3. [Behavioral analysis tools with machine learning indicators and anomaly detection]
 
 Research Applications:
-• [Academic research value]
-• [Threat intelligence contribution]
-• [Defense improvement opportunities]
+• [Threat intelligence value with sharing protocols and community benefits]
+• [Defense improvement opportunities with innovation areas and development priorities]
+• [Academic research contributions with methodology and peer review potential]
 
-PREDICTIVE ANALYSIS
-Future Threat Evolution:
-• [Likely next variations]
-• [Emerging risk factors]
-• [Defensive adaptation needs]
+PREDICTIVE INTELLIGENCE
+Future Evolution: [Likely adaptations and countermeasures this threat will develop]
+Defensive Innovation: [New technologies and approaches needed to counter evolving threats]
+Community Impact: [Long-term implications for digital security and social trust]
 
-REFERENCES & ATTRIBUTION
-Similar Cases: [Reference to known similar threats]
-Technical Indicators: [IOCs and behavioral signatures]
-Defensive Resources: [Tools and frameworks recommended]`
+SHOW_COMMUNITY_BUTTON: [YES if threat level is CRITICAL/HIGH/MEDIUM, NO otherwise]`
   },
   educational: {
     label: 'Educational Focus',
@@ -271,7 +283,7 @@ Defensive Resources: [Tools and frameworks recommended]`
     darkBgGradient: 'from-green-900/20 to-emerald-900/20',
     borderColor: 'border-green-200',
     textColor: 'text-green-600',
-    maxTokens: 2000,
+    maxTokens: 2500,
     temperature: 0.35,
     priority: 'learning',
     features: ['how_it_works', 'recognition_tips', 'prevention_strategies', 'real_examples'],
@@ -289,74 +301,81 @@ LEARNING OBJECTIVES
 What you'll understand: [Key learning outcomes from this analysis]
 Threat Category: [Type of threat with educational context]
 Real-world Impact: [Why this matters in daily digital life]
-CREDIBILITY VERDICT: [TRUE/FALSE/MIXED/UNVERIFIABLE]
-EXPLANATION PARAGRAPH:
-[2-3 sentences clearly explaining WHY this content is credible or not credible. State the specific evidence that supports your conclusion. Explain what makes this trustworthy or suspicious without using * or # symbols.]
-CONFIDENCE SCORE: [0-100%]
-Sources checked: [Brief mention of verification methods used]
 
+CREDIBILITY VERDICT: [TRUE/FALSE/MIXED/UNVERIFIABLE]
+
+DETAILED EXPLANATION PARAGRAPH: [Write exactly 250-280 words clearly explaining WHY this content is credible or not credible. State specific evidence that supports your conclusion in educational terms that anyone can understand. Explain what makes this trustworthy or suspicious using everyday examples. Include how psychological manipulation techniques work in simple terms, real-world impact of similar content with specific examples, and why people fall for this type of content using relatable scenarios. Discuss the broader implications for personal and community safety. Provide educational context about this threat type that helps people recognize similar cases in the future. Use teaching moments to explain digital literacy concepts. DO NOT use asterisks or hashtag symbols anywhere.]
+
+CONFIDENCE SCORE: [85-95%]
+
+SOURCES VERIFICATION: [List 3-4 specific verification methods explained in accessible terms]
+
+COMMUNITY IMPACT ASSESSMENT: [If threat level is CRITICAL/HIGH/MEDIUM, explain in educational terms why this poses risk to public safety and why community awareness is important. Include examples of how communities have been affected by similar content. If LOW/SAFE, explain the educational value for building digital literacy and community resilience.]
 
 HOW THIS WORKS - STEP BY STEP
 Attack/Deception Mechanics:
-1. [First step in the threat process]
-2. [How victims are identified/targeted]
-3. [Psychological hooks used]
-4. [How the deception/attack progresses]
-5. [Final goal of the threat actor]
+1. [First step in the threat process explained in simple terms with examples]
+2. [How victims are identified/targeted with psychological and social factors]
+3. [Psychological hooks used with everyday examples people can recognize]
+4. [How the deception/attack progresses with timeline and escalation patterns]
+5. [Final goal of the threat actor with real-world consequences and motivations]
 
 RECOGNITION PATTERNS - LEARN TO SPOT THESE
 Red Flags to Remember:
-• [Visual indicators anyone can spot]
-• [Language patterns that reveal deception]
-• [Behavioral requests that should trigger suspicion]
-• [Technical indicators for more advanced users]
+• [Visual indicators anyone can spot with specific examples and screenshots descriptions]
+• [Language patterns that reveal deception with common phrases and techniques]
+• [Behavioral requests that should trigger suspicion with context and alternatives]
+• [Technical indicators for more advanced users with explanation of significance]
 
 PSYCHOLOGY BEHIND THE THREAT
 Why People Fall For This:
-• [Cognitive biases being exploited]
-• [Emotional states that make people vulnerable]
-• [Social pressures utilized]
+• [Cognitive biases being exploited with everyday examples and personal relevance]
+• [Emotional states that make people vulnerable with recognition techniques]
+• [Social pressures utilized with peer influence and authority manipulation]
 
 Who Gets Targeted Most:
-• [Demographic information for awareness]
-• [Situational factors that increase risk]
+• [Demographic information for awareness with respectful explanation of vulnerabilities]
+• [Situational factors that increase risk with personal protection strategies]
 
 PROTECTION STRATEGIES - BUILD YOUR DEFENSES
 Immediate Protection:
-1. [First line of defense anyone can implement]
-2. [Verification techniques]
-3. [When and how to seek help]
+1. [First line of defense anyone can implement with step-by-step instructions]
+2. [Verification techniques with practical tools and reliable sources]
+3. [When and how to seek help with specific contacts and escalation procedures]
 
 Long-term Security Habits:
-• [Daily practices for digital hygiene]
-• [Tools and settings to configure]
-• [Knowledge areas to develop]
+• [Daily practices for digital hygiene with routine building and habit formation]
+• [Tools and settings to configure with user-friendly guides and regular maintenance]
+• [Knowledge areas to develop with learning resources and skill-building activities]
 
 FAMILY & COMMUNITY PROTECTION
 Helping Others:
-• [How to share this knowledge safely]
-• [Warning signs to watch for in others]
-• [Resources to recommend]
+• [How to share this knowledge safely without spreading fear or the threat itself]
+• [Warning signs to watch for in others with respectful intervention techniques]
+• [Resources to recommend with trusted sources and professional help options]
 
 Teaching Moments:
-• [How to use this as an educational example]
-• [Age-appropriate ways to explain to children]
+• [How to use this as an educational example with age-appropriate explanations]
+• [Conversation starters for digital safety discussions with family and friends]
+• [Age-appropriate ways to explain to children with developmental considerations]
 
 REAL-WORLD EXAMPLES
-Similar Cases: [Brief, educational examples without harmful details]
-Success Stories: [How people have avoided or recovered from this]
-Lessons Learned: [What the security community has discovered]
+Similar Cases: [Brief, educational examples without harmful details but with clear learning outcomes]
+Success Stories: [How people have avoided or recovered from this with positive examples and resilience building]
+Lessons Learned: [What the security community has discovered with practical applications for everyday users]
 
 KEY TAKEAWAYS
 Remember These 3 Things:
-1. [Most important lesson]
-2. [Critical recognition sign]
-3. [Essential protective action]
+1. [Most important lesson with memorable summary and practical application]
+2. [Critical recognition sign with specific examples and immediate action steps]
+3. [Essential protective action with implementation guidance and habit formation]
 
 Next Steps for Learning:
-• [Resources for deeper understanding]
-• [Skills to develop]
-• [Communities to join for ongoing education]`
+• [Resources for deeper understanding with vetted sources and learning paths]
+• [Skills to develop with practical exercises and measurable progress indicators]
+• [Communities to join for ongoing education with safe spaces and expert guidance]
+
+SHOW_COMMUNITY_BUTTON: [YES if threat level is CRITICAL/HIGH/MEDIUM, NO otherwise]`
   },
   forensic: {
     label: 'Forensic Investigation',
@@ -368,7 +387,7 @@ Next Steps for Learning:
     darkBgGradient: 'from-red-900/20 to-rose-900/20',
     borderColor: 'border-red-200',
     textColor: 'text-red-600',
-    maxTokens: 3000,
+    maxTokens: 3500,
     temperature: 0.2,
     priority: 'evidence',
     features: ['evidence_chain', 'attribution', 'impact_assessment', 'legal_context'],
@@ -387,97 +406,103 @@ Case Classification: [Threat type with legal/regulatory context]
 Severity Rating: [Impact scale 1-10 with justification]
 Legal Implications: [Relevant laws or regulations potentially violated]
 Recommended Response Level: [Internal/Law Enforcement/Regulatory]
-CREDIBILITY VERDICT: [TRUE/FALSE/MIXED/UNVERIFIABLE]
-EXPLANATION PARAGRAPH:
-[2-3 sentences clearly explaining WHY this content is credible or not credible. State the specific evidence that supports your conclusion. Explain what makes this trustworthy or suspicious without using * or # symbols.]
-CONFIDENCE SCORE: [0-100%]
-Sources checked: [Brief mention of verification methods used]
 
+CREDIBILITY VERDICT: [TRUE/FALSE/MIXED/UNVERIFIABLE]
+
+FORENSIC EXPLANATION PARAGRAPH: [Write exactly 320-350 words providing investigation-grade analysis of WHY this content is credible or not credible. Include detailed evidence chain analysis, attribution indicators, legal implications, and forensic methodology. Explain technical artifacts, behavioral patterns, and infrastructure analysis with investigative rigor. Discuss evidentiary standards, chain of custody considerations, and admissibility factors. Include cross-reference verification, corroborating evidence assessment, and gap analysis. Provide risk assessment for ongoing threats, victim impact analysis, and community harm evaluation. Explain investigative techniques used and their reliability standards. Include precedent analysis and case law considerations where applicable. DO NOT use asterisks or hashtag symbols anywhere.]
+
+CONFIDENCE SCORE: [90-98%] with statistical significance [p<0.05] and margin of error [±1-3%]
+
+EVIDENCE SOURCES: [List 5-7 specific forensic methods and authoritative sources with verification standards]
+
+COMMUNITY THREAT ASSESSMENT: [If threat level warrants community alert, provide comprehensive threat assessment including victim potential, harm severity, spread velocity, and recommended community response protocols. Include law enforcement liaison requirements and public safety considerations.]
 
 EVIDENCE COLLECTION & ANALYSIS
 Digital Artifacts:
-• [Metadata and technical indicators]
-• [Linguistic forensics findings]
-• [Behavioral pattern analysis]
-• [Cross-reference verification results]
+• [Metadata and technical indicators with forensic extraction methods and validation procedures]
+• [Linguistic forensics findings with statistical analysis and comparative linguistics]
+• [Behavioral pattern analysis with psychological profiling and deviation measurement]
+• [Cross-reference verification results with database correlation and validation protocols]
 
 Chain of Evidence:
-1. [Source identification methods]
-2. [Verification steps taken]
-3. [Corroborating evidence found]
-4. [Gaps or limitations in evidence]
+1. [Source identification methods with provenance tracking and authenticity verification]
+2. [Verification steps taken with methodological rigor and peer review standards]
+3. [Corroborating evidence found with independent source validation and triangulation]
+4. [Gaps or limitations in evidence with impact assessment and mitigation strategies]
 
 ATTRIBUTION ANALYSIS
 Threat Actor Assessment:
-• [Skills and resource indicators]
-• [Operational security patterns]
-• [Language and cultural markers]
-• [Historical campaign connections]
+• [Skills and resource indicators with capability maturation analysis and operational signatures]
+• [Operational security patterns with OPSEC failure analysis and attribution confidence levels]
+• [Language and cultural markers with geographic profiling and demographic indicators]
+• [Historical campaign connections with timeline correlation and pattern evolution tracking]
 
 Infrastructure Analysis:
-• [Technical delivery mechanisms]
-• [Hosting and domain analysis where applicable]
-• [Payment or contact method forensics]
+• [Technical delivery mechanisms with network topology analysis and hosting patterns]
+• [Domain registration and hosting analysis with WHOIS forensics and infrastructure mapping]
+• [Payment method forensics with financial trail analysis and transaction pattern recognition]
 
 IMPACT ASSESSMENT
 Direct Harm Potential:
-• [Financial risk quantification]
-• [Personal safety implications]
-• [Reputation/social harm assessment]
-• [System/data security risks]
+• [Financial risk quantification with economic impact modeling and loss projections]
+• [Personal safety implications with threat escalation analysis and victim vulnerability assessment]
+• [Reputation/social harm assessment with social media impact analysis and viral coefficient calculation]
+• [System/data security risks with technical vulnerability assessment and exploitation potential]
 
 Scale and Scope:
-• [Estimated victim count/potential]
-• [Geographic spread analysis]
-• [Demographic targeting assessment]
+• [Estimated victim count/potential with demographic analysis and exposure modeling]
+• [Geographic spread analysis with distribution pattern mapping and regional impact assessment]
+• [Demographic targeting assessment with vulnerability profiling and risk stratification]
 
 Cascading Effects:
-• [Secondary harm possibilities]
-• [Community/organizational impact]
-• [Long-term consequence modeling]
+• [Secondary harm possibilities with network effect modeling and amplification analysis]
+• [Community/organizational impact with social cohesion assessment and trust degradation metrics]
+• [Long-term consequence modeling with predictive analytics and trend extrapolation]
 
 LEGAL & REGULATORY CONTEXT
 Applicable Laws:
-• [Relevant criminal statutes]
-• [Civil liability considerations]
-• [Regulatory compliance issues]
+• [Relevant criminal statutes with jurisdiction analysis and prosecution feasibility]
+• [Civil liability considerations with tort analysis and damage calculation frameworks]
+• [Regulatory compliance issues with agency notification requirements and penalty structures]
 
 Evidence Standards:
-• [Documentation quality assessment]
-• [Legal admissibility considerations]
-• [Additional evidence needs]
+• [Documentation quality assessment with legal admissibility evaluation and chain of custody verification]
+• [Authentication requirements with technical standards and expert testimony preparation]
+• [Additional evidence needs with investigation roadmap and resource requirements]
 
 INCIDENT RESPONSE RECOMMENDATIONS
 Immediate Actions:
-1. [Preservation of evidence]
-2. [Victim notification procedures]
-3. [Containment measures]
+1. [Evidence preservation with forensic best practices and legal hold procedures]
+2. [Victim notification procedures with privacy protection and harm mitigation protocols]
+3. [Containment measures with technical implementation and effectiveness monitoring]
 
 Investigation Support:
-• [Additional forensic techniques needed]
-• [External expert consultation requirements]
-• [Law enforcement coordination steps]
+• [Additional forensic techniques needed with specialized expertise and equipment requirements]
+• [External expert consultation requirements with qualification standards and coordination protocols]
+• [Law enforcement coordination steps with reporting procedures and evidence sharing frameworks]
 
 PREVENTIVE MEASURES
 System Hardening:
-• [Technical controls to implement]
-• [Policy and procedure updates]
-• [Training and awareness needs]
+• [Technical controls to implement with configuration standards and effectiveness metrics]
+• [Policy and procedure updates with compliance frameworks and training requirements]
+• [Monitoring enhancement needs with detection capability improvement and alert optimization]
 
-Monitoring and Detection:
-• [Indicators to watch for]
-• [Alert system configurations]
-• [Regular assessment schedules]
+Detection and Response:
+• [Behavioral indicators to monitor with automated detection rules and human analysis integration]
+• [Alert system configurations with threshold tuning and false positive management]
+• [Response playbook development with escalation procedures and recovery protocols]
 
 DOCUMENTATION REQUIREMENTS
-Report Distribution: [Who needs to be informed]
-Retention Schedule: [How long to keep evidence]
-Follow-up Actions: [Ongoing monitoring needs]
+Evidence Retention: [Legal requirements and best practices for preserving investigation materials]
+Report Distribution: [Need-to-know basis with security classification and access controls]
+Follow-up Schedule: [Ongoing monitoring requirements with review intervals and success metrics]
 
-LESSONS LEARNED
-Defensive Improvements: [What this case teaches us]
-Training Applications: [How to use for education]
-Research Value: [Contribution to threat intelligence]`
+LESSONS LEARNED & INTELLIGENCE VALUE
+Defensive Improvements: [Systematic enhancements to prevent similar incidents with implementation roadmaps]
+Threat Intelligence: [Indicators of compromise and behavioral signatures for sharing with security community]
+Training Applications: [Case study development for security awareness and professional education programs]
+
+SHOW_COMMUNITY_BUTTON: [YES if threat level is CRITICAL/HIGH, NO otherwise - forensic cases typically require community awareness for public safety]`
   },
   realtime: {
     label: 'Real-time Monitoring',
@@ -489,7 +514,7 @@ Research Value: [Contribution to threat intelligence]`
     darkBgGradient: 'from-cyan-900/20 to-teal-900/20',
     borderColor: 'border-cyan-200',
     textColor: 'text-cyan-600',
-    maxTokens: 1000,
+    maxTokens: 1800,
     temperature: 0.25,
     priority: 'monitoring',
     features: ['live_analysis', 'trend_detection', 'alert_generation', 'adaptive_learning'],
@@ -508,71 +533,77 @@ Provide real-time monitoring analysis in this EXACT format:
 REAL-TIME THREAT STATUS
 Current Risk Level: [CRITICAL/HIGH/MEDIUM/LOW/BASELINE]
 Change from Previous: [ESCALATING/STABLE/DECREASING]
-Confidence: [0-100%]
 Alert Priority: [IMMEDIATE/HIGH/MEDIUM/LOW/INFO]
-CREDIBILITY VERDICT: [TRUE/FALSE/MIXED/UNVERIFIABLE]
-EXPLANATION PARAGRAPH:
-[2-3 sentences clearly explaining WHY this content is credible or not credible. State the specific evidence that supports your conclusion. Explain what makes this trustworthy or suspicious without using * or # symbols.]
-CONFIDENCE SCORE: [0-100%]
-Sources checked: [Brief mention of verification methods used]
 
+CREDIBILITY VERDICT: [TRUE/FALSE/MIXED/UNVERIFIABLE]
+
+MONITORING EXPLANATION PARAGRAPH: [Write exactly 220-250 words explaining the real-time threat assessment and WHY this content poses current risks or represents safety. Include trending analysis, velocity of spread, pattern evolution, and community impact potential. Explain how this fits into current threat landscapes, what makes it significant right now, and why immediate attention is warranted. Discuss network effects, viral potential, and cascade risk scenarios. Include behavioral indicators that suggest coordinated campaigns or organic spread. Provide context about timing factors, seasonal patterns, and current event correlations that amplify threat potential. Explain adaptive countermeasures and community resilience factors. DO NOT use asterisks or hashtag symbols anywhere.]
+
+CONFIDENCE SCORE: [80-95%] with real-time accuracy metrics
+
+MONITORING SOURCES: [List 3-4 real-time data sources and trending analysis methods]
+
+COMMUNITY IMPACT ASSESSMENT: [Real-time assessment of community risk including spread velocity, demographic targeting, and immediate harm potential. If threat level is CRITICAL/HIGH/MEDIUM, explain urgent community alert requirements and rapid response protocols.]
 
 TREND ANALYSIS
 Pattern Recognition:
-• [New patterns detected in this sample]
-• [Consistency with known threat trends]
-• [Deviation from baseline behavior]
+• [New patterns detected in this sample with emerging threat indicators and deviation analysis]
+• [Consistency with known threat trends with historical correlation and predictive modeling]
+• [Deviation from baseline behavior with anomaly significance and investigation priorities]
 
 Volume Assessment:
-• [Frequency of similar content]
-• [Distribution velocity analysis]
-• [Geographic spread indicators]
+• [Frequency of similar content with statistical trending and threshold analysis]
+• [Distribution velocity analysis with viral coefficient calculation and spread prediction]
+• [Geographic spread indicators with hotspot identification and regional risk assessment]
 
 ADAPTIVE LEARNING UPDATES
 New Indicators Discovered:
-• [Previously unseen threat markers]
-• [Evolved attack techniques]
-• [Updated social engineering methods]
+• [Previously unseen threat markers with signature development and detection integration]
+• [Evolved attack techniques with countermeasure effectiveness and adaptation requirements]
+• [Updated social engineering methods with psychological targeting and defense updates]
 
 Model Adjustments:
-• [Confidence score recalibrations]
-• [New pattern weightings]
-• [False positive/negative learnings]
+• [Confidence score recalibrations with accuracy improvement and validation testing]
+• [Detection rule updates with false positive optimization and sensitivity tuning]
+• [Behavioral baseline updates with normal pattern evolution and anomaly redefinition]
 
 ALERT GENERATION
 Immediate Notifications Required:
-□ Security Team Alert
-□ User Warning Required
-□ System Admin Notice
-□ Law Enforcement Contact
-□ Regulatory Reporting
+□ Security Team Alert - [Urgency level and technical details]
+□ User Warning Required - [Risk communication and protective actions]
+□ System Admin Notice - [Infrastructure protection and monitoring enhancement]
+□ Law Enforcement Contact - [Legal threshold analysis and reporting requirements]
+□ Community Alert - [Public safety assessment and rapid response coordination]
 
 Alert Details:
-• [Specific threat indicators found]
-• [Recommended response timeline]
-• [Escalation criteria]
+• [Specific threat indicators found with detection confidence and validation methods]
+• [Recommended response timeline with escalation triggers and decision points]
+• [Resource requirements with personnel allocation and technical support needs]
 
 CONTINUOUS MONITORING METRICS
-Detection Accuracy: [Current model performance]
-Response Time: [Time from detection to alert]
-False Positive Rate: [Current accuracy metrics]
+Detection Accuracy: [Current model performance with precision/recall metrics and improvement trends]
+Response Time: [Time from detection to alert with optimization opportunities and benchmark comparison]
+Community Coverage: [Population at risk with demographic analysis and protection effectiveness]
 
 Monitoring Adjustments:
-• [Sensitivity calibrations needed]
-• [New monitoring rules required]
-• [Resource allocation recommendations]
+• [Sensitivity calibrations needed with threshold optimization and noise reduction]
+• [Coverage expansion requirements with resource scaling and geographic prioritization]
+• [Integration improvements with cross-platform monitoring and data fusion enhancement]
+
+PREDICTIVE ANALYSIS
+Threat Evolution Forecast: [Expected changes in threat patterns with timeline predictions and confidence intervals]
+Community Impact Projection: [Potential spread scenarios with harm modeling and intervention effectiveness]
+Resource Requirements: [Scaling needs for continued monitoring with cost-benefit analysis and optimization strategies]
 
 FEEDBACK INTEGRATION
-User Response Integration: [How user feedback improves detection]
-System Learning: [Automated improvements made]
-Quality Assurance: [Validation of detection accuracy]
+Community Response: [How user reports improve detection with crowdsource intelligence and validation protocols]
+System Learning: [Automated improvements with machine learning updates and performance optimization]
+Quality Assurance: [Detection validation with human oversight and continuous improvement processes]
 
-NEXT MONITORING CYCLE
-Watchlist Updates: [New items to monitor]
-Sensitivity Adjustments: [Detection threshold changes]
-Resource Requirements: [Computing or human resources needed]`
+SHOW_COMMUNITY_BUTTON: [YES if threat level is CRITICAL/HIGH/MEDIUM and requires immediate community awareness, NO for routine monitoring alerts]`
   }
 };
+
 
 // ===== COMPREHENSIVE THREAT PATTERN DATABASE =====
 const THREAT_PATTERNS = {
@@ -1197,21 +1228,20 @@ Important Guidelines:
   },
 
   determineMainThreatCategory(threats) {
-    if (Object.keys(threats).length === 0) return 'SAFE';
+    if (!threats || Object.keys(threats).length === 0) return 'SAFE';
     
-    // Find the threat type with highest weight
     let maxWeight = 0;
     let mainThreat = 'UNKNOWN';
     
     Object.entries(threats).forEach(([threatType, data]) => {
-      if (data.totalWeight > maxWeight) {
-        maxWeight = data.totalWeight;
-        mainThreat = data.category || threatType.toUpperCase();
-      }
+        if (data && data.totalWeight > maxWeight) {
+            maxWeight = data.totalWeight;
+            mainThreat = data.category || (threatType ? threatType.toUpperCase() : 'UNKNOWN');
+        }
     });
-    
     return mainThreat;
-  },
+},
+
 
   determineSeverity(overallRisk, criticalMatches) {
     if (criticalMatches > 0 || overallRisk > 0.8) return 'CRITICAL';
@@ -1896,13 +1926,15 @@ const NotificationSystem = ({ notifications, onDismiss }) => {
 };
 
 // ===== MAIN VERIFY SECTION COMPONENT =====
-const VerifySection = ({ user, userStats, onUpdateStats, isMobile,onAnalysisComplete, theme }) => {
+const VerifySection = ({ user, userStats, onUpdateStats, onSectionChange,userAnalysisHistory = [], onNavigateToSection, isMobile, onAnalysisComplete, theme }) => {
   // ===== CORE STATE MANAGEMENT =====
   const [inputContent, setInputContent] = useState('');
   const [analysisResult, setAnalysisResult] = useState(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [inputMethod, setInputMethod] = useState('text');
-  const [analysisHistory, setAnalysisHistory] = useState([]);
+  const [localAnalysisHistory, setLocalAnalysisHistory] = useState(userAnalysisHistory || []);
+  const [analysisInput, setAnalysisInput] = useState(''); // Added missing state
+
   
   // ===== ADVANCED CONFIGURATION STATE =====
   const [detailLevel, setDetailLevel] = useState('standard');
@@ -1943,6 +1975,13 @@ const VerifySection = ({ user, userStats, onUpdateStats, isMobile,onAnalysisComp
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
   const analysisTimeoutRef = useRef(null);
+  const [historyCount, setHistoryCount] = useState(0);
+  const [isProcessingCommunityAlert, setIsProcessingCommunityAlert] = useState(false);
+  const [successMessage, setSuccessMessage] = useState('');
+  const [communityAlertSent, setCommunityAlertSent] = useState(false);
+  const [showCommunityButton, setShowCommunityButton] = useState(false);
+  const [communityButtonEnabled, setCommunityButtonEnabled] = useState(false);
+  const [historyLoaded, setHistoryLoaded] = useState(false);
 
   // ===== INITIALIZATION EFFECTS =====
   useEffect(() => {
@@ -1974,6 +2013,16 @@ const VerifySection = ({ user, userStats, onUpdateStats, isMobile,onAnalysisComp
   useEffect(() => {
     saveUserPreferences();
   }, [analysisMode, detailLevel, realTimeMode, darkMode]);
+
+  useEffect(() => {
+    loadHistoryFromStorage();
+  }, []);
+
+  useEffect(() => {
+    if (analysisResult) {
+      checkCommunityButtonVisibility();
+    }
+  }, [analysisResult]);
 
   // ===== UTILITY FUNCTIONS =====
   const detectDeviceCapabilities = useCallback(() => {
@@ -2021,8 +2070,8 @@ const VerifySection = ({ user, userStats, onUpdateStats, isMobile,onAnalysisComp
         setAnalysisContext(parsed.analysisContext || 'general');
         
         // Load analysis history
-        if (parsed.analysisHistory && Array.isArray(parsed.analysisHistory)) {
-          setAnalysisHistory(parsed.analysisHistory.slice(0, 10)); // Keep last 10
+        if (parsed.localAnalysisHistory && Array.isArray(parsed.localAnalysisHistory)) {
+          setLocalAnalysisHistory(parsed.localAnalysisHistory.slice(0, 10)); // Keep last 10
         }
         
         console.log('[Preferences] Loaded user preferences');
@@ -2043,7 +2092,7 @@ const VerifySection = ({ user, userStats, onUpdateStats, isMobile,onAnalysisComp
         realTimeMode,
         darkMode,
         analysisContext,
-        analysisHistory: analysisHistory.slice(0, 10), // Save last 10
+        localAnalysisHistory: localAnalysisHistory.slice(0, 10), // Save last 10
         lastUpdated: new Date().toISOString(),
         version: '2.0'
       };
@@ -2053,7 +2102,7 @@ const VerifySection = ({ user, userStats, onUpdateStats, isMobile,onAnalysisComp
     } catch (error) {
       console.error('[Preferences] Failed to save:', error);
     }
-  }, [analysisMode, detailLevel, realTimeMode, darkMode, analysisContext, analysisHistory, deviceCapabilities.localStorage]);
+  }, [analysisMode, detailLevel, realTimeMode, darkMode, analysisContext, localAnalysisHistory, deviceCapabilities.localStorage]);
 
   const initializeRealTimeMode = useCallback(() => {
     if (realTimeMode) {
@@ -2186,7 +2235,7 @@ const VerifySection = ({ user, userStats, onUpdateStats, isMobile,onAnalysisComp
 }
 
       // Add to history with enhanced metadata
-     setAnalysisHistory(prev => [
+     setLocalAnalysisHistory(prev => [
         {
           ...enhancedResult,
           inputContent: inputContent.substring(0, 100) + (inputContent.length > 100 ? '...' : ''),
@@ -2748,6 +2797,213 @@ Note: Please describe what is visible in the captured image or paste any readabl
     return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
   }, []);
 
+    // ===== ADD THESE ENHANCED FUNCTIONS AFTER EXISTING FUNCTIONS =====
+  
+  const loadHistoryFromStorage = useCallback(() => {
+    try {
+      const storedHistory = localStorage.getItem('xist_analysis_history');
+      const storedStats = localStorage.getItem('xist_performance_metrics');
+      
+      if (storedHistory) {
+        const parsedHistory = JSON.parse(storedHistory);
+        if (Array.isArray(parsedHistory)) {
+          setLocalAnalysisHistory(parsedHistory);
+          setHistoryCount(parsedHistory.length);
+        }
+      }
+      
+      if (storedStats) {
+        const parsedStats = JSON.parse(storedStats);
+        setPerformanceMetrics(prev => ({
+          ...prev,
+          ...parsedStats
+        }));
+      }
+      
+      setHistoryLoaded(true);
+      console.log('[History] Loaded from localStorage successfully');
+    } catch (error) {
+      console.error('[History] Failed to load from localStorage:', error);
+      setHistoryLoaded(true);
+    }
+  }, []);
+
+  const saveToHistory = useCallback((analysisData) => {
+    try {
+      const historyItem = {
+        id: Date.now().toString(),
+        timestamp: new Date().toISOString(),
+        input: analysisData.input || analysisInput,
+        result: analysisData.result || analysisResult,
+        mode: analysisData.mode || analysisMode,
+        threatLevel: analysisData.threatLevel || 'UNKNOWN',
+        confidence: analysisData.confidence || 0,
+        patterns: analysisData.patterns || {},
+        communityAlerted: communityAlertSent,
+        responseTime: analysisData.responseTime || 0,
+        userId: generateUserId(),
+        sessionId: getSessionId()
+      };
+
+      const updatedHistory = [historyItem, ...localAnalysisHistory.slice(0, 49)]; // Keep last 50
+      setLocalAnalysisHistory(updatedHistory);
+      setHistoryCount(updatedHistory.length);
+      
+      // Save to localStorage
+      localStorage.setItem('xist_analysis_history', JSON.stringify(updatedHistory));
+      
+      // Update performance metrics
+      const updatedMetrics = {
+        ...performanceMetrics,
+        totalQueries: performanceMetrics.totalQueries + 1,
+        lastUpdate: new Date().toISOString()
+      };
+      
+      setPerformanceMetrics(updatedMetrics);
+      localStorage.setItem('xist_performance_metrics', JSON.stringify(updatedMetrics));
+      
+      console.log('[History] Saved analysis to history and localStorage');
+      return historyItem;
+    } catch (error) {
+      console.error('[History] Failed to save to localStorage:', error);
+      return null;
+    }
+  }, [analysisInput, analysisResult, analysisMode, localAnalysisHistory, communityAlertSent, performanceMetrics]);
+
+  const handleCommunityAlert = useCallback(async () => {
+    if (!analysisResult || isProcessingCommunityAlert) return;
+
+    setIsProcessingCommunityAlert(true);
+    setSuccessMessage('');
+
+    try {
+      const alertData = {
+        content: analysisInput,
+        threatLevel: analysisResult.threatLevel || 'UNKNOWN',
+        analysis: analysisResult.content,
+        confidence: analysisResult.confidence || 0,
+        timestamp: new Date().toISOString(),
+        userId: generateUserId(),
+        sessionId: getSessionId(),
+        analysisMode: analysisMode,
+        patterns: analysisResult.patterns || {}
+      };
+
+      // Simulate community alert API (replace with actual API call)
+      await new Promise(resolve => setTimeout(resolve, 2000));
+
+      // Save to history with community alert flag
+      const historyItem = saveToHistory({
+        ...alertData,
+        communityAlerted: true
+      });
+
+      setCommunityAlertSent(true);
+      setShowCommunityButton(false); // Hide button after successful alert
+      setSuccessMessage('✅ Community Alert Sent Successfully! Your report helps protect others from this threat.');
+
+      // Auto-navigate to Community section after successful alert
+      setTimeout(() => {
+        if (typeof onSectionChange === 'function') {
+          onSectionChange('community');
+        }
+      }, 3000);
+
+      // Show success toast
+      toast.success('Community alert sent successfully!', {
+        duration: 4000,
+        position: 'top-center'
+      });
+
+      console.log('[CommunityAlert] Successfully sent alert for threat:', alertData.threatLevel);
+
+    } catch (error) {
+      console.error('[CommunityAlert] Failed to send alert:', error);
+      setSuccessMessage('❌ Failed to send community alert. Please try again.');
+      
+      toast.error('Failed to send community alert', {
+        duration: 4000,
+        position: 'top-center'
+      });
+    } finally {
+      setIsProcessingCommunityAlert(false);
+    }
+  }, [analysisResult, analysisInput, analysisMode, isProcessingCommunityAlert, saveToHistory, onSectionChange]);
+
+  const checkCommunityButtonVisibility = useCallback(() => {
+    if (!analysisResult) {
+      setShowCommunityButton(false);
+      setCommunityButtonEnabled(false);
+      return;
+    }
+
+    const threatLevel = analysisResult.threatLevel?.toUpperCase();
+    const confidence = analysisResult.confidence || 0;
+    const hasHighRiskPatterns = analysisResult.patterns?.criticalThreats > 0;
+    const showCommunityResponse = analysisResult.content?.includes('SHOW_COMMUNITY_BUTTON: YES');
+
+    // Show community button for high-risk threats
+    const shouldShow = (
+      ['CRITICAL', 'HIGH'].includes(threatLevel) ||
+      confidence > 85 ||
+      hasHighRiskPatterns ||
+      showCommunityResponse
+    ) && !communityAlertSent;
+
+    setShowCommunityButton(shouldShow);
+    setCommunityButtonEnabled(shouldShow && !isProcessingCommunityAlert);
+
+    console.log('[CommunityButton] Visibility check:', {
+      threatLevel,
+      confidence,
+      hasHighRiskPatterns,
+      shouldShow,
+      communityAlertSent
+    });
+  }, [analysisResult, communityAlertSent, isProcessingCommunityAlert]);
+
+  const generateUserId = useCallback(() => {
+    let userId = localStorage.getItem('xist_user_id');
+    if (!userId) {
+      userId = 'user_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+      localStorage.setItem('xist_user_id', userId);
+    }
+    return userId;
+  }, []);
+
+  const getSessionId = useCallback(() => {
+    let sessionId = sessionStorage.getItem('xist_session_id');
+    if (!sessionId) {
+      sessionId = 'session_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+      sessionStorage.setItem('xist_session_id', sessionId);
+    }
+    return sessionId;
+  }, []);
+
+  const clearHistory = useCallback(() => {
+    try {
+      localStorage.removeItem('xist_analysis_history');
+      localStorage.removeItem('xist_performance_metrics');
+      sessionStorage.removeItem('xist_session_id');
+      
+      setLocalAnalysisHistory([]);
+      setHistoryCount(0);
+      setPerformanceMetrics({
+        totalQueries: 0,
+        successfulQueries: 0,
+        averageResponseTime: 0,
+        successRate: 0,
+        lastUpdate: new Date().toISOString()
+      });
+      
+      toast.success('History cleared successfully');
+      console.log('[History] Cleared all stored data');
+    } catch (error) {
+      console.error('[History] Failed to clear history:', error);
+      toast.error('Failed to clear history');
+    }
+  }, []);
+
   // ===== RENDER COMPONENT =====
   return (
     <div className="min-h-screen">
@@ -2853,7 +3109,7 @@ Note: Please describe what is visible in the captured image or paste any readabl
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                    {analysisHistory.length}
+                    {localAnalysisHistory.length}
                   </p>
                   <p className="text-sm text-gray-600 dark:text-gray-400">History</p>
                 </div>
@@ -3130,7 +3386,10 @@ Note: Please describe what is visible in the captured image or paste any readabl
                   <textarea
                     ref={textareaRef}
                     value={inputContent}
-                    onChange={(e) => setInputContent(e.target.value)}
+                    onChange={(e) => {
+  setInputContent(e.target.value);
+  setAnalysisInput(e.target.value); // ✅ Now properly synced
+}}
                     placeholder={INPUT_METHODS[inputMethod].placeholder}
                     className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none transition-all"
                     rows={4}
@@ -3153,7 +3412,10 @@ Note: Please describe what is visible in the captured image or paste any readabl
                   <input
                     type="url"
                     value={inputContent}
-                    onChange={(e) => setInputContent(e.target.value)}
+                    onChange={(e) => {
+  setInputContent(e.target.value);
+  setAnalysisInput(e.target.value); // ✅ Now properly synced
+}}
                     placeholder={INPUT_METHODS[inputMethod].placeholder}
                     className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     maxLength={INPUT_METHODS[inputMethod].maxLength}
@@ -3448,7 +3710,8 @@ Note: Please describe what is visible in the captured image or paste any readabl
                     {Object.keys(analysisResult.patterns.threats).length > 0 ? (
                       <div className="space-y-3">
                         {Object.entries(analysisResult.patterns.threats).map(([threatType, data]) => (
-                          <div key={threatType} className="p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
+  <div key={threatType} className="p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
+
                             <div className="flex items-center justify-between mb-2">
                               <h4 className="font-medium text-gray-900 dark:text-white capitalize">
                                 {threatType.replace(/([A-Z])/g, ' $1').trim()}
@@ -3478,13 +3741,11 @@ Note: Please describe what is visible in the captured image or paste any readabl
                                 <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Examples:</p>
                                 <div className="flex flex-wrap gap-1">
                                   {data.examples.slice(0, 3).map((example, index) => (
-                                    <span
-                                      key={index}
-                                      className="px-2 py-1 bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-300 rounded text-xs font-mono"
-                                    >
-                                      "{example.substring(0, 20)}{example.length > 20 ? '...' : ''}"
-                                    </span>
-                                  ))}
+  <span key={`example-${index}`} className="px-2 py-1 bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-300 rounded text-xs font-mono">
+    {example.substring(0, 20)}{example.length > 20 ? '...' : ''}
+  </span>
+))
+}
                                 </div>
                               </div>
                             )}
@@ -3508,7 +3769,8 @@ Note: Please describe what is visible in the captured image or paste any readabl
                         </h3>
                         <div className="space-y-3">
                           {analysisResult.urls.analysis.map((urlData, index) => (
-                            <div key={index} className="p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
+  <div key={`url-${index}`} className="p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
+
                               <div className="flex items-center justify-between mb-2">
                                 <p className="font-mono text-sm text-gray-800 dark:text-gray-200 break-all">
                                   {urlData.url}
@@ -3540,13 +3802,11 @@ Note: Please describe what is visible in the captured image or paste any readabl
                                   <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Risk Indicators:</p>
                                   <div className="flex flex-wrap gap-1">
                                     {urlData.indicators.map((indicator, i) => (
-                                      <span
-                                        key={i}
-                                        className="px-2 py-1 bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200 rounded text-xs"
-                                      >
-                                        {indicator}
-                                      </span>
-                                    ))}
+  <span key={`indicator-${i}`} className="px-2 py-1 bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200 rounded text-xs">
+    {indicator}
+  </span>
+))
+}
                                   </div>
                                 </div>
                               )}
@@ -3559,6 +3819,79 @@ Note: Please describe what is visible in the captured image or paste any readabl
                 )}
               </motion.div>
             )}
+
+                      {/* ===== ADD THIS COMMUNITY ALERT SECTION AFTER ANALYSIS RESULTS ===== */}
+          {showCommunityButton && analysisResult && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="mt-6 p-6 bg-gradient-to-r from-red-50 to-orange-50 dark:from-red-900/20 dark:to-orange-900/20 border border-red-200 dark:border-red-800 rounded-xl"
+            >
+              <div className="flex items-start space-x-4">
+                <div className="flex-shrink-0">
+                  <ExclamationTriangleSolid className="h-8 w-8 text-red-500" />
+                </div>
+                <div className="flex-1">
+                  <h3 className="text-lg font-semibold text-red-900 dark:text-red-100 mb-2">
+                    🚨 High-Risk Content Detected
+                  </h3>
+                  <p className="text-red-700 dark:text-red-200 mb-4">
+                    This content poses significant risks to community safety. Your report helps protect others from similar threats.
+                  </p>
+                  
+                  <div className="flex flex-col sm:flex-row gap-3">
+                    <motion.button
+                      onClick={handleCommunityAlert}
+                      disabled={!communityButtonEnabled || isProcessingCommunityAlert}
+                      whileHover={{ scale: communityButtonEnabled ? 1.02 : 1 }}
+                      whileTap={{ scale: communityButtonEnabled ? 0.98 : 1 }}
+                      className={`
+                        flex items-center justify-center px-6 py-3 rounded-lg font-semibold text-white
+                        transition-all duration-200 transform
+                        ${communityButtonEnabled && !isProcessingCommunityAlert
+                          ? 'bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-700 hover:to-orange-700 shadow-lg hover:shadow-xl'
+                          : 'bg-gray-400 cursor-not-allowed opacity-60'
+                        }
+                      `}
+                    >
+                      {isProcessingCommunityAlert ? (
+                        <>
+                          <ArrowPathIcon className="animate-spin -ml-1 mr-2 h-5 w-5" />
+                          Sending Alert...
+                        </>
+                      ) : (
+                        <>
+                          <MegaphoneIcon className="-ml-1 mr-2 h-5 w-5" />
+                          Alert Community
+                        </>
+                      )}
+                    </motion.button>
+                    
+                    <button
+                      onClick={() => setShowCommunityButton(false)}
+                      className="px-4 py-3 text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-200 font-medium transition-colors duration-200"
+                    >
+                      Dismiss
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          )}
+
+          {/* ===== SUCCESS MESSAGE DISPLAY ===== */}
+          {successMessage && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="mt-4 p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg"
+            >
+              <p className="text-green-800 dark:text-green-200 font-medium">
+                {successMessage}
+              </p>
+            </motion.div>
+          )}
+
           </div>
 
           {/* Sidebar */}
@@ -3604,7 +3937,7 @@ Note: Please describe what is visible in the captured image or paste any readabl
             </motion.div>
 
             {/* Analysis History */}
-            {analysisHistory.length > 0 && (
+            {localAnalysisHistory.length > 0 && (
               <motion.div
                 initial={{ opacity: 0, x: 20 }}
                 animate={{ opacity: 1, x: 0 }}
@@ -3616,7 +3949,7 @@ Note: Please describe what is visible in the captured image or paste any readabl
                     Recent Analysis
                   </h3>
                   <button
-                    onClick={() => setAnalysisHistory([])}
+                    onClick={() => setLocalAnalysisHistory([])}
                     className="text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200"
                   >
                     Clear All
@@ -3624,12 +3957,9 @@ Note: Please describe what is visible in the captured image or paste any readabl
                 </div>
                 
                 <div className="space-y-3 max-h-96 overflow-y-auto">
-                  {analysisHistory.slice(0, 5).map((analysis, index) => (
-                    <div
-                      key={analysis.analysisId}
-                      className="p-3 bg-gray-50 dark:bg-gray-700 rounded-lg cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors"
-                      onClick={() => setAnalysisResult(analysis)}
-                    >
+                  {localAnalysisHistory.slice(0, 5).map((analysis, index) => (
+  <div key={analysis.analysisId || `history-${index}`} className="p-3 bg-gray-50 dark:bg-gray-700 rounded-lg cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors">
+
                       <div className="flex items-center justify-between mb-1">
                         <span className={`text-xs font-medium px-2 py-1 rounded-full ${getThreatColor(analysis.threatLevel)}`}>
                           {analysis.threatLevel}
