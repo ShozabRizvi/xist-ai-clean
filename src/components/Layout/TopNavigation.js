@@ -78,7 +78,7 @@ const TopNavigation = ({
     { id: 'education', icon: BookOpenIcon, label: 'Education' },
     { id: 'community', icon: UsersIcon, label: 'Community' },
     { id: 'analytics', icon: ChartBarIcon, label: 'Analytics' },
-    { id: 'protection', icon: ShieldExclamationIcon, label: 'Protection' }
+    { id: 'protection', icon: ShieldExclamationIcon, label: 'Helpline 24/7' }
   ];
 
   // 🚀 MOBILE-ONLY NAVIGATION ITEMS (Extra sections for hamburger menu)
@@ -112,7 +112,7 @@ const TopNavigation = ({
             <div className="text-center">
               <div className="bg-white p-4 rounded-xl mx-auto mb-4 w-48 h-48 flex items-center justify-center border">
                 <img 
-                  src="/qrcode.png" 
+                  src="/qrcode2.png" 
                   alt="QR Code" 
                   className="w-full h-full rounded-lg"
                   onError={(e) => {

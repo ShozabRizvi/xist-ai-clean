@@ -189,7 +189,20 @@ const App = () => {
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
-
+useEffect(() => {
+  // Force immediate scroll to top
+  document.documentElement.scrollTop = 0;
+  document.body.scrollTop = 0;
+  
+  // Add smooth scroll for better UX
+  setTimeout(() => {
+    window.scrollTo({
+      top: 0,
+      left: 0,
+      behavior: 'smooth'
+    });
+  }, 50);
+}, [currentSection]);
   // User stats update handler
   const handleUpdateUserStats = async (newStats) => {
     try {

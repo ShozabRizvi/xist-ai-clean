@@ -1,3 +1,4 @@
+// CommunitySection.js
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -8,1527 +9,1205 @@ import {
   BookmarkIcon, DocumentTextIcon, ShieldCheckIcon, AcademicCapIcon,
   CalendarIcon, CurrencyDollarIcon, ChartBarIcon, ScaleIcon, XMarkIcon,
   UserGroupIcon, NoSymbolIcon, CheckCircleIcon, UserMinusIcon,
-  MapPinIcon,
-  UserPlusIcon
+  MapPinIcon, UserPlusIcon, GlobeAltIcon, LanguageIcon, ClockIcon,
+  TrashIcon, ArchiveBoxIcon, EllipsisHorizontalIcon, PhotoIcon,
+  VideoCameraIcon, LinkIcon, HashtagIcon, AtSymbolIcon, BellIcon,
+  InformationCircleIcon, ExclamationCircleIcon
 } from '@heroicons/react/24/outline';
-import { HeartIcon as HeartIconSolid, StarIcon as StarIconSolid } from '@heroicons/react/24/solid';
+import { HeartIcon as HeartIconSolid, StarIcon as StarIconSolid,
+         CheckBadgeIcon as CheckBadgeIconSolid } from '@heroicons/react/24/solid';
 import Card from '../UI/Card';
 import Button from '../UI/Button';
 import { useResponsive } from '../../hooks/useResponsive';
-import PostReporting from '../Community/PostReporting';
-import Leaderboard from '../Community/Leaderboard';
+import { supabase } from '../../supabase';
 
-const CommunitySection = ({ user, userStats }) => {
-  const { screenSize } = useResponsive();
-  const [activeTab, setActiveTab] = useState('feed');
-  const [searchQuery, setSearchQuery] = useState('');
+/**
+ * CommunitySection
+ *
+ * - Uses the single exported `supabase` client (from supabase.js) — do NOT create clients here.
+ * - All fields use `user?.id` (not uid) and all DB row identifiers use `id`.
+ * - Realtime subscribes to `community_posts`.
+ * - DB updates are guarded with try/catch when optional columns might not exist.
+ *
+ * Keep the component props (`user`, `isDarkMode`) so your app integration remains unchanged.
+ */
+
+const CommunitySection = ({ user, isDarkMode }) => {
+  const { isMobile, isTablet, isDesktop } = useResponsive();
+
+  // Main state
+  const [posts, setPosts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [newPost, setNewPost] = useState('');
   const [selectedFilter, setSelectedFilter] = useState('all');
-  const [reportingPost, setReportingPost] = useState(null);
-  const [showNewPostForm, setShowNewPostForm] = useState(false);
-  const [newPost, setNewPost] = useState({ title: '', content: '', tags: [] });
-  const [showAuthorityPanel, setShowAuthorityPanel] = useState(false);
-  const [showAuthorityReportForm, setShowAuthorityReportForm] = useState(false);
-  const [sharedPosts, setSharedPosts] = useState([]);
+  const [showAuthorityModal, setShowAuthorityModal] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [showPostModal, setShowPostModal] = useState(false);
+  const [selectedPost, setSelectedPost] = useState(null);
 
-  // Fixed localStorage keys for XIST AI
-  const [posts, setPosts] = useState(() => {
-    const savedPosts = localStorage.getItem('xist_community_posts');
-    return savedPosts ? JSON.parse(savedPosts) : [
-      {
-        id: 1,
-        author: 'Dr. Sarah Chen',
-        authorId: 'user1',
-        avatar: 'https://images.unsplash.com/photo-1494790108755-2616b25ad2be?w=50&h=50&fit=crop&crop=face',
-        content: '🚨 URGENT: New AI-powered phishing campaign detected targeting cryptocurrency users. These emails use ChatGPT-like responses to seem legitimate. Key indicators: 1) Asks for wallet recovery phrases, 2) Creates false urgency about account suspension, 3) Links to fake exchange websites. Stay vigilant! #CryptoSecurity #PhishingAlert',
-        timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
-        likes: 89,
-        dislikes: 2,
-        comments: 23,
-        shares: 34,
-        views: 456,
-        tags: ['phishing', 'cryptocurrency', 'ai', 'urgent'],
-        verified: true,
-        pinned: true,
-        trending: true,
-        threatLevel: 'critical',
-        liked: false,
-        disliked: false,
-        expert: true,
-        reputation: 'Diamond Expert'
-      },
-      {
-        id: 2,
-        author: 'Alex Thompson',
-        authorId: 'user2',
-        avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=50&h=50&fit=crop&crop=face',
-        content: 'Thanks to this community, I avoided a romance scam that could have cost me $15,000! The red flags you all taught me to look for were spot on. Sharing my experience to help others. 🙏 #CommunitySupport #RomanceScamAwareness',
-        timestamp: new Date(Date.now() - 4 * 60 * 60 * 1000).toISOString(),
-        likes: 156,
-        dislikes: 0,
-        comments: 45,
-        shares: 67,
-        views: 892,
-        tags: ['romance-scam', 'success-story', 'gratitude'],
-        verified: false,
-        provisional: true,
-        liked: false,
-        disliked: false,
-        reputation: 'Trusted Member'
-      },
-      {
-        id: 3,
-        author: 'Mike Rodriguez',
-        authorId: 'user3',
-        avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=50&h=50&fit=crop&crop=face',
-        content: '📊 Weekly Threat Report: We\'ve seen a 340% increase in fake investment schemes using deepfake videos of celebrities. These scams are becoming incredibly sophisticated. Always verify investment opportunities through official channels. Never trust social media ads for investments! #WeeklyReport #InvestmentScams #DeepfakeAlert',
-        timestamp: new Date(Date.now() - 6 * 60 * 60 * 1000).toISOString(),
-        likes: 203,
-        dislikes: 1,
-        comments: 67,
-        shares: 89,
-        views: 1247,
-        tags: ['investment-scams', 'deepfake', 'weekly-report', 'celebrity-fraud'],
-        verified: true,
-        expert: true,
-        liked: false,
-        disliked: false,
-        reputation: 'Gold Expert'
-      }
-    ];
+  // Authority state
+  const [isAuthority, setIsAuthority] = useState(false);
+  const [authorityData, setAuthorityData] = useState(null);
+  const [authorityLoginMode, setAuthorityLoginMode] = useState('login');
+  const [authorityForm, setAuthorityForm] = useState({
+    authorityId: '',
+    department: '',
+    name: '',
+    email: '',
+    verificationCode: ''
   });
 
-  const [authorityReports, setAuthorityReports] = useState(() => {
-    const savedReports = localStorage.getItem('xist_authority_reports');
-    return savedReports ? JSON.parse(savedReports) : [
-      {
-        id: 'auth-001',
-        type: 'authority_alert',
-        authority: 'FBI Cyber Division',
-        title: 'CRITICAL: Nation-State Actor Targeting Critical Infrastructure',
-        content: 'Federal agencies have identified coordinated attacks by advanced persistent threat (APT) groups targeting power grid and water treatment facilities across multiple states.',
-        priority: 'CRITICAL',
-        timestamp: new Date(Date.now() - 1 * 60 * 60 * 1000).toISOString(),
-        verified: true,
-        official: true,
-        region: 'United States',
-        threatLevel: 'national_security',
-        affectedSectors: ['Energy', 'Water', 'Transportation']
-      },
-      {
-        id: 'auth-002',
-        type: 'authority_warning',
-        authority: 'Federal Trade Commission',
-        title: 'HIGH ALERT: Massive Cryptocurrency Ponzi Scheme Discovered',
-        content: 'FTC warns consumers about "CryptoMax Pro" - a fraudulent investment platform that has already stolen over $200M from victims nationwide.',
-        priority: 'HIGH',
-        timestamp: new Date(Date.now() - 3 * 60 * 60 * 1000).toISOString(),
-        verified: true,
-        official: true,
-        region: 'United States',
-        threatLevel: 'financial_fraud',
-        affectedSectors: ['Financial Services', 'Cryptocurrency']
-      }
-    ];
-  });
+  // Post composition state
+  const [postContent, setPostContent] = useState('');
+  const [postType, setPostType] = useState('regular');
+  const [postMedia, setPostMedia] = useState([]);
+  const [postLocation, setPostLocation] = useState(null);
+  const [postHashtags, setPostHashtags] = useState([]);
+  const [showLocationPicker, setShowLocationPicker] = useState(false);
 
-  // Auto-save to localStorage when data changes
-  useEffect(() => {
-    localStorage.setItem('xist_community_posts', JSON.stringify(posts));
-  }, [posts]);
-
-  useEffect(() => {
-    localStorage.setItem('xist_authority_reports', JSON.stringify(authorityReports));
-  }, [authorityReports]);
-
-  // Fixed sessionStorage key for shared posts from VerifySection
-  useEffect(() => {
-    const checkForSharedPost = () => {
-      const sharedPostData = sessionStorage.getItem('sharedToXistCommunity');
-      if (sharedPostData) {
-        try {
-          const postData = JSON.parse(sharedPostData);
-          handleAddSharedPost(postData);
-          sessionStorage.removeItem('sharedToXistCommunity');
-        } catch (error) {
-          console.error('Error parsing shared post data:', error);
-        }
-      }
-    };
-    
-    checkForSharedPost();
-    window.addEventListener('storage', checkForSharedPost);
-    return () => window.removeEventListener('storage', checkForSharedPost);
-  }, []);
-
-  // Populated challenges data
-  const [challenges, setChallenges] = useState([
-    {
-      id: 'challenge-1',
-      title: 'Phishing Email Detection Master',
-      description: 'Test your ability to identify sophisticated phishing attempts and social engineering tactics',
-      difficulty: 'Intermediate',
-      participants: 2847,
-      timeLimit: '15 minutes',
-      questions: 25,
-      reward: '500 XP + Security Badge',
-      category: 'Email Security',
-      icon: '🎣',
-      status: 'active',
-      leaderboard: [
-        { name: 'Dr. Sarah Chen', score: 98, time: '12:45' },
-        { name: 'Mike Rodriguez', score: 96, time: '13:22' },
-        { name: 'Elena Vasquez', score: 94, time: '14:10' }
-      ]
-    },
-    {
-      id: 'challenge-2',
-      title: 'Cryptocurrency Scam Spotter',
-      description: 'Identify fake crypto investment schemes and romance scam red flags',
-      difficulty: 'Advanced',
-      participants: 1923,
-      timeLimit: '20 minutes',
-      questions: 30,
-      reward: '750 XP + Crypto Expert Badge',
-      category: 'Financial Security',
-      icon: '💰',
-      status: 'active',
-      leaderboard: [
-        { name: 'Alex Thompson', score: 92, time: '18:33' },
-        { name: 'Jessica Park', score: 90, time: '19:15' },
-        { name: 'David Kim', score: 88, time: '19:45' }
-      ]
-    },
-    {
-      id: 'challenge-3',
-      title: 'Deepfake Detection Challenge',
-      description: 'Learn to spot AI-generated content and manipulated media',
-      difficulty: 'Expert',
-      participants: 1456,
-      timeLimit: '25 minutes',
-      questions: 20,
-      reward: '1000 XP + AI Detection Master Badge',
-      category: 'Digital Security',
-      icon: '🤖',
-      status: 'active',
-      leaderboard: [
-        { name: 'Prof. Chen Liu', score: 95, time: '22:10' },
-        { name: 'Maya Singh', score: 93, time: '23:55' },
-        { name: 'Tom Wilson', score: 91, time: '24:30' }
-      ]
-    }
-  ]);
-
-  // Populated events data
-  const [events, setEvents] = useState([
-    {
-      id: 'event-1',
-      title: 'Cybersecurity Trends 2025: AI Threats & Defenses',
-      speaker: 'Dr. Sarah Chen & Mike Rodriguez',
-      date: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString(),
-      time: '2:00 PM EST',
-      duration: '90 minutes',
-      attendees: 1247,
-      maxAttendees: 2000,
-      type: 'Webinar',
-      category: 'Digital Security',
-      description: 'Explore emerging AI-powered threats and learn advanced defense strategies from leading cybersecurity experts.',
-      tags: ['AI', 'Threats', 'Defense', 'Trends'],
-      status: 'upcoming',
-      isRegistered: false,
-      image: 'https://images.unsplash.com/photo-1558494949-ef010cbdcc31?w=400&h=200&fit=crop',
-      agenda: [
-        'Current AI Threat Landscape',
-        'Deepfake Detection Techniques',
-        'Automated Defense Systems',
-        'Q&A Session'
-      ]
-    },
-    {
-      id: 'event-2',
-      title: 'Romance Scam Prevention Workshop',
-      speaker: 'Elena Vasquez & Community Survivors',
-      date: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toISOString(),
-      time: '7:00 PM EST',
-      duration: '2 hours',
-      attendees: 892,
-      maxAttendees: 1500,
-      type: 'Interactive Workshop',
-      category: 'Psychology',
-      description: 'Learn to identify and avoid romance scams through real case studies and survivor testimonials.',
-      tags: ['Romance Scams', 'Prevention', 'Psychology', 'Support'],
-      status: 'upcoming',
-      isRegistered: true,
-      image: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=400&h=200&fit=crop',
-      agenda: [
-        'Psychology of Romance Scams',
-        'Red Flag Recognition',
-        'Survivor Stories',
-        'Support Resources'
-      ]
-    },
-    {
-      id: 'event-3',
-      title: 'Cryptocurrency Security Deep Dive',
-      speaker: 'Blockchain Security Alliance',
-      date: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
-      time: '11:00 AM EST',
-      duration: '3 hours',
-      attendees: 567,
-      maxAttendees: 1000,
-      type: 'Technical Session',
-      category: 'Financial Security',
-      description: 'Advanced cryptocurrency security practices, wallet protection, and identifying investment fraud.',
-      tags: ['Cryptocurrency', 'Blockchain', 'Wallets', 'Investment'],
-      status: 'upcoming',
-      isRegistered: false,
-      image: 'https://images.unsplash.com/photo-1639762681485-074b7f938ba0?w=400&h=200&fit=crop',
-      agenda: [
-        'Wallet Security Best Practices',
-        'DeFi Risk Assessment',
-        'Scam Identification',
-        'Legal Perspectives'
-      ]
-    }
-  ]);
-
-  const [communityStats, setCommunityStats] = useState({
-    totalMembers: 12847,
-    onlineNow: 1432,
-    postsToday: 234,
-    expertsOnline: 45,
-    threatsReported: 3456,
-    accuracyRate: 98.7
-  });
-
-  const [expertMembers] = useState([
-    {
-      id: 1,
-      name: 'Dr. Sarah Chen',
-      title: 'Cybersecurity Researcher',
-      avatar: 'https://images.unsplash.com/photo-1494790108755-2616b25ad2be?w=50&h=50&fit=crop&crop=face',
-      verified: true,
-      reputation: 'Expert',
-      level: 'Diamond',
-      contributions: 1247,
-      online: true,
-      category: 'Digital Security',
-      specialties: ['AI Security', 'Threat Detection', 'Misinformation Analysis']
-    },
-    {
-      id: 2,
-      name: 'Mike Rodriguez',
-      title: 'Fraud Investigation Specialist',
-      avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=50&h=50&fit=crop&crop=face',
-      verified: true,
-      reputation: 'Expert',
-      level: 'Gold',
-      contributions: 892,
-      online: true,
-      category: 'Financial Security',
-      specialties: ['Financial Fraud', 'Social Engineering', 'Romance Scams']
-    },
-    {
-      id: 3,
-      name: 'Elena Vasquez',
-      title: 'Medical Misinformation Expert',
-      avatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=50&h=50&fit=crop&crop=face',
-      verified: true,
-      reputation: 'Expert',
-      level: 'Gold',
-      contributions: 734,
-      online: false,
-      category: 'Misinformation',
-      specialties: ['Health Claims', 'Medical Research', 'Vaccine Information']
-    }
-  ]);
-
-  // Authority Panel States
-  const [authorityId, setAuthorityId] = useState('');
-  const [authorityIdType, setAuthorityIdType] = useState('law_enforcement');
-  const [isAuthorityVerified, setIsAuthorityVerified] = useState(false);
-  const [pendingAuthorityReports, setPendingAuthorityReports] = useState([
-    {
-      id: 1,
-      type: 'misinformation',
-      content: 'False claim about vaccine safety spreading on social media',
-      reporter: 'Dr. Sarah Chen',
-      timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000),
-      severity: 'high',
-      status: 'pending'
-    },
-    {
-      id: 2,
-      type: 'scam',
-      content: 'Cryptocurrency investment fraud targeting elderly users',
-      reporter: 'Mike Rodriguez',
-      timestamp: new Date(Date.now() - 4 * 60 * 60 * 1000),
-      severity: 'critical',
-      status: 'under_review'
-    }
-  ]);
-
-  // 🎨 Category color mapping like in your image
-  const getCategoryColor = (category) => {
-    const colors = {
-      'All Categories': 'from-purple-500 to-pink-500',
-      'Email Security': 'from-blue-500 to-indigo-500',
-      'Misinformation': 'from-red-500 to-pink-500',
-      'Financial Security': 'from-green-500 to-emerald-500',
-      'Psychology': 'from-orange-500 to-red-500',
-      'Mobile Security': 'from-cyan-500 to-blue-500',
-      'Digital Security': 'from-purple-500 to-indigo-500'
-    };
-    return colors[category] || 'from-gray-500 to-gray-600';
-  };
-
-  // Updated shared post content to use Xist AI branding
-  const handleAddSharedPost = (sharedData) => {
-    const postData = {
-      id: `shared-${Date.now()}`,
-      author: user?.displayName || 'Anonymous User',
-      authorId: user?.uid || 'anonymous',
-      avatar: user?.photoURL || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=50&h=50&fit=crop&crop=face',
-      content: `🔍 **Analysis Shared:** I analyzed this content using Xist AI and wanted to share the results.
-
-**Original Content:** "${sharedData.content}"
-
-**Analysis Result:** ${sharedData.result} (${sharedData.score}% confidence)
-
-**Detected Issues:** ${sharedData.details}
-
-#AnalysisShared #ThreatDetection #CommunityWarning`,
-      timestamp: new Date().toISOString(),
-      likes: 0,
-      dislikes: 0,
-      comments: 0,
-      shares: 0,
-      views: 1,
-      tags: ['analysis-shared', 'threat-detection', 'user-contribution'],
-      verified: false,
-      shared: true,
-      analysisResult: sharedData.result,
-      analysisScore: sharedData.score,
-      originalContent: sharedData.content,
-      liked: false,
-      disliked: false,
-      reputation: 'Community Contributor'
-    };
-
-    setPosts(prev => [postData, ...prev]);
-    console.log('Analysis shared to community successfully!');
-  };
-
-  // Handle post interactions
-  const handleLike = (postId) => {
-    setPosts(prev => prev.map(post =>
-      post.id === postId
-        ? {
-            ...post,
-            likes: post.liked ? post.likes - 1 : post.likes + 1,
-            dislikes: post.disliked ? post.dislikes - 1 : post.dislikes,
-            liked: !post.liked,
-            disliked: false
-          }
-        : post
-    ));
-  };
-
-  const handleDislike = (postId) => {
-    setPosts(prev => prev.map(post =>
-      post.id === postId
-        ? {
-            ...post,
-            dislikes: post.disliked ? post.dislikes - 1 : post.dislikes + 1,
-            likes: post.liked ? post.likes - 1 : post.likes,
-            disliked: !post.disliked,
-            liked: false
-          }
-        : post
-    ));
-  };
-
-  const handleReport = async (reportData) => {
-    console.log('Report submitted:', reportData);
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    setPosts(prev => prev.map(post =>
-      post.id === reportData.postId
-        ? { ...post, reported: true }
-        : post
-    ));
-  };
-
-  const handleNewPost = async (e) => {
-    e.preventDefault();
-    if (!newPost.content.trim()) return;
-
-    const postData = {
-      id: Date.now(),
-      author: user?.displayName || 'Anonymous',
-      authorId: user?.uid || 'anonymous',
-      avatar: user?.photoURL || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=50&h=50&fit=crop&crop=face',
-      content: newPost.content,
-      timestamp: new Date().toISOString(),
-      likes: 0,
-      dislikes: 0,
-      comments: 0,
-      shares: 0,
-      views: 1,
-      tags: newPost.tags,
-      verified: false,
-      liked: false,
-      disliked: false,
-      reputation: 'New Member'
-    };
-
-    setPosts(prev => [postData, ...prev]);
-    setNewPost({ title: '', content: '', tags: [] });
-    setShowNewPostForm(false);
-  };
-
-  // Challenge Functions
-  const handleStartChallenge = (challengeId) => {
-    console.log('Starting challenge:', challengeId);
-    alert(`Starting challenge: ${challenges.find(c => c.id === challengeId)?.title}`);
-  };
-
-  const getDifficultyColor = (difficulty) => {
-    switch (difficulty) {
-      case 'Beginner': return 'text-green-600 bg-green-50 dark:bg-green-900/20';
-      case 'Intermediate': return 'text-yellow-600 bg-yellow-50 dark:bg-yellow-900/20';
-      case 'Advanced': return 'text-orange-600 bg-orange-50 dark:bg-orange-900/20';
-      case 'Expert': return 'text-red-600 bg-red-50 dark:bg-red-900/20';
-      default: return 'text-gray-600 bg-gray-50 dark:bg-gray-800';
-    }
-  };
-
-  // Event Functions
-  const handleEventRegistration = (eventId) => {
-    setEvents(prev => prev.map(event =>
-      event.id === eventId
-        ? {
-            ...event,
-            isRegistered: !event.isRegistered,
-            attendees: event.isRegistered ? event.attendees - 1 : event.attendees + 1
-          }
-        : event
-    ));
-  };
-
-  const getEventStatusColor = (status) => {
-    switch (status) {
-      case 'upcoming': return 'text-blue-600 bg-blue-50 dark:bg-blue-900/20';
-      case 'featured': return 'text-purple-600 bg-purple-50 dark:bg-purple-900/20';
-      case 'live': return 'text-green-600 bg-green-50 dark:bg-green-900/20';
-      default: return 'text-gray-600 bg-gray-50 dark:bg-gray-800';
-    }
-  };
-
-  // Authority Panel Functions
-  const authorityTypes = [
-    { value: 'law_enforcement', label: 'Law Enforcement Agency' },
-    { value: 'cybersecurity', label: 'Cybersecurity Organization' },
-    { value: 'government', label: 'Government Authority' },
-    { value: 'academic', label: 'Academic Institution' },
-    { value: 'ngo', label: 'Non-Governmental Organization' }
+  // Authority departments (unchanged)
+  const authorityDepartments = [
+    { id: 'fbi', name: 'Federal Bureau of Investigation', badge: '🏛️', color: 'blue' },
+    { id: 'cia', name: 'Central Intelligence Agency', badge: '🕵️', color: 'gray' },
+    { id: 'ftc', name: 'Federal Trade Commission', badge: '⚖️', color: 'green' },
+    { id: 'fcc', name: 'Federal Communications Commission', badge: '📡', color: 'purple' },
+    { id: 'cisa', name: 'Cybersecurity & Infrastructure Security Agency', badge: '🛡️', color: 'red' },
+    { id: 'doj', name: 'Department of Justice', badge: '⚡', color: 'indigo' },
+    { id: 'sec', name: 'Securities and Exchange Commission', badge: '💼', color: 'yellow' },
+    { id: 'dhs', name: 'Department of Homeland Security', badge: '🏠', color: 'orange' },
+    { id: 'nsa', name: 'National Security Agency', badge: '🔒', color: 'slate' },
+    { id: 'local_police', name: 'Local Police Department', badge: '👮', color: 'blue' },
+    { id: 'state_police', name: 'State Police', badge: '🚔', color: 'blue' },
+    { id: 'interpol', name: 'International Police', badge: '🌍', color: 'blue' },
+    { id: 'europol', name: 'European Police Office', badge: '🇪🇺', color: 'blue' },
+    { id: 'cyber_crime', name: 'Cyber Crime Unit', badge: '💻', color: 'red' },
+    { id: 'financial_crimes', name: 'Financial Crimes Enforcement', badge: '💰', color: 'green' },
+    { id: 'academic', name: 'Academic Institution', badge: '🎓', color: 'purple' },
+    { id: 'research', name: 'Research Organization', badge: '🔬', color: 'teal' },
+    { id: 'media_org', name: 'Media Organization', badge: '📰', color: 'gray' },
+    { id: 'fact_checker', name: 'Fact-Checking Organization', badge: '✓', color: 'green' },
+    { id: 'other', name: 'Other Government Agency', badge: '🏢', color: 'gray' }
   ];
 
-  const handleVerifyAuthority = () => {
-    if (authorityId.trim()) {
-      setIsAuthorityVerified(true);
-      console.log('Authority verification submitted:', { authorityId, authorityIdType });
+  // ---------- lifecycle ----------
+  useEffect(() => {
+    initializeData();
+    loadPosts();
+    checkAuthorityStatus();
+    const subscription = setupRealtimeSubscription();
+    getUserLocation();
+    cleanupOldPosts();
+
+    return () => {
+      // cleanup realtime subscription safely
+      try {
+        if (subscription && typeof subscription.unsubscribe === 'function') {
+          subscription.unsubscribe();
+        } else if (subscription && typeof supabase.removeChannel === 'function') {
+          // fallback if channel object differs
+          supabase.removeChannel(subscription).catch(() => {});
+        }
+      } catch (e) {
+        console.warn('[Community] subscription cleanup failed', e);
+      }
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const initializeData = async () => {
+    // purely informational initialization - do not create new clients here
+    try {
+      console.log('Initializing Supabase connection (CommunitySection)...');
+      // Optionally test connection (non-blocking)
+      // We keep this lightweight; do not attempt to create a client here.
+    } catch (err) {
+      console.error('Error initializing Supabase (CommunitySection):', err);
     }
   };
 
-  const handleAuthorityReportAction = (reportId, action) => {
-    setPendingAuthorityReports(prev =>
-      prev.map(report =>
-        report.id === reportId
-          ? { ...report, status: action }
-          : report
-      )
-    );
-    console.log(`Authority report ${reportId} ${action}`);
-  };
+  // ---------- load / realtime ----------
+  const loadPosts = async () => {
+    setLoading(true);
 
-  const getSeverityColor = (severity) => {
-    switch (severity) {
-      case 'critical': return 'text-red-600 bg-red-50 dark:bg-red-900/20';
-      case 'high': return 'text-orange-600 bg-orange-50 dark:bg-orange-900/20';
-      case 'medium': return 'text-yellow-600 bg-yellow-50 dark:bg-yellow-900/20';
-      case 'low': return 'text-green-600 bg-green-50 dark:bg-green-900/20';
-      default: return 'text-gray-600 bg-gray-50 dark:bg-gray-800';
+    try {
+      if (!supabase) {
+        console.log('Supabase client not found — running in demo/local mode');
+        setPosts([]);
+        return;
+      }
+
+      // fetch community_posts
+      const { data, error } = await supabase
+        .from('community_posts')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(50);
+
+      if (error) {
+        console.error('[Community] loadPosts error:', error);
+        // If 406 occurred previously it often indicates requesting columns that the server can't return.
+        // Fall back gracefully.
+        setPosts([]);
+      } else {
+        setPosts(data || []);
+      }
+    } catch (err) {
+      console.error('[Community] loadPosts exception:', err);
+      setPosts([]);
+    } finally {
+      setLoading(false);
     }
   };
 
-  const getBadgeIcon = (user) => {
-    if (user.expert) return <CheckBadgeIcon className="w-4 h-4 text-blue-500" />;
-    if (user.verified) return <CheckCircleIcon className="w-4 h-4 text-green-500" />;
-    return null;
+  const setupRealtimeSubscription = () => {
+    if (!supabase) return null;
+
+    try {
+      // Subscribe to changes on community_posts table (all events)
+      const channel = supabase
+        .channel('community_posts_changes')
+        .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'community_posts' }, (payload) => {
+          console.log('Realtime INSERT:', payload.new);
+          setPosts(prev => [payload.new, ...prev.filter(p => p.id !== payload.new.id)]);
+        })
+        .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'community_posts' }, (payload) => {
+          console.log('Realtime UPDATE:', payload.new);
+          setPosts(prev => prev.map(p => (p.id === payload.new.id ? payload.new : p)));
+        })
+        .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'community_posts' }, (payload) => {
+          console.log('Realtime DELETE:', payload.old);
+          setPosts(prev => prev.filter(p => p.id !== payload.old.id));
+        })
+        .subscribe();
+
+      return channel;
+    } catch (err) {
+      console.error('[Community] realtime subscription error:', err);
+      return null;
+    }
   };
 
-  // Filtered and sorted data
+  // ---------- location ----------
+  const getUserLocation = () => {
+    if (!navigator?.geolocation) return;
+    try {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          setPostLocation({
+            lat: position.coords.latitude,
+            lng: position.coords.longitude,
+            city: 'Unknown',
+            country: 'Unknown'
+          });
+        },
+        (error) => {
+          console.log('Geolocation error:', error);
+        }
+      );
+    } catch (err) {
+      console.warn('getUserLocation failed:', err);
+    }
+  };
+
+  // ---------- authority ----------
+  const checkAuthorityStatus = async () => {
+    // We cannot assume extra columns exist on user_profiles.
+    // We'll attempt to read the user_profiles row by id and use `verified` flag or local logic.
+    if (!user || !user.id) return;
+
+    try {
+      if (!supabase) return;
+
+      const { data, error } = await supabase
+        .from('user_profiles')
+        .select('*')
+        .eq('id', user.id)
+        .single();
+
+      if (!error && data) {
+        // if your schema uses a dedicated `is_authority` column, replace logic here.
+        // For now, treat `verified === true` as authority (if your flow sets that).
+        if (data.verified) {
+          setIsAuthority(true);
+          setAuthorityData(data);
+        } else {
+          setIsAuthority(false);
+          setAuthorityData(data);
+        }
+      } else {
+        // No profile yet or other error
+        console.log('[Community] checkAuthorityStatus:', error?.message || 'no profile');
+      }
+    } catch (err) {
+      console.error('Error checking authority status:', err);
+    }
+  };
+
+  const handleAuthorityAuth = async () => {
+    if (!user || !user.id) {
+      alert('Please login first');
+      return;
+    }
+
+    try {
+      if (!supabase) {
+        alert('Database not configured. Please set up Supabase.');
+        return;
+      }
+
+      // WARNING: your provided user_profiles schema doesn't contain authority_id, department, badge_color, etc.
+      // To avoid SQL errors we update only known columns (id, username, full_name, email, country, verified).
+      // If you want a full authority system, add a dedicated table (e.g. authority_profiles) in your DB.
+
+      if (authorityLoginMode === 'register') {
+        // Upsert basic profile info and keep verified=false until manual verification by admin.
+        const profilePayload = {
+          id: user.id,
+          username: user?.email?.split?.('@')?.[0] || user?.id,
+          full_name: authorityForm.name || null,
+          email: authorityForm.email || user?.email || null,
+          country: null,
+          verified: false,
+          created_at: new Date().toISOString()
+        };
+
+        // upsert: insert or update existing
+        const { error } = await supabase
+          .from('user_profiles')
+          .upsert(profilePayload, { onConflict: 'id' });
+
+        if (error) {
+          throw error;
+        }
+
+        alert('Authority registration submitted! Please wait for manual verification by admins.');
+      } else {
+        // Login flow: we'll validate that the user's profile email or full_name matches what they entered.
+        const { data, error } = await supabase
+          .from('user_profiles')
+          .select('*')
+          .eq('id', user.id)
+          .single();
+
+        if (error || !data) {
+          throw new Error('No profile found. Please register first.');
+        }
+
+        // crude matching: check provided email or name matches stored values
+        const matchesEmail = authorityForm.email && data.email && authorityForm.email.toLowerCase() === (data.email || '').toLowerCase();
+        const matchesName = authorityForm.name && data.full_name && authorityForm.name.trim().toLowerCase() === (data.full_name || '').trim().toLowerCase();
+
+        if (!matchesEmail && !matchesName) {
+          throw new Error('Invalid authority credentials (no match). Please register or contact admin.');
+        }
+
+        // If they match and profile.verified is true, grant authority locally
+        if (data.verified) {
+          setIsAuthority(true);
+          setAuthorityData(data);
+          alert('Successfully logged in as authority!');
+        } else {
+          // not verified by admin yet
+          alert('Your profile is not verified as an authority. Please wait for admin verification.');
+        }
+      }
+
+      setShowAuthorityModal(false);
+      resetAuthorityForm();
+    } catch (err) {
+      console.error('Authority auth error:', err);
+      alert('Error: ' + (err.message || 'Unknown error'));
+    }
+  };
+
+  const resetAuthorityForm = () => {
+    setAuthorityForm({
+      authorityId: '',
+      department: '',
+      name: '',
+      email: '',
+      verificationCode: ''
+    });
+  };
+
+  // ---------- posts CRUD ----------
+  const createPost = async () => {
+    if (!postContent?.trim()) return;
+    if (!user || !user.id) {
+      alert('Please login first');
+      return;
+    }
+
+    try {
+      const postData = {
+        content: postContent,
+        user_id: user.id,
+        username: (user.user_metadata && user.user_metadata.username) || user.email || user.id,
+        user_country: (user.user_metadata && user.user_metadata.country) || null,
+        user_verified: !!(user.user_metadata && user.user_metadata.verified),
+        hashtags: postHashtags.length ? postHashtags : null,
+        created_at: new Date().toISOString(),
+        likes: 0,
+        reposts: 0,
+        replies_count: 0,
+        engagement_score: 0,
+        threat_level: 'low',
+        parent_id: null
+      };
+
+      if (!supabase) {
+        // local fallback
+        const fallbackPost = { ...postData, id: Date.now().toString() };
+        setPosts(prev => [fallbackPost, ...prev]);
+      } else {
+        const { data, error } = await supabase
+          .from('community_posts')
+          .insert([postData])
+          .select();
+
+        if (error) throw error;
+
+        // refresh using returned data if available
+        if (data && data[0]) {
+          setPosts(prev => [data[0], ...prev]);
+        } else {
+          loadPosts();
+        }
+      }
+
+      // Reset composer
+      setPostContent('');
+      setPostType('regular');
+      setPostMedia([]);
+      setPostHashtags([]);
+      setShowPostModal(false);
+      alert('Post created successfully!');
+    } catch (err) {
+      console.error('Error creating post:', err);
+      alert('Error creating post: ' + (err.message || 'Unknown'));
+    }
+  };
+
+  // interactions: like / share / report / reply — update counts on community_posts
+  const interactWithPost = async (postId, interactionType, data = {}) => {
+    if (!user || !user.id) {
+      alert('Please login first');
+      return;
+    }
+
+    try {
+      // Determine which field to increment on the main post table
+      const fieldMap = {
+        like: 'likes',
+        share: 'reposts',
+        report: 'replies_count', // for reporting we also keep a separate table; we'll increment reports_count if present, else replies_count
+        reply: 'replies_count'
+      };
+
+      const targetField = fieldMap[interactionType] || 'engagement_score';
+
+      // Attempt to increment the counter atomically on the DB
+      if (supabase) {
+        // Fetch current value, then update; note: Supabase doesn't have incremental update until you use SQL; do read-modify-update safely in try/catch
+        const { data: postRow, error: fetchError } = await supabase
+          .from('community_posts')
+          .select(targetField)
+          .eq('id', postId)
+          .single();
+
+        if (fetchError) {
+          console.warn('[interact] fetch failed:', fetchError);
+        } else {
+          const current = (postRow && postRow[targetField]) || 0;
+          const { error: updateError } = await supabase
+            .from('community_posts')
+            .update({ [targetField]: current + 1 })
+            .eq('id', postId);
+
+          if (updateError) {
+            console.warn('[interact] update increment failed:', updateError);
+          } else {
+            // reflect locally
+            setPosts(prev => prev.map(p => p.id === postId ? { ...p, [targetField]: current + 1 } : p));
+          }
+        }
+
+        // For report interactions, also save to threat_reports table if available
+        if (interactionType === 'report') {
+          try {
+            const reportPayload = {
+              post_id: postId,
+              reporter_id: user.id,
+              report_type: data.reason || 'inappropriate',
+              status: 'pending',
+              created_at: new Date().toISOString()
+            };
+            const { error: reportErr } = await supabase
+              .from('threat_reports')
+              .insert([reportPayload]);
+            if (reportErr) console.warn('[interact] threat_reports insert failed:', reportErr);
+          } catch (e) {
+            console.warn('[interact] threat_reports insert exception:', e);
+          }
+        }
+      } else {
+        // fallback: update local state only
+        setPosts(prev => prev.map(p => {
+          if (p.id === postId) {
+            const updateField = targetField;
+            return { ...p, [updateField]: (p[updateField] || 0) + 1 };
+          }
+          return p;
+        }));
+      }
+    } catch (err) {
+      console.error('Error interacting with post:', err);
+    }
+  };
+
+  const deletePost = async (postId, isAutoDelete = false) => {
+    try {
+      if (!supabase) {
+        setPosts(prev => prev.filter(post => post.id !== postId));
+        return;
+      }
+
+      if (isAutoDelete) {
+        // If you prefer a soft-delete, set a flag; your schema doesn't include `status` or `archived_at` by default,
+        // so we'll set threat_level='archived' as a conservative safe operation (won't fail if that column exists).
+        try {
+          await supabase
+            .from('community_posts')
+            .update({
+              threat_level: 'archived'
+            })
+            .eq('id', postId);
+        } catch (e) {
+          // fallback to delete if update fails
+          await supabase
+            .from('community_posts')
+            .delete()
+            .eq('id', postId);
+        }
+      } else {
+        await supabase
+          .from('community_posts')
+          .delete()
+          .eq('id', postId);
+      }
+
+      // refresh local list
+      loadPosts();
+    } catch (err) {
+      console.error('Error deleting post:', err);
+    }
+  };
+
+  const cleanupOldPosts = async () => {
+    try {
+      if (!supabase) return;
+      const sevenMonthsAgo = new Date();
+      sevenMonthsAgo.setMonth(sevenMonthsAgo.getMonth() - 7);
+
+      await supabase
+        .from('community_posts')
+        .delete()
+        .lt('created_at', sevenMonthsAgo.toISOString());
+    } catch (err) {
+      console.error('Error cleaning up old posts:', err);
+    }
+  };
+
+  // Fact-check post: uses AI externally (mocked). To avoid DB errors, DB updates are attempted but failures are caught.
+  const factCheckPost = async (postId, content) => {
+    try {
+      console.log('Fact-checking post:', postId, content);
+
+      // Mock or real integration goes here; keep mock result for now
+      const mockResult = {
+        status: 'verified',
+        notes: 'Information verified through multiple sources.',
+        confidence: 0.85
+      };
+
+      // Update DB with optional columns; wrapped in try/catch so it won't break if columns missing in schema
+      if (supabase) {
+        try {
+          await supabase
+            .from('community_posts')
+            .update({
+              fact_check_status: mockResult.status,
+              fact_check_notes: mockResult.notes,
+              fact_check_confidence: mockResult.confidence
+            })
+            .eq('id', postId);
+        } catch (dbErr) {
+          // Might fail if those columns don't exist - don't crash; just log
+          console.warn('[factCheck] Optional columns update failed (if columns missing, ignore):', dbErr?.message || dbErr);
+        }
+
+        // refresh
+        loadPosts();
+      } else {
+        // local update
+        setPosts(prev => prev.map(p => p.id === postId ? {
+          ...p,
+          fact_check_status: mockResult.status,
+          fact_check_notes: mockResult.notes,
+          fact_check_confidence: mockResult.confidence
+        } : p));
+      }
+    } catch (err) {
+      console.error('Error fact-checking post:', err);
+    }
+  };
+
+  // ---------- filtering ----------
   const filteredPosts = posts.filter(post => {
-    const matchesSearch = !searchQuery || 
-      post.content.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      post.author.toLowerCase().includes(searchQuery.toLowerCase());
-    
-    const matchesFilter = selectedFilter === 'all' ||
-      post.tags.some(tag => tag.toLowerCase().includes(selectedFilter.toLowerCase()));
-    
-    return matchesSearch && matchesFilter;
+    if (!post) return false;
+    if (selectedFilter === 'authorities') return post.is_authority || false;
+    if (selectedFilter === 'reports') return post.post_type === 'report';
+    if (selectedFilter === 'verified') return (post.fact_check_status || '').toLowerCase() === 'verified';
+    if (selectedFilter === 'disputed') return (post.fact_check_status || '').toLowerCase() === 'disputed';
+    if (searchQuery) {
+      const q = searchQuery.toLowerCase();
+      const contentMatch = post.content && post.content.toLowerCase().includes(q);
+      const tagsMatch = Array.isArray(post.hashtags) && post.hashtags.some(tag => tag.toLowerCase().includes(q));
+      return contentMatch || tagsMatch;
+    }
+    return true;
   });
 
-  // Tab content renderer
-  const renderTabContent = () => {
-    switch (activeTab) {
-      case 'feed':
-        return (
-          <div className="space-y-6">
-            {/* Search and Filter Bar */}
-            <div className="bg-white dark:bg-gray-800 p-4 rounded-2xl shadow-lg border border-white/20">
-              <div className="flex flex-col lg:flex-row gap-4">
-                <div className="flex-1">
-                  <div className="relative">
-                    <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-                    <input
-                      type="text"
-                      placeholder="Search discussions, threats, alerts..."
-                      className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                    />
-                  </div>
-                </div>
-                <div className="flex gap-2">
-                  <select
-                    className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
-                    value={selectedFilter}
-                    onChange={(e) => setSelectedFilter(e.target.value)}
-                  >
-                    <option value="all">All Categories</option>
-                    <option value="phishing">Phishing</option>
-                    <option value="scam">Scams</option>
-                    <option value="misinformation">Misinformation</option>
-                    <option value="cryptocurrency">Cryptocurrency</option>
-                    <option value="urgent">Urgent Alerts</option>
-                  </select>
-                  <Button
-                    
-                    size="sm"
-                    onClick={() => setShowNewPostForm(true)}
-                    className="flex items-center gap-1"
-                  >
-                    <PlusIcon className="w-6 h-5" />
-                  New Post
-                  </Button>
-                </div>
-              </div>
-            </div>
-
-            {/* Community Stats */}
-            <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-lg border border-white/20">
-              <div className="grid grid-cols-2 md:grid-cols-6 gap-4">
-                <div className="text-center">
-                  <div className="text-2xl font-bold text-neon-cyan">{communityStats.totalMembers.toLocaleString()}</div>
-                  <div className="text-sm text-gray-600 dark:text-gray-400">Members</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-2xl font-bold text-green-500">{communityStats.onlineNow.toLocaleString()}</div>
-                  <div className="text-sm text-gray-600 dark:text-gray-400">Online Now</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-2xl font-bold text-blue-500">{communityStats.postsToday}</div>
-                  <div className="text-sm text-gray-600 dark:text-gray-400">Posts Today</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-2xl font-bold text-purple-500">{communityStats.expertsOnline}</div>
-                  <div className="text-sm text-gray-600 dark:text-gray-400">Experts Online</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-2xl font-bold text-orange-500">{communityStats.threatsReported.toLocaleString()}</div>
-                  <div className="text-sm text-gray-600 dark:text-gray-400">Threats Reported</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-2xl font-bold text-yellow-500">{communityStats.accuracyRate}%</div>
-                  <div className="text-sm text-gray-600 dark:text-gray-400">Accuracy Rate</div>
-                </div>
-              </div>
-            </div>
-
-            {/* Posts Feed */}
-            <div className="space-y-4">
-              {filteredPosts.length === 0 ? (
-                <div className="bg-white dark:bg-gray-800 p-8 rounded-2xl shadow-lg border border-white/20 text-center">
-                  <div className="text-gray-500 dark:text-gray-400 mb-4">
-                    <UserGroupIcon className="w-12 h-12 mx-auto mb-2" />
-                    <p className="text-lg font-medium">No posts found</p>
-                    <p className="text-sm">
-                      {searchQuery || selectedFilter !== 'all' 
-                        ? 'Try adjusting your search or filters' 
-                        : 'Be the first to share a security alert!'}
-                    </p>
-                  </div>
-                  <Button
-                    onClick={() => setShowNewPostForm(true)}
-                    className="bg-neon-cyan hover:bg-neon-cyan/80"
-                  >
-                    Create First Post
-                  </Button>
-                </div>
-              ) : (
-                filteredPosts.map((post) => (
-                  <motion.div
-                    key={post.id}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className={`${post.authority ? 'ring-2 ring-red-500 bg-red-50 dark:bg-red-900/10' : ''}`}
-                  >
-                    <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-lg border border-white/20">
-                      {/* Post Header */}
-                      <div className="flex items-start justify-between mb-4">
-                        <div className="flex items-center gap-3">
-                          <img
-                            src={post.avatar}
-                            alt={post.author}
-                            className="w-10 h-10 rounded-full object-cover"
-                          />
-                          <div>
-                            <div className="flex items-center gap-2">
-                              <span className="font-medium text-gray-900 dark:text-gray-100">
-                                {post.author}
-                              </span>
-                              {getBadgeIcon(post)}
-                              {post.pinned && (
-                                <span className="px-2 py-1 text-xs bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-200 rounded-full">
-                                  PINNED
-                                </span>
-                              )}
-                            </div>
-                            <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
-                              <span>{post.reputation}</span>
-                              <span>•</span>
-                              <span>{new Date(post.timestamp).toLocaleString()}</span>
-                            </div>
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          {post.trending && (
-                            <FireIcon className="w-5 h-5 text-orange-500" title="Trending" />
-                          )}
-                          <button
-                            onClick={() => setReportingPost(post)}
-                            className="p-1 hover:bg-gray-100 dark:hover:bg-gray-800 rounded"
-                          >
-                            <FlagIcon className="w-4 h-4 text-gray-400" />
-                          </button>
-                        </div>
-                      </div>
-
-                      {/* Post Content */}
-                      <div className="mb-4">
-                        <p className="text-gray-900 dark:text-gray-100 whitespace-pre-wrap">
-                          {post.content}
-                        </p>
-                      </div>
-
-                      {/* Tags */}
-                      {post.tags.length > 0 && (
-                        <div className="flex flex-wrap gap-2 mb-4">
-                          {post.tags.map((tag) => (
-                            <span
-                              key={tag}
-                              className="px-2 py-1 text-xs bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200 rounded-full"
-                            >
-                              #{tag}
-                            </span>
-                          ))}
-                        </div>
-                      )}
-
-                      {/* Post Actions */}
-                      <div className="flex items-center justify-between pt-4 border-t border-gray-200 dark:border-gray-700">
-                        <div className="flex items-center gap-6">
-                          <button
-                            onClick={() => handleLike(post.id)}
-                            className={`flex items-center gap-1 text-sm ${
-                              post.liked ? 'text-blue-600' : 'text-gray-600 dark:text-gray-400'
-                            } hover:text-blue-600`}
-                          >
-                            <HandThumbUpIcon className="w-4 h-4" />
-                            {post.likes}
-                          </button>
-                          <button
-                            onClick={() => handleDislike(post.id)}
-                            className={`flex items-center gap-1 text-sm ${
-                              post.disliked ? 'text-red-600' : 'text-gray-600 dark:text-gray-400'
-                            } hover:text-red-600`}
-                          >
-                            <HandThumbDownIcon className="w-4 h-4" />
-                            {post.dislikes}
-                          </button>
-                          <span className="flex items-center gap-1 text-sm text-gray-600 dark:text-gray-400">
-                            <ChatBubbleLeftIcon className="w-4 h-4" />
-                            {post.comments}
-                          </span>
-                          <span className="flex items-center gap-1 text-sm text-gray-600 dark:text-gray-400">
-                            <ShareIcon className="w-4 h-4" />
-                            {post.shares}
-                          </span>
-                        </div>
-                        <span className="flex items-center gap-1 text-sm text-gray-600 dark:text-gray-400">
-                          <EyeIcon className="w-4 h-4" />
-                          {post.views} views
-                        </span>
-                      </div>
-                    </div>
-                  </motion.div>
-                ))
-              )}
-            </div>
-          </div>
-        );
-
-      case 'experts':
-        return (
-          <div className="space-y-6">
-            <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-lg border border-white/20">
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
-                Connect with verified security professionals and misinformation experts
-              </h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {expertMembers.map((expert) => (
-                  <motion.div
-                    key={expert.id}
-                    initial={{ opacity: 0, scale: 0.95 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    whileHover={{ scale: 1.02 }}
-                    className="transition-transform"
-                  >
-                    {/* 🎨 Updated card design matching your image */}
-                    <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-lg border border-white/20 hover:shadow-xl transition-all duration-300">
-                      {/* Category Badge */}
-                      <div className={`inline-block px-4 py-2 rounded-full text-white text-sm font-medium mb-4 bg-gradient-to-r ${getCategoryColor(expert.category)}`}>
-                        {expert.category}
-                      </div>
-                      
-                      <div className="flex items-center gap-3 mb-3">
-                        <div className="relative">
-                          <img
-                            src={expert.avatar}
-                            alt={expert.name}
-                            className="w-12 h-12 rounded-full object-cover"
-                          />
-                          {expert.online && (
-                            <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-white dark:border-gray-800"></div>
-                          )}
-                        </div>
-                        <div>
-                          <div className="flex items-center gap-2">
-                            <h4 className="font-medium text-gray-900 dark:text-gray-100">
-                              {expert.name}
-                            </h4>
-                            {expert.verified && (
-                              <CheckBadgeIcon className="w-4 h-4 text-blue-500" />
-                            )}
-                          </div>
-                          <p className="text-sm text-gray-600 dark:text-gray-400">
-                            {expert.title}
-                          </p>
-                        </div>
-                      </div>
-                      
-                      <div className="mb-3">
-                        <div className="flex items-center justify-between text-sm mb-1">
-                          <span className="text-gray-600 dark:text-gray-400">Reputation</span>
-                          <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                            expert.level === 'Diamond' ? 'bg-purple-100 text-purple-800 dark:bg-purple-900/20 dark:text-purple-200' :
-                            expert.level === 'Gold' ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-200' :
-                            'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200'
-                          }`}>
-                            {expert.level} {expert.reputation}
-                          </span>
-                        </div>
-                        <div className="text-sm text-gray-600 dark:text-gray-400">
-                          <span className="font-medium">{expert.contributions}</span> contributions
-                        </div>
-                      </div>
-
-                      <div className="mb-4">
-                        <h5 className="text-sm font-medium text-gray-900 dark:text-gray-100 mb-2">
-                          Specialties
-                        </h5>
-                        <div className="flex flex-wrap gap-1">
-                          {expert.specialties.map((specialty) => (
-                            <span
-                              key={specialty}
-                              className="px-2 py-1 text-xs bg-blue-50 text-blue-700 dark:bg-blue-900/20 dark:text-blue-300 rounded-full"
-                            >
-                              {specialty}
-                            </span>
-                          ))}
-                        </div>
-                      </div>
-
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="w-full"
-                        disabled={!expert.online}
-                      >
-                        {expert.online ? 'Connect' : 'Offline'}
-                      </Button>
-                    </div>
-                  </motion.div>
-                ))}
-              </div>
-            </div>
-          </div>
-        );
-
-      case 'threats':
-        return (
-          <div className="space-y-6">
-            <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-lg border border-white/20">
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
-                Real-time threat detection and community-reported incidents
-              </h3>
-              
-              {/* Authority Reports */}
-              <div className="space-y-4">
-                <h4 className="font-medium text-gray-900 dark:text-gray-100">
-                  Verified reports from government agencies, cybersecurity firms, and trusted authorities
-                </h4>
-                {authorityReports.map((report) => (
-                  <motion.div
-                    key={report.id}
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                  >
-                    <div className="bg-white dark:bg-gray-800 p-4 rounded-2xl shadow-lg border border-white/20 border-l-4 border-l-red-500 bg-red-50 dark:bg-red-900/10">
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2 mb-2">
-                            <ExclamationTriangleIcon className="w-5 h-5 text-red-600" />
-                            <span className={`px-2 py-1 text-xs font-bold rounded-full ${
-                              report.priority === 'CRITICAL' 
-                                ? 'bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-200'
-                                : 'bg-orange-100 text-orange-800 dark:bg-orange-900/20 dark:text-orange-200'
-                            }`}>
-                              {report.priority}
-                            </span>
-                            <span className="text-sm text-gray-600 dark:text-gray-400">
-                              {report.authority}
-                            </span>
-                          </div>
-                          <h5 className="font-medium text-gray-900 dark:text-gray-100 mb-2">
-                            {report.title}
-                          </h5>
-                          <p className="text-sm text-gray-700 dark:text-gray-300 mb-3">
-                            {report.content}
-                          </p>
-                          <div className="flex flex-wrap gap-2">
-                            {report.affectedSectors.map((sector) => (
-                              <span
-                                key={sector}
-                                className="px-2 py-1 text-xs bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300 rounded"
-                              >
-                                {sector}
-                              </span>
-                            ))}
-                          </div>
-                        </div>
-                        <div className="text-xs text-gray-500 dark:text-gray-400">
-                          {new Date(report.timestamp).toLocaleString()}
-                        </div>
-                      </div>
-                    </div>
-                  </motion.div>
-                ))}
-              </div>
-            </div>
-          </div>
-        );
-
-      case 'challenges':
-        return (
-          <div className="space-y-6">
-            <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-lg border border-white/20">
-              <div className="flex items-center justify-between mb-6">
-                <div>
-                  <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-                    Security Challenges
-                  </h3>
-                  <p className="text-gray-600 dark:text-gray-400">
-                    Test your cybersecurity knowledge and compete with other community members
-                  </p>
-                </div>
-                <TrophyIcon className="w-8 h-8 text-yellow-500" />
-              </div>
-
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {challenges.map((challenge) => (
-                  <motion.div
-                    key={challenge.id}
-                    initial={{ opacity: 0, scale: 0.95 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    whileHover={{ scale: 1.02 }}
-                    className="transition-transform"
-                  >
-                    {/* 🎨 Updated card design matching your image */}
-                    <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-lg border border-white/20 h-full">
-                      {/* Category Badge */}
-                      <div className={`inline-block px-4 py-2 rounded-full text-white text-sm font-medium mb-4 bg-gradient-to-r ${getCategoryColor(challenge.category)}`}>
-                        {challenge.category}
-                      </div>
-
-                      <div className="flex items-start justify-between mb-4">
-                        <div className="flex items-center gap-3">
-                          <div className="text-3xl">{challenge.icon}</div>
-                          <div>
-                            <h4 className="font-semibold text-gray-900 dark:text-gray-100">
-                              {challenge.title}
-                            </h4>
-                            <span className={`px-2 py-1 text-xs font-medium rounded-full ${getDifficultyColor(challenge.difficulty)}`}>
-                              {challenge.difficulty}
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-
-                      <p className="text-sm text-gray-700 dark:text-gray-300 mb-4">
-                        {challenge.description}
-                      </p>
-
-                      <div className="grid grid-cols-2 gap-4 mb-4">
-                        <div className="text-center">
-                          <div className="text-lg font-bold text-neon-cyan">
-                            {challenge.participants.toLocaleString()}
-                          </div>
-                          <div className="text-xs text-gray-600 dark:text-gray-400">
-                            Participants
-                          </div>
-                        </div>
-                        <div className="text-center">
-                          <div className="text-lg font-bold text-purple-500">
-                            {challenge.questions}
-                          </div>
-                          <div className="text-xs text-gray-600 dark:text-gray-400">
-                            Questions
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="mb-4">
-                        <div className="flex items-center justify-between text-sm mb-2">
-                          <span className="text-gray-600 dark:text-gray-400">Time Limit</span>
-                          <span className="font-medium text-gray-900 dark:text-gray-100">
-                            {challenge.timeLimit}
-                          </span>
-                        </div>
-                        <div className="flex items-center justify-between text-sm mb-2">
-                          <span className="text-gray-600 dark:text-gray-400">Reward</span>
-                          <span className="font-medium text-yellow-600">
-                            {challenge.reward}
-                          </span>
-                        </div>
-                      </div>
-
-                      {/* Leaderboard Preview */}
-                      <div className="mb-4">
-                        <h5 className="text-sm font-medium text-gray-900 dark:text-gray-100 mb-2">
-                          Top Performers
-                        </h5>
-                        <div className="space-y-1">
-                          {challenge.leaderboard.slice(0, 3).map((entry, index) => (
-                            <div key={index} className="flex items-center justify-between text-sm">
-                              <div className="flex items-center gap-2">
-                                <span className="text-xs font-medium text-gray-600 dark:text-gray-400">
-                                  #{index + 1}
-                                </span>
-                                <span className="text-gray-900 dark:text-gray-100">
-                                  {entry.name}
-                                </span>
-                              </div>
-                              <div className="flex items-center gap-2">
-                                <span className="font-medium text-green-600">
-                                  {entry.score}%
-                                </span>
-                                <span className="text-gray-500 dark:text-gray-400">
-                                  {entry.time}
-                                </span>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-
-                      <Button
-                        onClick={() => handleStartChallenge(challenge.id)}
-                        className="w-full bg-gradient-to-r from-neon-cyan to-purple-600 hover:from-neon-cyan/80 hover:to-purple-600/80"
-                      >
-                        Start Challenge
-                      </Button>
-                    </div>
-                  </motion.div>
-                ))}
-              </div>
-            </div>
-          </div>
-        );
-
-      case 'events':
-        return (
-          <div className="space-y-6">
-            <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-lg border border-white/20">
-              <div className="flex items-center justify-between mb-6">
-                <div>
-                  <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-                    Upcoming Events
-                  </h3>
-                  <p className="text-gray-600 dark:text-gray-400">
-                    Join webinars, workshops, and discussions with security experts
-                  </p>
-                </div>
-                <CalendarIcon className="w-8 h-8 text-blue-500" />
-              </div>
-
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {events.map((event) => (
-                  <motion.div
-                    key={event.id}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    whileHover={{ y: -5 }}
-                    className="transition-transform"
-                  >
-                    {/* 🎨 Updated card design matching your image */}
-                    <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-white/20 overflow-hidden h-full">
-                      {/* Category Badge at top */}
-                      <div className="p-4 pb-0">
-                        <div className={`inline-block px-4 py-2 rounded-full text-white text-sm font-medium bg-gradient-to-r ${getCategoryColor(event.category)}`}>
-                          {event.category}
-                        </div>
-                      </div>
-
-                      {/* Event Image */}
-                      <div className="relative h-48 mx-4 mt-2 rounded-xl overflow-hidden">
-                        <img
-                          src={event.image}
-                          alt={event.title}
-                          className="w-full h-full object-cover"
-                        />
-                        <div className="absolute top-4 left-4">
-                          <span className={`px-3 py-1 text-xs font-medium rounded-full ${getEventStatusColor(event.status)}`}>
-                            {event.status.toUpperCase()}
-                          </span>
-                        </div>
-                        <div className="absolute top-4 right-4">
-                          <div className="bg-white dark:bg-gray-800 rounded-lg p-2 text-center shadow-lg">
-                            <div className="text-lg font-bold text-gray-900 dark:text-gray-100">
-                              {new Date(event.date).getDate()}
-                            </div>
-                            <div className="text-xs text-gray-600 dark:text-gray-400 uppercase">
-                              {new Date(event.date).toLocaleDateString('en-US', { month: 'short' })}
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="p-6">
-                        <div className="mb-4">
-                          <h4 className="font-semibold text-gray-900 dark:text-gray-100 mb-2">
-                            {event.title}
-                          </h4>
-                          <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
-                            by {event.speaker}
-                          </p>
-                          <p className="text-sm text-gray-700 dark:text-gray-300">
-                            {event.description}
-                          </p>
-                        </div>
-
-                        {/* Event Details */}
-                        <div className="space-y-2 mb-4">
-                          <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
-                            <CalendarIcon className="w-4 h-4" />
-                            <span>{new Date(event.date).toLocaleDateString()}</span>
-                            <span>•</span>
-                            <span>{event.time}</span>
-                            <span>•</span>
-                            <span>{event.duration}</span>
-                          </div>
-                          <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
-                            <UsersIcon className="w-4 h-4" />
-                            <span>{event.attendees.toLocaleString()} registered</span>
-                            <span>•</span>
-                            <span>{event.type}</span>
-                          </div>
-                        </div>
-
-                        {/* Event Tags */}
-                        <div className="flex flex-wrap gap-2 mb-4">
-                          {event.tags.map((tag) => (
-                            <span
-                              key={tag}
-                              className="px-2 py-1 text-xs bg-blue-50 text-blue-700 dark:bg-blue-900/20 dark:text-blue-300 rounded-full"
-                            >
-                              {tag}
-                            </span>
-                          ))}
-                        </div>
-
-                        {/* Agenda Preview */}
-                        <div className="mb-4">
-                          <h5 className="text-sm font-medium text-gray-900 dark:text-gray-100 mb-2">
-                            Agenda
-                          </h5>
-                          <ul className="space-y-1">
-                            {event.agenda.slice(0, 3).map((item, index) => (
-                              <li key={index} className="text-sm text-gray-600 dark:text-gray-400 flex items-center gap-2">
-                                <div className="w-1.5 h-1.5 bg-neon-cyan rounded-full"></div>
-                                {item}
-                              </li>
-                            ))}
-                            {event.agenda.length > 3 && (
-                              <li className="text-sm text-gray-500 dark:text-gray-500 italic">
-                                +{event.agenda.length - 3} more items...
-                              </li>
-                            )}
-                          </ul>
-                        </div>
-
-                        {/* Registration Button */}
-                        <Button
-                          onClick={() => handleEventRegistration(event.id)}
-                          variant={event.isRegistered ? "outline" : "default"}
-                          className={`w-full ${
-                            !event.isRegistered 
-                              ? 'bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-600/80 hover:to-purple-600/80' 
-                              : 'text-green-600 border-green-600 hover:bg-green-50 dark:hover:bg-green-900/20'
-                          }`}
-                        >
-                          {event.isRegistered ? (
-                            <>
-                              <CheckCircleIcon className="w-4 h-4 mr-2" />
-                              Registered
-                            </>
-                          ) : (
-                            <>
-                              <CalendarIcon className="w-4 h-4 mr-2" />
-                              Register Now
-                            </>
-                          )}
-                        </Button>
-                      </div>
-                    </div>
-                  </motion.div>
-                ))}
-              </div>
-            </div>
-          </div>
-        );
-
-      case 'authority':
-        return (
-          <div className="space-y-6">
-            <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-lg border border-white/20">
-              <div className="flex items-center gap-3 mb-6">
-                <ShieldCheckIcon className="w-8 h-8 text-blue-600" />
-                <div>
-                  <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-                    Authority Panel
-                  </h3>
-                  <p className="text-gray-600 dark:text-gray-400">
-                    Authorized personnel can access advanced threat intelligence and investigation tools
-                  </p>
-                </div>
-              </div>
-
-              {!isAuthorityVerified ? (
-                <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-lg border border-white/20 bg-yellow-50 dark:bg-yellow-900/10 border-yellow-200 dark:border-yellow-800">
-                  <div className="text-center mb-6">
-                    <ExclamationTriangleIcon className="w-12 h-12 text-yellow-600 mx-auto mb-3" />
-                    <h4 className="font-semibold text-gray-900 dark:text-gray-100 mb-2">
-                      Authority Verification Required
-                    </h4>
-                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-6">
-                      This section is restricted to verified law enforcement agencies, cybersecurity organizations, and government authorities.
-                    </p>
-                  </div>
-
-                  <div className="max-w-md mx-auto space-y-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                        Authority Type
-                      </label>
-                      <select
-                        value={authorityIdType}
-                        onChange={(e) => setAuthorityIdType(e.target.value)}
-                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800"
-                      >
-                        {authorityTypes.map(type => (
-                          <option key={type.value} value={type.value}>
-                            {type.label}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                    
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                        Authority Identification
-                      </label>
-                      <input
-                        type="text"
-                        placeholder="Enter badge number, department ID, or organization code"
-                        value={authorityId}
-                        onChange={(e) => setAuthorityId(e.target.value)}
-                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800"
-                      />
-                    </div>
-
-                    <Button
-                      onClick={handleVerifyAuthority}
-                      className="w-full bg-blue-600 hover:bg-blue-700"
-                      disabled={!authorityId.trim()}
-                    >
-                      <ShieldCheckIcon className="w-4 h-4 mr-2" />
-                      Verify Authority Access
-                    </Button>
-                  </div>
-                </div>
-              ) : (
-                <div className="space-y-6">
-                  <div className="bg-white dark:bg-gray-800 p-4 rounded-2xl shadow-lg border border-white/20 bg-green-50 dark:bg-green-900/10 border-green-200 dark:border-green-800">
-                    <div className="flex items-center gap-3">
-                      <CheckBadgeIcon className="w-6 h-6 text-green-600" />
-                      <div className="flex-1">
-                        <h4 className="font-medium text-gray-900 dark:text-gray-100">
-                          Authority Access Verified
-                        </h4>
-                        <p className="text-sm text-gray-600 dark:text-gray-400">
-                          ID: {authorityId} • Access Level: Tier 1 • Last Login: {new Date().toLocaleString()}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Pending Reports */}
-                  <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-lg border border-white/20">
-                    <h4 className="font-semibold text-gray-900 dark:text-gray-100 mb-4">
-                      Pending Community Reports
-                    </h4>
-                    <div className="space-y-3">
-                      {pendingAuthorityReports.map((report) => (
-                        <div
-                          key={report.id}
-                          className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg"
-                        >
-                          <div className="flex items-start justify-between mb-2">
-                            <div>
-                              <span className={`px-2 py-1 text-xs font-medium rounded-full ${getSeverityColor(report.severity)}`}>
-                                {report.severity.toUpperCase()}
-                              </span>
-                              <span className="ml-2 text-sm font-medium text-gray-900 dark:text-gray-100">
-                                {report.type}
-                              </span>
-                            </div>
-                            <span className="text-xs text-gray-500 dark:text-gray-400">
-                              {new Date(report.timestamp).toLocaleString()}
-                            </span>
-                          </div>
-                          <p className="text-sm text-gray-700 dark:text-gray-300 mb-2">
-                            {report.content}
-                          </p>
-                          <div className="flex items-center justify-between">
-                            <span className="text-sm text-gray-600 dark:text-gray-400">
-                              Reported by: {report.reporter}
-                            </span>
-                            <div className="flex gap-2">
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => handleAuthorityReportAction(report.id, 'investigating')}
-                              >
-                                Investigate
-                              </Button>
-                              <Button
-                                size="sm"
-                                onClick={() => handleAuthorityReportAction(report.id, 'approved')}
-                              >
-                                Approve
-                              </Button>
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-        );
-
-      default:
-        return null;
-    }
+  // ---------- render helpers ----------
+  const renderAuthorityBadge = (post) => {
+    if (!post || !post.is_authority) return null;
+    const dept = authorityDepartments.find(d => d.id === post.authority_department) || authorityDepartments[0];
+    return (
+      <div className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-${dept.color}-100 text-${dept.color}-800 dark:bg-${dept.color}-900 dark:text-${dept.color}-200`}>
+        <CheckBadgeIconSolid className="w-3 h-3 mr-1" />
+        {dept.badge} {dept.name}
+      </div>
+    );
   };
 
-  return (
-    
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Header */}
-        <div className="text-center mb-8">
-          <motion.div
-                    initial={{ scale: 0 }}
-                    animate={{ scale: 1 }}
-                    transition={{ type: "spring", duration: 0.8 }}
-                    className="relative inline-block"
-                  >
-                    <UserGroupIcon className="w-12 h-12 md:w-16 md:h-16 mx-auto mb-4 text-purple-600" />
-          </motion.div>
-          <h1 className="text-4xl font-bold text-gray-900 dark:text-gray-100 mb-2">
-            Community Security Hub
-          </h1>
-          <p className="text-lg text-gray-600 dark:text-gray-400">
-            Connect with security experts, share threat intelligence, and collaborate to make the internet safer for everyone
+  const renderFactCheckLabel = (post) => {
+    const status = (post && post.fact_check_status) || null;
+    if (!status || status === 'pending') return null;
+
+    const statusKey = status.toLowerCase();
+    const statusConfig = {
+      verified: { icon: CheckCircleIcon, color: 'green', text: 'Verified Information' },
+      disputed: { icon: ExclamationTriangleIcon, color: 'yellow', text: 'Disputed Claims' },
+      false: { icon: XMarkIcon, color: 'red', text: 'False Information' }
+    };
+
+    const config = statusConfig[statusKey];
+    if (!config) return null;
+
+    const Icon = config.icon;
+    return (
+      <div className={`mt-2 p-2 rounded-lg bg-${config.color}-50 border border-${config.color}-200 dark:bg-${config.color}-900/20`}>
+        <div className="flex items-center">
+          <Icon className={`w-4 h-4 text-${config.color}-600 mr-2`} />
+          <span className={`text-sm font-medium text-${config.color}-800 dark:text-${config.color}-200`}>
+            {config.text}
+          </span>
+        </div>
+        {post.fact_check_notes && (
+          <p className={`mt-1 text-sm text-${config.color}-700 dark:text-${config.color}-300`}>
+            {post.fact_check_notes}
           </p>
+        )}
+      </div>
+    );
+  };
+
+  // ---------- UI ----------
+  return (
+    <div className="max-w-4xl mx-auto space-y-6">
+      {/* Header */}
+      <Card className="p-6">
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center space-x-3">
+            <UserGroupIcon className="w-8 h-8 text-blue-600" />
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+                Global Community
+              </h1>
+              <p className="text-gray-600 dark:text-gray-400">
+                Connect with fact-checkers and authorities worldwide
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center space-x-2">
+            {!isAuthority && (
+              <Button
+                onClick={() => setShowAuthorityModal(true)}
+                className="bg-blue-600 hover:bg-blue-700 text-white"
+              >
+                <ShieldCheckIcon className="w-4 h-4 mr-2" />
+                Authority Access
+              </Button>
+            )}
+
+            <Button
+              onClick={() => setShowPostModal(true)}
+              className="bg-green-600 hover:bg-green-700 text-white"
+            >
+              <PlusIcon className="w-4 h-4 mr-2" />
+              New Post
+            </Button>
+          </div>
         </div>
 
-        {/* 🎨 Updated Navigation Tabs with category-style design */}
-        <div className="bg-white dark:bg-gray-800 p-1 mb-8 rounded-2xl shadow-lg border border-white/20">
-          <div className="flex flex-wrap gap-1">
-            {[
-              { id: 'feed', label: 'Community Feed', icon: UsersIcon, category: 'All Categories' },
-              { id: 'experts', label: 'Experts', icon: AcademicCapIcon, category: 'Digital Security' },
-              { id: 'threats', label: 'Threat Intel', icon: ExclamationTriangleIcon, category: 'Financial Security' },
-              { id: 'challenges', label: 'Challenges', icon: TrophyIcon, category: 'Email Security' },
-              { id: 'events', label: 'Events', icon: CalendarIcon, category: 'Psychology' },
-              { id: 'authority', label: 'Authority Panel', icon: ShieldCheckIcon, category: 'Misinformation' }
-            ].map((tab) => (
+        {/* Authority Status */}
+        {isAuthority && authorityData && (
+          <div className="mb-4 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-3">
+                <CheckBadgeIconSolid className="w-6 h-6 text-blue-600" />
+                <div>
+                  <p className="font-medium text-blue-900 dark:text-blue-100">
+                    Verified Authority Account
+                  </p>
+                  <p className="text-sm text-blue-700 dark:text-blue-300">
+                    {authorityDepartments.find(d => d.id === authorityData.department)?.name || authorityData.full_name || authorityData.username}
+                  </p>
+                </div>
+              </div>
+              {renderAuthorityBadge({ is_authority: true, authority_department: authorityData?.department })}
+            </div>
+          </div>
+        )}
+
+        {/* Search and Filters */}
+        <div className="flex flex-col sm:flex-row gap-4">
+          <div className="flex-1 relative">
+            <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+            <input
+              type="text"
+              placeholder="Search posts, hashtags, or topics..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+            />
+          </div>
+
+          <div className="flex space-x-2 overflow-x-auto">
+            {['all', 'authorities', 'reports', 'verified', 'disputed'].map((filter) => (
               <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all ${
-                  activeTab === tab.id
-                    ? `text-white bg-gradient-to-r ${getCategoryColor(tab.category)} shadow-lg`
-                    : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800'
+                key={filter}
+                onClick={() => setSelectedFilter(filter)}
+                className={`px-4 py-2 rounded-lg font-medium capitalize transition-colors whitespace-nowrap ${
+                  selectedFilter === filter
+                    ? 'bg-blue-600 text-white'
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600'
                 }`}
               >
-                <tab.icon className="w-4 h-4" />
-                {screenSize === 'mobile' ? '' : tab.label}
+                {filter}
               </button>
             ))}
           </div>
         </div>
 
-        {/* Tab Content */}
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={activeTab}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            transition={{ duration: 0.3 }}
-          >
-            {renderTabContent()}
-          </motion.div>
-        </AnimatePresence>
+        {/* Database Status */}
+        {/* Removed checks for supabaseUrl / supabaseKey (use single client). Keep a demo message if supabase is falsy. */}
+        {!supabase && (
+          <div className="mt-4 p-3 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg border border-yellow-200">
+            <div className="flex items-center space-x-2">
+              <ExclamationTriangleIcon className="w-5 h-5 text-yellow-600" />
+              <p className="text-sm text-yellow-800 dark:text-yellow-200">
+                <strong>Demo Mode:</strong> Supabase not configured. Posts will be stored locally only.
+              </p>
+            </div>
+          </div>
+        )}
+      </Card>
 
-        {/* Modals */}
-        <AnimatePresence>
-          {/* New Post Form Modal */}
-          {showNewPostForm && (
+      {/* Posts Feed */}
+      <div className="space-y-4">
+        {loading ? (
+          <Card className="p-8 text-center">
+            <div className="animate-spin w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full mx-auto mb-4"></div>
+            <p className="text-gray-600 dark:text-gray-400">Loading community posts...</p>
+          </Card>
+        ) : filteredPosts.length === 0 ? (
+          <Card className="p-8 text-center">
+            <UserGroupIcon className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+            <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
+              No posts found
+            </h3>
+            <p className="text-gray-600 dark:text-gray-400">
+              Be the first to share something with the community!
+            </p>
+          </Card>
+        ) : (
+          filteredPosts.map((post) => (
             <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50"
-              onClick={() => setShowNewPostForm(false)}
+              key={post.id}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className={`${
+                post.is_authority
+                  ? 'ring-2 ring-blue-200 dark:ring-blue-800 bg-blue-50/50 dark:bg-blue-900/10'
+                  : ''
+              }`}
             >
-              <motion.div
-                initial={{ scale: 0.95, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                exit={{ scale: 0.95, opacity: 0 }}
-                className="bg-white dark:bg-gray-800 rounded-2xl p-6 w-full max-w-2xl shadow-2xl border border-white/20"
-                onClick={(e) => e.stopPropagation()}
-              >
-                <div className="flex items-center justify-between mb-6">
-                  <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-                    Share Security Alert
-                  </h3>
-                  <button
-                    onClick={() => setShowNewPostForm(false)}
-                    className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg"
-                  >
-                    <XMarkIcon className="w-5 h-5" />
-                  </button>
+              <Card className="p-6">
+                {/* Post Header */}
+                <div className="flex items-start space-x-3 mb-4">
+                  <img
+                    src={post.user_avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(post.username || post.user_name || 'User')}&background=random`}
+                    alt={post.username || post.user_name || 'User'}
+                    className="w-12 h-12 rounded-full object-cover"
+                  />
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center space-x-2 mb-1">
+                      <h3 className="font-semibold text-gray-900 dark:text-white truncate">
+                        {post.username || post.user_name || 'Anonymous'}
+                      </h3>
+                      {post.is_authority && renderAuthorityBadge(post)}
+                      {post.post_type === 'report' && (
+                        <span className="px-2 py-1 bg-red-100 text-red-800 text-xs font-medium rounded-full dark:bg-red-900 dark:text-red-200">
+                          Official Report
+                        </span>
+                      )}
+                    </div>
+                    <div className="flex items-center space-x-2 text-sm text-gray-500 dark:text-gray-400">
+                      <ClockIcon className="w-4 h-4" />
+                      <span>{post.created_at ? new Date(post.created_at).toLocaleString() : 'Unknown'}</span>
+                      {post.location && (
+                        <>
+                          <MapPinIcon className="w-4 h-4" />
+                          <span>{(post.location.city || post.location.city === 0) ? post.location.city : 'Unknown'}, {(post.location.country || post.location.country === 0) ? post.location.country : 'Unknown'}</span>
+                        </>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="flex items-center space-x-2">
+                    <button
+                      onClick={() => factCheckPost(post.id, post.content)}
+                      className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-full transition-colors dark:hover:bg-blue-900/20"
+                      title="Fact Check"
+                    >
+                      <MagnifyingGlassIcon className="w-5 h-5" />
+                    </button>
+
+                    <button className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-50 rounded-full transition-colors dark:hover:bg-gray-700">
+                      <EllipsisHorizontalIcon className="w-5 h-5" />
+                    </button>
+                  </div>
                 </div>
 
-                <form onSubmit={handleNewPost} className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                      Content
-                    </label>
-                    <textarea
-                      value={newPost.content}
-                      onChange={(e) => setNewPost(prev => ({ ...prev, content: e.target.value }))}
-                      placeholder="Share your security findings, warnings, or ask questions..."
-                      rows={6}
-                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 resize-none"
-                      required
-                    />
+                {/* Post Content */}
+                <div className="mb-4">
+                  <p className="text-gray-900 dark:text-white whitespace-pre-wrap mb-3">
+                    {post.content}
+                  </p>
+
+                  {/* Hashtags */}
+                  {post.hashtags && post.hashtags.length > 0 && (
+                    <div className="flex flex-wrap gap-2 mb-3">
+                      {post.hashtags.map((tag, index) => (
+                        <span
+                          key={index}
+                          className="text-blue-600 hover:text-blue-800 cursor-pointer font-medium"
+                        >
+                          #{tag.replace(/^#/, '')}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Media */}
+                  {post.media && Array.isArray(post.media) && post.media.length > 0 && (
+                    <div className="grid grid-cols-2 gap-2 mb-3">
+                      {post.media.map((media, index) => (
+                        <div key={index} className="relative rounded-lg overflow-hidden">
+                          {media.type === 'image' ? (
+                            <img
+                              src={media.url}
+                              alt="Post media"
+                              className="w-full h-48 object-cover"
+                            />
+                          ) : (
+                            <video
+                              src={media.url}
+                              controls
+                              className="w-full h-48 object-cover"
+                            />
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Fact Check Label */}
+                  {renderFactCheckLabel(post)}
+                </div>
+
+                {/* Post Actions */}
+                <div className="flex items-center justify-between pt-4 border-t border-gray-200 dark:border-gray-700">
+                  <div className="flex items-center space-x-6">
+                    <button
+                      onClick={() => interactWithPost(post.id, 'like')}
+                      className="flex items-center space-x-2 text-gray-500 hover:text-red-600 transition-colors"
+                    >
+                      <HeartIcon className="w-5 h-5" />
+                      <span>{post.likes ?? post.likes_count ?? 0}</span>
+                    </button>
+
+                    <button
+                      onClick={() => setSelectedPost(post)}
+                      className="flex items-center space-x-2 text-gray-500 hover:text-blue-600 transition-colors"
+                    >
+                      <ChatBubbleLeftIcon className="w-5 h-5" />
+                      <span>{post.replies_count ?? post.comments_count ?? 0}</span>
+                    </button>
+
+                    <button
+                      onClick={() => interactWithPost(post.id, 'share')}
+                      className="flex items-center space-x-2 text-gray-500 hover:text-green-600 transition-colors"
+                    >
+                      <ShareIcon className="w-5 h-5" />
+                      <span>{post.reposts ?? post.shares_count ?? 0}</span>
+                    </button>
+
+                    <button
+                      onClick={() => interactWithPost(post.id, 'report', { reason: 'inappropriate' })}
+                      className="flex items-center space-x-2 text-gray-500 hover:text-yellow-600 transition-colors"
+                    >
+                      <FlagIcon className="w-5 h-5" />
+                      <span>{post.reports_count ?? 0}</span>
+                    </button>
                   </div>
 
+                  <div className="flex items-center space-x-2">
+                    <button className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-50 rounded-full transition-colors dark:hover:bg-gray-700">
+                      <BookmarkIcon className="w-5 h-5" />
+                    </button>
+
+                    {(user?.id === post.user_id || isAuthority) && (
+                      <button
+                        onClick={() => deletePost(post.id)}
+                        className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-full transition-colors dark:hover:bg-red-900/20"
+                      >
+                        <TrashIcon className="w-5 h-5" />
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </Card>
+            </motion.div>
+          ))
+        )}
+      </div>
+
+      {/* Authority Modal */}
+      <AnimatePresence>
+        {showAuthorityModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
+            onClick={() => setShowAuthorityModal(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              className="bg-white dark:bg-gray-800 rounded-xl p-6 w-full max-w-md"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-xl font-bold text-gray-900 dark:text-white">
+                  Authority Access
+                </h2>
+                <button
+                  onClick={() => setShowAuthorityModal(false)}
+                  className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full transition-colors dark:hover:bg-gray-700"
+                >
+                  <XMarkIcon className="w-5 h-5" />
+                </button>
+              </div>
+
+              {/* Login/Register Toggle */}
+              <div className="flex mb-6 bg-gray-100 dark:bg-gray-700 rounded-lg p-1">
+                <button
+                  onClick={() => setAuthorityLoginMode('login')}
+                  className={`flex-1 py-2 px-4 rounded-md transition-colors ${
+                    authorityLoginMode === 'login'
+                      ? 'bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow-sm'
+                      : 'text-gray-600 dark:text-gray-400'
+                  }`}
+                >
+                  Login
+                </button>
+                <button
+                  onClick={() => setAuthorityLoginMode('register')}
+                  className={`flex-1 py-2 px-4 rounded-md transition-colors ${
+                    authorityLoginMode === 'register'
+                      ? 'bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow-sm'
+                      : 'text-gray-600 dark:text-gray-400'
+                  }`}
+                >
+                  Register
+                </button>
+              </div>
+
+              <form onSubmit={(e) => { e.preventDefault(); handleAuthorityAuth(); }} className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Authority ID
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={authorityForm.authorityId}
+                    onChange={(e) => setAuthorityForm(prev => ({ ...prev, authorityId: e.target.value }))}
+                    placeholder="Enter your government/organization ID"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Department/Organization
+                  </label>
+                  <select
+                    required
+                    value={authorityForm.department}
+                    onChange={(e) => setAuthorityForm(prev => ({ ...prev, department: e.target.value }))}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                  >
+                    <option value="">Select Department</option>
+                    {authorityDepartments.map(dept => (
+                      <option key={dept.id} value={dept.id}>
+                        {dept.badge} {dept.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {authorityLoginMode === 'register' && (
+                  <>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Full Name
+                      </label>
+                      <input
+                        type="text"
+                        required
+                        value={authorityForm.name}
+                        onChange={(e) => setAuthorityForm(prev => ({ ...prev, name: e.target.value }))}
+                        placeholder="Enter your full name"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Official Email
+                      </label>
+                      <input
+                        type="email"
+                        required
+                        value={authorityForm.email}
+                        onChange={(e) => setAuthorityForm(prev => ({ ...prev, email: e.target.value }))}
+                        placeholder="Enter your official email"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                      />
+                    </div>
+                  </>
+                )}
+
+                <Button
+                  type="submit"
+                  className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+                >
+                  <ShieldCheckIcon className="w-4 h-4 mr-2" />
+                  {authorityLoginMode === 'login' ? 'Login as Authority' : 'Register Authority'}
+                </Button>
+              </form>
+
+              <div className="mt-4 p-3 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg">
+                <div className="flex items-start space-x-2">
+                  <InformationCircleIcon className="w-5 h-5 text-yellow-600 mt-0.5" />
+                  <div className="text-sm text-yellow-800 dark:text-yellow-200">
+                    <p className="font-medium mb-1">Authority Verification</p>
+                    <p>Authority accounts require manual verification. Please ensure you have valid credentials.</p>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* New Post Modal */}
+      <AnimatePresence>
+        {showPostModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
+            onClick={() => setShowPostModal(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              className="bg-white dark:bg-gray-800 rounded-xl p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-xl font-bold text-gray-900 dark:text-white">
+                  Create New Post
+                </h2>
+                <button
+                  onClick={() => setShowPostModal(false)}
+                  className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full transition-colors dark:hover:bg-gray-700"
+                >
+                  <XMarkIcon className="w-5 h-5" />
+                </button>
+              </div>
+
+              <form onSubmit={(e) => { e.preventDefault(); createPost(); }} className="space-y-4">
+                {/* Post Type */}
+                {isAuthority && (
                   <div>
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                      Tags (comma-separated)
+                      Post Type
                     </label>
-                    <input
-                      type="text"
-                      value={newPost.tags.join(', ')}
-                      onChange={(e) => setNewPost(prev => ({
-                        ...prev,
-                        tags: e.target.value.split(',').map(tag => tag.trim()).filter(Boolean)
-                      }))}
-                      placeholder="phishing, scam, urgent, cryptocurrency..."
-                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800"
-                    />
+                    <div className="flex space-x-4">
+                      <label className="flex items-center">
+                        <input
+                          type="radio"
+                          value="regular"
+                          checked={postType === 'regular'}
+                          onChange={(e) => setPostType(e.target.value)}
+                          className="mr-2"
+                        />
+                        <span className="text-sm text-gray-700 dark:text-gray-300">Regular Post</span>
+                      </label>
+                      <label className="flex items-center">
+                        <input
+                          type="radio"
+                          value="report"
+                          checked={postType === 'report'}
+                          onChange={(e) => setPostType(e.target.value)}
+                          className="mr-2"
+                        />
+                        <span className="text-sm text-gray-700 dark:text-gray-300">Official Report</span>
+                      </label>
+                    </div>
+                  </div>
+                )}
+
+                {/* Content */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Content
+                  </label>
+                  <textarea
+                    required
+                    value={postContent}
+                    onChange={(e) => setPostContent(e.target.value)}
+                    placeholder="What's happening in your area? Share information, ask questions, or report incidents..."
+                    rows={6}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:border-gray-600 dark:text-white resize-none"
+                  />
+                  <div className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                    {postContent.length}/1000 characters
+                  </div>
+                </div>
+
+                {/* Location */}
+                {postLocation && (
+                  <div className="p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                    <div className="flex items-center space-x-2">
+                      <MapPinIcon className="w-4 h-4 text-gray-600" />
+                      <span className="text-sm text-gray-700 dark:text-gray-300">
+                        {postLocation.city}, {postLocation.country}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => setPostLocation(null)}
+                        className="text-red-600 hover:text-red-800"
+                      >
+                        <XMarkIcon className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {/* Action Buttons */}
+                <div className="flex items-center justify-between pt-4 border-t border-gray-200 dark:border-gray-700">
+                  <div className="flex items-center space-x-2">
+                    <button
+                      type="button"
+                      className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-full transition-colors dark:hover:bg-blue-900/20"
+                      title="Add Photo"
+                      onClick={() => {
+                        // placeholder: integrate file picker / upload flow
+                        alert('Add Photo not implemented in this demo. Use upload flow in future.');
+                      }}
+                    >
+                      <PhotoIcon className="w-5 h-5" />
+                    </button>
+                    <button
+                      type="button"
+                      className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-full transition-colors dark:hover:bg-blue-900/20"
+                      title="Add Video"
+                      onClick={() => alert('Add Video not implemented in this demo.')}
+                    >
+                      <VideoCameraIcon className="w-5 h-5" />
+                    </button>
+                    <button
+                      type="button"
+                      className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-full transition-colors dark:hover:bg-blue-900/20"
+                      title="Add Link"
+                      onClick={() => alert('Add Link not implemented in this demo.')}
+                    >
+                      <LinkIcon className="w-5 h-5" />
+                    </button>
+                    <button
+                      type="button"
+                      className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-full transition-colors dark:hover:bg-blue-900/20"
+                      title="Add Location"
+                      onClick={() => setShowLocationPicker((s) => !s)}
+                    >
+                      <MapPinIcon className="w-5 h-5" />
+                    </button>
                   </div>
 
-                  <div className="flex gap-3">
+                  <div className="flex items-center space-x-3">
                     <Button
                       type="button"
-                      variant="outline"
-                      onClick={() => setShowNewPostForm(false)}
+                      onClick={() => setShowPostModal(false)}
+                      className="px-4 py-2 text-gray-700 bg-gray-200 hover:bg-gray-300 dark:bg-gray-600 dark:text-gray-300 dark:hover:bg-gray-500"
                     >
                       Cancel
                     </Button>
                     <Button
                       type="submit"
-                      className="bg-neon-cyan hover:bg-neon-cyan/80"
+                      disabled={!postContent.trim()}
+                      className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                      <ArrowUpTrayIcon className="w-4 h-4 mr-2" />
-                      Post Alert
+                      {postType === 'report' ? 'Publish Report' : 'Post'}
                     </Button>
                   </div>
-                </form>
-              </motion.div>
+                </div>
+              </form>
             </motion.div>
-          )}
-
-          {/* Post Reporting Modal */}
-          {reportingPost && (
-            <PostReporting
-              post={reportingPost}
-              onClose={() => setReportingPost(null)}
-              onSubmit={handleReport}
-            />
-          )}
-        </AnimatePresence>
-      </div>
-    
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
   );
 };
 

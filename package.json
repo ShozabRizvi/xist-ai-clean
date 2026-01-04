@@ -5,14 +5,15 @@
   "dependencies": {
     "@heroicons/react": "^2.2.0",
     "@react-oauth/google": "^0.12.2",
+    "@supabase/supabase-js": "^2.75.1",
     "@tailwindcss/forms": "^0.5.10",
     "firebase": "^12.2.1",
-    "framer-motion": "^10.16.4",
+    "framer-motion": "^10.18.0",
     "html2canvas": "^1.4.1",
     "i18next": "^25.5.2",
     "jspdf": "^3.0.2",
     "mammoth": "^1.10.0",
-    "pdfjs-dist": "^5.4.149",
+    "pdfjs-dist": "^5.4.394",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-dropzone": "^14.3.8",
@@ -49,6 +50,11 @@
       "last 1 safari version"
     ]
   },
+  "browser": {
+  "fs": false,
+  "path": false,
+  "crypto": false
+},
   "devDependencies": {
     "@tailwindcss/postcss": "^4.1.13",
     "autoprefixer": "^10.4.21",

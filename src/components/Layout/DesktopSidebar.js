@@ -85,15 +85,16 @@ const DesktopSidebar = ({ currentSection, setCurrentSection, user, userStats, co
     { id: 'verify', icon: ShieldCheckIcon, label: 'Verify', description: 'AI Threat Analysis' },
     { id: 'education', icon: BookOpenIcon, label: 'Education', description: 'Safety Learning' },
     { id: 'community', icon: UsersIcon, label: 'Community', description: 'Social Network' },
+    { id: 'protection', icon: ShieldExclamationIcon, label: 'Helpline', description: 'Security Center' },
     { id: 'analytics', icon: ChartBarIcon, label: 'Analytics', description: 'Usage Statistics' },
-    { id: 'protection', icon: ShieldExclamationIcon, label: 'Protection', description: 'Security Center' },
-    { id: 'settings', icon: Cog6ToothIcon, label: 'Settings', description: 'Preferences' },
-    { id: 'about', icon: InformationCircleIcon, label: 'About', description: 'Company Info' },
     { id: 'contact', icon: PhoneIcon, label: 'Contact', description: 'Get in Touch' },
     { id: 'support', icon: QuestionMarkCircleIcon, label: 'Support', description: 'Help & FAQs' },
-    { id: 'api', icon: CodeBracketIcon, label: 'API', description: 'API Management' },
-    { id: 'health', icon: HeartIcon, label: 'Health', description: 'System Monitor' },
-    { id: 'authority', icon: ScaleIcon, label: 'Authority', description: 'Admin Panel' }
+    //{ id: 'authority', icon: ScaleIcon, label: 'Authority', description: 'Admin Panel' },
+    { id: 'about', icon: InformationCircleIcon, label: 'About', description: 'Company Info' },
+    { id: 'settings', icon: Cog6ToothIcon, label: 'Settings', description: 'Preferences' },
+    //{ id: 'api', icon: CodeBracketIcon, label: 'API', description: 'API Management' },
+    //{ id: 'health', icon: HeartIcon, label: 'Health', description: 'System Monitor' },
+    
   ];
 
   return (

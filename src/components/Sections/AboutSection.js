@@ -16,7 +16,6 @@ import {
 import Card from '../UI/Card';
 import { useResponsive } from '../../hooks/useResponsive';
 
-
 const AboutSection = () => {
   const { screenSize } = useResponsive();
 
@@ -24,7 +23,7 @@ const AboutSection = () => {
     {
       name: 'Shozab Rizvi',
       role: 'Lead Developer',
-      image: 'Shozab-v2.png',
+      image: 'shozab3.jpg',
       icon: CodeBracketIcon,
       isTeam: false,
       experience: '3rd Year Student',
@@ -78,13 +77,6 @@ const AboutSection = () => {
     }
   ];
 
-  const stats = [
-    { label: 'Users Protected', value: '2.3K+', icon: UsersIcon },
-    { label: 'Threats Detected', value: '5.2K+', icon: ShieldCheckIcon },
-    { label: 'Accuracy Rate', value: '94.8%', icon: TrophyIcon },
-    { label: 'Active Development', value: '6+ months', icon: GlobeAltIcon }
-  ];
-
   return (
     <div className="max-w-7xl mx-auto p-6 space-y-12">
       
@@ -95,8 +87,14 @@ const AboutSection = () => {
         className="text-center space-y-6"
       >
         <div className="flex items-center justify-center space-x-3">
-          <div className="w-16 h-16 rounded-full flex items-center justify-center">
-            <InformationCircleIcon className="w-12 h-12  mx-auto mb-4 text-purple-600" />
+          <div className="flex items-center justify-center mb-6">
+            <motion.div
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              transition={{ type: "spring", duration: 0.6 }}
+            >
+              <InformationCircleIcon className="w-24 h-24 mx-auto text-purple-600 mb-6" />
+            </motion.div>
           </div>
           <div>
             <h1 className="text-4xl font-bold text-gray-900 dark:text-white">About Xist AI</h1>
@@ -119,9 +117,8 @@ const AboutSection = () => {
         <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6 text-center">How Xist AI Works</h2>
         
         <p className="text-gray-600 dark:text-gray-300 text-center mb-8 max-w-3xl mx-auto">
-          Our platform combines modern web technologies, machine learning algorithms, and AI-powered analysis using 
-          <strong className="text-purple-600 dark:text-purple-400"> DeepSeek-R1 AI</strong> to provide comprehensive digital 
-          protection services with <strong className="text-green-600 dark:text-green-400">94.8% accuracy</strong> - all developed by students during their studies.
+          Our platform combines modern web technologies, machine learning algorithms, and AI-powered analysis 
+          to provide comprehensive digital protection services - all developed by students during their studies.
         </p>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -265,27 +262,43 @@ const AboutSection = () => {
         </div>
       </motion.div>
 
-      {/* Stats Section */}
+      {/* Student Development Journey */}
       <motion.div 
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.6 }}
         className="bg-gradient-to-r from-purple-600 to-blue-600 rounded-xl p-8 text-white"
       >
-        <h2 className="text-2xl font-bold text-center mb-4">Our Journey So Far</h2>
-        <p className="text-center text-purple-100 mb-8">Student project making real impact</p>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-          {stats.map((stat, idx) => (
+        <h2 className="text-2xl font-bold text-center mb-4">Our Development Journey</h2>
+        <p className="text-center text-purple-100 mb-8">Building while learning - the student way</p>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {[
+            {
+              icon: AcademicCapIcon,
+              title: "Academic Foundation",
+              description: "Applying computer science concepts from our coursework to real-world security challenges"
+            },
+            {
+              icon: CodeBracketIcon,
+              title: "Hands-on Development",
+              description: "Learning by building - every feature teaches us something new about programming and security"
+            },
+            {
+              icon: UsersIcon,
+              title: "Student Collaboration",
+              description: "Working together across different colleges to combine our knowledge and skills"
+            }
+          ].map((journey, idx) => (
             <motion.div
               key={idx}
-              className="text-center"
+              className="text-center p-6 bg-white/10 backdrop-blur-sm rounded-xl"
               initial={{ opacity: 0, scale: 0.8 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ delay: 0.7 + idx * 0.1 }}
             >
-              <stat.icon className="w-8 h-8 mx-auto mb-2 opacity-80" />
-              <div className="text-3xl font-bold mb-1">{stat.value}</div>
-              <div className="text-sm opacity-90">{stat.label}</div>
+              <journey.icon className="w-12 h-12 mx-auto mb-4 opacity-90" />
+              <h3 className="text-lg font-bold mb-2">{journey.title}</h3>
+              <p className="text-sm opacity-90 leading-relaxed">{journey.description}</p>
             </motion.div>
           ))}
         </div>

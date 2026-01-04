@@ -15,14 +15,14 @@ import { showNotification } from '../UI/NotificationToast';
 const HealthSection = () => {
   const { user } = useAuth();
   
-  // State management
+  
   const [activeTab, setActiveTab] = useState('overview');
   const [systemMetrics, setSystemMetrics] = useState({});
   const [isLoading, setIsLoading] = useState(true);
   const [lastUpdated, setLastUpdated] = useState(new Date());
   const [selectedIncident, setSelectedIncident] = useState(null);
 
-  // System Status Data
+  
   const [systemStatus, setSystemStatus] = useState({
     overall: 'operational',
     api: 'operational',
@@ -33,7 +33,7 @@ const HealthSection = () => {
     monitoring: 'operational'
   });
 
-  // Performance metrics
+  
   const [performanceMetrics, setPerformanceMetrics] = useState({
     uptime: 99.97,
     responseTime: 142,
@@ -43,7 +43,7 @@ const HealthSection = () => {
     totalRequests: 2456789
   });
 
-  // Regional status
+  
   const REGIONS = [
     { 
       id: 'us-east-1', 
@@ -87,7 +87,7 @@ const HealthSection = () => {
     }
   ];
 
-  // Service components
+  
   const SERVICE_COMPONENTS = [
     {
       name: 'API Gateway',
@@ -133,7 +133,7 @@ const HealthSection = () => {
     }
   ];
 
-  // Recent incidents
+  
   const INCIDENTS = [
     {
       id: 'inc-2025-09-15-001',
@@ -192,7 +192,7 @@ const HealthSection = () => {
     }
   ];
 
-  // Scheduled maintenance
+  
   const SCHEDULED_MAINTENANCE = [
     {
       id: 'maint-2025-09-20-001',
@@ -216,7 +216,7 @@ const HealthSection = () => {
     }
   ];
 
-  // Generate real-time metrics
+  
   useEffect(() => {
     const updateMetrics = () => {
       setPerformanceMetrics(prev => ({
@@ -233,11 +233,11 @@ const HealthSection = () => {
     setIsLoading(false);
     updateMetrics();
 
-    const interval = setInterval(updateMetrics, 10000); // Update every 10 seconds
+    const interval = setInterval(updateMetrics, 10000); 
     return () => clearInterval(interval);
   }, []);
 
-  // Get status color
+  
   const getStatusColor = (status) => {
     switch (status) {
       case 'operational': return 'text-green-600 dark:text-green-400';
@@ -281,7 +281,7 @@ const HealthSection = () => {
     <div className="min-h-screen bg-gradient-to-br from-green-50 via-blue-50 to-indigo-50 dark:from-gray-900 dark:via-green-900/20 dark:to-blue-900/20 py-8">
       <div className="max-w-7xl mx-auto px-6 space-y-8">
         
-        {/* Header Section */}
+        {}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -313,7 +313,7 @@ const HealthSection = () => {
               </div>
             </div>
 
-            {/* Quick Stats */}
+            {}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
               <div className="text-center">
                 <div className="text-xl font-bold text-green-600 dark:text-green-400">
@@ -343,7 +343,7 @@ const HealthSection = () => {
           </div>
         </motion.div>
 
-        {/* Navigation Tabs */}
+        {}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -377,9 +377,9 @@ const HealthSection = () => {
           </div>
         </motion.div>
 
-        {/* Content Area */}
+        {}
         <AnimatePresence mode="wait">
-          {/* Overview Tab */}
+          {}
           {activeTab === 'overview' && (
             <motion.div
               key="overview"
@@ -388,7 +388,7 @@ const HealthSection = () => {
               exit={{ opacity: 0, y: -20 }}
               className="space-y-8"
             >
-              {/* System Status Overview */}
+              {}
               <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8">
                 <div className="flex items-center justify-between mb-6">
                   <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
@@ -436,7 +436,7 @@ const HealthSection = () => {
                 </div>
               </div>
 
-              {/* Performance Metrics */}
+              {}
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {[
                   {
@@ -512,7 +512,7 @@ const HealthSection = () => {
             </motion.div>
           )}
 
-          {/* Services Tab */}
+          {}
           {activeTab === 'services' && (
             <motion.div
               key="services"
@@ -564,7 +564,7 @@ const HealthSection = () => {
             </motion.div>
           )}
 
-          {/* Regions Tab */}
+          {}
           {activeTab === 'regions' && (
             <motion.div
               key="regions"
@@ -639,7 +639,7 @@ const HealthSection = () => {
             </motion.div>
           )}
 
-                    {/* Incidents Tab */}
+                    {}
           {activeTab === 'incidents' && (
             <motion.div
               key="incidents"
@@ -726,7 +726,7 @@ const HealthSection = () => {
                         </div>
                       </div>
                       
-                      {/* Affected Services Tags */}
+                      {}
                       <div className="flex flex-wrap gap-2">
                         {incident.affectedServices.map((service, serviceIndex) => (
                           <span
@@ -744,7 +744,7 @@ const HealthSection = () => {
             </motion.div>
           )}
 
-          {/* Maintenance Tab */}
+          {}
           {activeTab === 'maintenance' && (
             <motion.div
               key="maintenance"
@@ -804,7 +804,7 @@ const HealthSection = () => {
                           </div>
                         </div>
                         
-                        {/* Affected Services */}
+                        {}
                         <div className="flex items-center space-x-2">
                           <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
                             Affected Services:
@@ -835,7 +835,7 @@ const HealthSection = () => {
                   </div>
                 )}
 
-                {/* Maintenance Guidelines */}
+                {}
                 <div className="mt-8 p-6 bg-gray-50 dark:bg-gray-700 rounded-xl">
                   <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center space-x-2">
                     <InformationCircleIcon className="w-5 h-5" />
@@ -864,7 +864,7 @@ const HealthSection = () => {
             </motion.div>
           )}
 
-          {/* Metrics Tab */}
+          {}
           {activeTab === 'metrics' && (
             <motion.div
               key="metrics"
@@ -873,14 +873,14 @@ const HealthSection = () => {
               exit={{ opacity: 0, y: -20 }}
               className="space-y-8"
             >
-              {/* Real-time Performance Charts */}
+              {}
               <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8">
                 <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">
                   Real-time Performance Metrics
                 </h2>
                 
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                  {/* Response Time Chart */}
+                  {}
                   <div>
                     <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
                       Response Time (Last 24 Hours)
@@ -911,7 +911,7 @@ const HealthSection = () => {
                     </div>
                   </div>
 
-                  {/* Throughput Chart */}
+                  {}
                   <div>
                     <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
                       Request Throughput (Requests/min)
@@ -944,7 +944,7 @@ const HealthSection = () => {
                 </div>
               </div>
 
-              {/* Detailed Metrics Grid */}
+              {}
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                 {[
                   {
@@ -1027,7 +1027,7 @@ const HealthSection = () => {
                 ))}
               </div>
 
-              {/* SLA Performance */}
+              {}
               <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8">
                 <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">
                   SLA Performance
@@ -1092,7 +1092,7 @@ const HealthSection = () => {
           )}
         </AnimatePresence>
 
-        {/* Incident Detail Modal */}
+        {}
         <AnimatePresence>
           {selectedIncident && (
             <motion.div

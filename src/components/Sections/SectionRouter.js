@@ -1,4 +1,3 @@
-// SectionRouter.js
 import React from 'react';
 import HomeSection from './HomeSection';
 import VerifySection from './VerifySection';
@@ -7,14 +6,9 @@ import CommunitySection from './CommunitySection';
 import EducationSection from './EducationSection';
 import SettingsSection from './SettingsSection';
 import AboutSection from './AboutSection';
-
-// **ALL MISSING SECTIONS INCLUDING CONTACT & SUPPORT**
-import APISection from './APISection';
-import AuthoritySection from './AuthoritySection';
 import ProtectionSection from './ProtectionSection';
-import HealthSection from './HealthSection';
-import ContactSection from './ContactSection';  // ← HERE!
-import SupportSection from './SupportSection';  // ← HERE!
+import ContactSection from './ContactSection';  
+import SupportSection from './SupportSection';  
 
 const SectionRouter = ({ 
   currentSection, 
@@ -104,25 +98,8 @@ const SectionRouter = ({
           />
         );
       
-      // **ALL YOUR MISSING SECTIONS**
-      case 'api':
-        return (
-          <APISection
-            user={user}
-            userStats={userStats}
-            setCurrentSection={setCurrentSection}
-            theme={theme}
-          />
-        );
-      case 'authority':
-        return (
-          <AuthoritySection
-            user={user}
-            userStats={userStats}
-            setCurrentSection={setCurrentSection}
-            theme={theme}
-          />
-        );
+      
+     
       case 'protection':
         return (
           <ProtectionSection
@@ -132,16 +109,8 @@ const SectionRouter = ({
             theme={theme}
           />
         );
-      case 'health':
-        return (
-          <HealthSection
-            user={user}
-            userStats={userStats}
-            setCurrentSection={setCurrentSection}
-            theme={theme}
-          />
-        );
-      case 'contact':  // ← CONTACT SECTION
+     
+      case 'contact':  
         return (
           <ContactSection
             user={user}
@@ -150,7 +119,7 @@ const SectionRouter = ({
             theme={theme}
           />
         );
-      case 'support':  // ← SUPPORT SECTION
+      case 'support':  
         return (
           <SupportSection
             user={user}

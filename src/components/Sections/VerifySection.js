@@ -1,11 +1,11 @@
-import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'react-hot-toast';
-import { 
-  ShieldCheckIcon, ExclamationTriangleIcon, CheckCircleIcon, XCircleIcon, 
-  InformationCircleIcon, ChartBarIcon, DocumentTextIcon, GlobeAltIcon, 
-  ClockIcon, BoltIcon, MagnifyingGlassIcon, LinkIcon, SparklesIcon, 
-  MicrophoneIcon, DocumentArrowUpIcon, CameraIcon, Cog6ToothIcon, 
+import {
+  ShieldCheckIcon, ExclamationTriangleIcon, CheckCircleIcon, XCircleIcon,
+  InformationCircleIcon, ChartBarIcon, DocumentTextIcon, GlobeAltIcon,
+  ClockIcon, BoltIcon, MagnifyingGlassIcon, LinkIcon, SparklesIcon,
+  MicrophoneIcon, DocumentArrowUpIcon, CameraIcon, Cog6ToothIcon,
   PhotoIcon, CloudArrowUpIcon, BeakerIcon, AcademicCapIcon, EyeIcon,
   CpuChipIcon, ArrowPathIcon, StarIcon, FireIcon, LightBulbIcon,
   WifiIcon, SignalIcon, DevicePhoneMobileIcon, ComputerDesktopIcon,
@@ -17,17 +17,16 @@ import {
   SpeakerWaveIcon, VideoCameraIcon, PlayIcon, StopIcon, PauseIcon,
   ForwardIcon, BackwardIcon, SpeakerXMarkIcon, AdjustmentsHorizontalIcon,
   FunnelIcon, Bars3Icon, XMarkIcon, PlusIcon, MinusIcon, EllipsisHorizontalIcon,
-  ArrowUpRightIcon, ArrowDownLeftIcon, ChevronUpIcon, ChevronDownIcon,
-  ChevronLeftIcon, ChevronRightIcon, MagnifyingGlassPlusIcon, MagnifyingGlassMinusIcon,
-  CloudIcon, CubeTransparentIcon, FilmIcon, LanguageIcon, 
-  SunIcon, MoonIcon, UserIcon, BellIcon, HomeIcon, NewspaperIcon, 
-  DocumentIcon, PhoneIcon, EnvelopeIcon, MapPinIcon, CalendarIcon, 
+  ChevronUpIcon, ChevronDownIcon, ChevronLeftIcon, ChevronRightIcon,
+  MagnifyingGlassPlusIcon, MagnifyingGlassMinusIcon, CloudIcon,
+  UserIcon, BellIcon, HomeIcon, NewspaperIcon,
+  DocumentIcon, PhoneIcon, EnvelopeIcon, MapPinIcon, CalendarIcon,
   BuildingOfficeIcon, UserCircleIcon, Cog8ToothIcon, QuestionMarkCircleIcon,
-  CheckBadgeIcon, ArrowTrendingUpIcon, ArrowTrendingDownIcon, 
+  CheckBadgeIcon, ArrowTrendingUpIcon, ArrowTrendingDownIcon,
   FlagIcon, TagIcon, CubeIcon, ChartPieIcon, FingerPrintIcon,
   WindowIcon, CursorArrowRippleIcon, EllipsisVerticalIcon,
   Squares2X2Icon, ListBulletIcon, TableCellsIcon, ViewColumnsIcon,
-  AdjustmentsVerticalIcon, FaceSmileIcon, FaceFrownIcon, 
+  AdjustmentsVerticalIcon, FaceSmileIcon, FaceFrownIcon,
   HandRaisedIcon, ExclamationIcon, NoSymbolIcon, CheckIcon,
   PlayCircleIcon, PauseCircleIcon, StopCircleIcon,
   PhoneXMarkIcon, VideoCameraSlashIcon, FolderIcon,
@@ -36,4021 +35,1567 @@ import {
   IdentificationIcon, CreditCardIcon, BanknotesIcon,
   CurrencyDollarIcon, CalculatorIcon, ScaleIcon, ReceiptPercentIcon,
   ShoppingBagIcon, ShoppingCartIcon, BuildingStorefrontIcon,
-  TruckIcon, MapIcon, CompassIcon, FlaskConicalIcon, 
-  CircuitBoardIcon, WrenchScrewdriverIcon, HammerIcon, WrenchIcon, 
-  CogIcon, TerminalIcon, CodeBracketIcon, CodeBracketSquareIcon, 
-  BugAntIcon, CloudArrowDownIcon, ArrowsRightLeftIcon, ArrowsUpDownIcon, 
+  TruckIcon, MapIcon, CompassIcon, FlaskConicalIcon,
+  CircuitBoardIcon, WrenchScrewdriverIcon, HammerIcon, WrenchIcon,
+  CogIcon, TerminalIcon, CodeBracketIcon, CodeBracketSquareIcon,
+  BugAntIcon, CloudArrowDownIcon, ArrowsRightLeftIcon, ArrowsUpDownIcon,
   ArrowUturnLeftIcon, ArrowUturnRightIcon, ArrowUturnUpIcon, ArrowUturnDownIcon,
   ChevronDoubleLeftIcon, ChevronDoubleRightIcon, ChevronDoubleUpIcon,
   ChevronDoubleDownIcon, HandThumbDownIcon, EyeSlashIcon, UsersIcon,
-  BookOpenIcon, PencilIcon, PencilSquareIcon, TrashIcon, ArchiveBoxXMarkIcon
+  BookOpenIcon, PencilIcon, PencilSquareIcon, TrashIcon, ArchiveBoxXMarkIcon,
+  ShareIcon
 } from '@heroicons/react/24/outline';
 
-import { 
-  ShieldCheckIcon as ShieldCheckSolid, 
+import {
+  ShieldCheckIcon as ShieldCheckSolid,
   ExclamationTriangleIcon as ExclamationTriangleSolid,
-  CheckCircleIcon as CheckCircleSolid, 
+  CheckCircleIcon as CheckCircleSolidIcon,
   XCircleIcon as XCircleSolid,
-  StarIcon as StarSolid, 
-  HeartIcon as HeartSolid, 
+  StarIcon as StarSolid,
+  HeartIcon as HeartSolid,
   FireIcon as FireSolid,
-  BoltIcon as BoltSolid, 
+  BoltIcon as BoltSolid,
   SparklesIcon as SparklesSolid,
   LightBulbIcon as LightBulbSolid,
   LockClosedIcon as LockClosedSolid,
-  ShieldExclamationIcon as ShieldExclamationSolid
+  ShieldExclamationIcon as ShieldExclamationSolid,
+  CheckBadgeIcon as CheckBadgeSolid
 } from '@heroicons/react/24/solid';
+import { useAuth } from '../../hooks/useAuth';
+import { supabase } from '../../supabase';
+const GEMINI_API_KEY = process.env.REACT_APP_GEMINI_API_KEY;
+const OPENROUTER_API_KEY = process.env.REACT_APP_OPENROUTER_API_KEY;
+const DEEPSEEK_MODEL = process.env.REACT_APP_DEEPSEEK_MODEL;
+const OPENROUTER_BASE_URL = process.env.REACT_APP_OPENROUTER_BASE_URL;
 
-
-// Continue with the rest of the code exactly as before...
-
-
-// ===== COMPREHENSIVE ANALYSIS MODES WITH ADVANCED CONFIGURATION =====
 const ANALYSIS_MODES = {
   lightning: {
+    id: 'lightning',
     label: 'Lightning Scan',
     icon: BoltIcon,
     iconSolid: BoltSolid,
     description: 'Ultra-fast threat detection (5-10 seconds)',
-    color: 'yellow',
-    gradient: 'from-yellow-400 to-orange-500',
-    bgGradient: 'from-yellow-50 to-orange-50',
-    darkBgGradient: 'from-yellow-900/20 to-orange-900/20',
-    borderColor: 'border-yellow-200',
+    color: 'from-yellow-400 to-orange-500',
+    bgColor: 'bg-gradient-to-r from-yellow-50 to-orange-50',
+    darkBgColor: 'dark:bg-gradient-to-r dark:from-yellow-900/20 dark:to-orange-900/20',
+    borderColor: 'border-yellow-400',
+    darkBorderColor: 'dark:border-yellow-600',
     textColor: 'text-yellow-600',
-    maxTokens: 800,
-    temperature: 0.1,
-    priority: 'speed',
-    features: ['basic_threats', 'risk_score', 'immediate_action'],
+    darkTextColor: 'dark:text-yellow-400',
     estimatedTime: '5-10s',
-    useCase: 'Quick verification while browsing',
-    accuracy: 85,
-    confidenceBoost: 0.15,
-    promptTemplate: `LIGHTNING THREAT ASSESSMENT - ULTRA FAST ANALYSIS
-
-Content to analyze: "{content}"
-
-Provide IMMEDIATE threat assessment in this EXACT format:
-
-THREAT LEVEL: [CRITICAL/HIGH/MEDIUM/LOW/SAFE]
-
-PRIMARY THREAT: [Phishing/Investment Scam/Health Misinformation/Political Misinformation/Technical Scam/Social Engineering/Malware/Spam/Safe Content]
-
-CREDIBILITY VERDICT: [TRUE/FALSE/MIXED/UNVERIFIABLE]
-
-DETAILED EXPLANATION PARAGRAPH: [Write exactly 200-220 words explaining WHY this content is credible or not credible. State specific evidence that supports your conclusion. Explain what makes this trustworthy or suspicious. Include psychological manipulation techniques if present, real-world impact of similar content, and why people fall for this type of content. Discuss the broader implications for digital safety and provide educational context about this threat type. DO NOT use asterisks or hashtag symbols anywhere in your response.]
-
-CONFIDENCE SCORE: [85-98%]
-
-IMMEDIATE ACTION REQUIRED:
-1. [One critical action user should take RIGHT NOW with specific reasoning]
-2. [Secondary protective measure with implementation details]
-3. [Community awareness step if threat is significant]
-
-SOURCES VERIFICATION: [List 2-3 specific verification methods used in analysis]
-
-COMMUNITY IMPACT ASSESSMENT: [If threat level is CRITICAL or HIGH, explain why this poses risk to public safety and why community should be alerted. If MEDIUM/LOW/SAFE, explain general awareness value for community protection.]
-
-PROTECTIVE CONTEXT: [Brief explanation of how this fits into broader digital security landscape and what users should learn from this example]
-
-SHOW_COMMUNITY_BUTTON: [YES if threat level is CRITICAL/HIGH, NO otherwise]
-
-Keep technical analysis under 150 words but ensure educational explanation meets 200+ word requirement. Focus on SPEED, ACCURACY, and COMMUNITY SAFETY.`
+    maxTokens: 800,
+    temperature: 0.1
   },
   comprehensive: {
+    id: 'comprehensive',
     label: 'Comprehensive Analysis',
     icon: ShieldCheckIcon,
     iconSolid: ShieldCheckSolid,
     description: 'Balanced detail with explanations (15-20 seconds)',
-    color: 'blue',
-    gradient: 'from-blue-500 to-cyan-600',
-    bgGradient: 'from-blue-50 to-cyan-50',
-    darkBgGradient: 'from-blue-900/20 to-cyan-900/20',
-    borderColor: 'border-blue-200',
+    color: 'from-blue-500 to-cyan-600',
+    bgColor: 'bg-gradient-to-r from-blue-50 to-cyan-50',
+    darkBgColor: 'dark:bg-gradient-to-r dark:from-blue-900/20 dark:to-cyan-900/20',
+    borderColor: 'border-blue-400',
+    darkBorderColor: 'dark:border-blue-600',
     textColor: 'text-blue-600',
-    maxTokens: 2000,
-    temperature: 0.3,
-    priority: 'balance',
-    features: ['threat_analysis', 'evidence_reasoning', 'context', 'recommendations'],
+    darkTextColor: 'dark:text-blue-400',
     estimatedTime: '15-20s',
-    useCase: 'Standard verification needs',
-    accuracy: 92,
-    confidenceBoost: 0.25,
-    promptTemplate: `COMPREHENSIVE MISINFORMATION & THREAT ANALYSIS
-
-Content to analyze: "{content}"
-
-Provide detailed analysis in this EXACT format:
-
-SECURITY ASSESSMENT
-Threat Level: [CRITICAL/HIGH/MEDIUM/LOW/SAFE]
-Primary Threat Type: [Phishing/Investment Scam/Health Misinformation/Political Misinformation/Technical Scam/Social Engineering/Safe Content]
-
-CREDIBILITY VERDICT: [TRUE/FALSE/MIXED/UNVERIFIABLE]
-
-DETAILED EXPLANATION PARAGRAPH: [Write exactly 250-300 words explaining WHY this content is credible or not credible. State specific evidence that supports your conclusion. Explain what makes this trustworthy or suspicious. Include psychological manipulation techniques if present, real-world impact of similar content, and why people fall for this type of content. Discuss the broader implications and provide educational context about this threat type. Include historical examples of similar cases and their outcomes. Explain the psychology behind why this type of content spreads and how it exploits human cognitive biases. DO NOT use asterisks or hashtag symbols anywhere in your response.]
-
-CONFIDENCE SCORE: [85-98%]
-
-SOURCES VERIFICATION: [List 3-4 specific sources or verification methods used in analysis]
-
-COMMUNITY IMPACT ASSESSMENT: [If threat level is CRITICAL/HIGH/MEDIUM, explain why this poses risk to public safety and why community should be alerted. Include specific examples of how similar content has harmed communities. If LOW/SAFE, explain general awareness value for community protection and digital literacy.]
-
-DETAILED ANALYSIS
-Evidence Found:
-• [Specific red flags or safety indicators with detailed explanations]
-• [Pattern recognition results with context and examples]  
-• [Language analysis findings with psychological insights]
-
-Risk Factors:
-• [Psychological manipulation techniques if present with explanation of how they work]
-• [Technical inconsistencies if applicable with details on what they reveal]
-• [Source credibility issues if found with reasoning and verification attempts]
-
-CONTEXT & EXPLANATION
-Why this matters: [Educational explanation of the threat/safety with real-world examples and broader implications for digital security]
-Historical context: [Similar cases or patterns if relevant with outcomes and lessons learned]
-Target demographic: [Who this typically targets and why they're vulnerable, including psychological and social factors]
-
-PROTECTIVE ACTIONS
-Immediate steps:
-1. [First critical action with reasoning and step-by-step implementation]
-2. [Second important action with explanation of why it's necessary]
-3. [Third preventive measure with context about ongoing protection]
-
-Long-term protection:
-• [Ongoing security measures with implementation details and timeline]
-• [Awareness tips with specific examples and recognition techniques]
-
-COMMUNITY AWARENESS
-Education Value: [How this case can be used to educate others about digital threats]
-Sharing Guidelines: [Safe ways to share this information to protect others without spreading the threat]
-
-SHOW_COMMUNITY_BUTTON: [YES if threat level is CRITICAL/HIGH/MEDIUM, NO otherwise]`
+    maxTokens: 2000,
+    temperature: 0.3
   },
-  expert: {
-    label: 'Expert Deep Dive',
-    icon: SparklesIcon,
-    iconSolid: SparklesSolid,
-    description: 'Maximum technical detail and insights (25-35 seconds)',
-    color: 'purple',
-    gradient: 'from-purple-600 to-pink-600',
-    bgGradient: 'from-purple-50 to-pink-50',
-    darkBgGradient: 'from-purple-900/20 to-pink-900/20',
-    borderColor: 'border-purple-200',
-    textColor: 'text-purple-600',
-    maxTokens: 3000,
-    temperature: 0.4,
-    priority: 'depth',
-    features: ['technical_analysis', 'historical_context', 'advanced_patterns', 'forensic_details'],
+  forensic: {
+    id: 'forensic',
+    label: 'Forensic Investigation',
+    icon: MagnifyingGlassIcon,
+    description: 'Deep forensic analysis for high-stakes content (25-35 seconds)',
+    color: 'from-amber-600 to-orange-600',
+    bgColor: 'bg-gradient-to-r from-amber-50 to-orange-50',
+    darkBgColor: 'dark:bg-gradient-to-r dark:from-amber-900/20 dark:to-orange-900/20',
+    borderColor: 'border-amber-400',
+    darkBorderColor: 'dark:border-amber-600',
+    textColor: 'text-amber-600',
+    darkTextColor: 'dark:text-amber-400',
     estimatedTime: '25-35s',
-    useCase: 'Security professionals and researchers',
-    accuracy: 96,
-    confidenceBoost: 0.35,
-    promptTemplate: `EXPERT-LEVEL THREAT FORENSICS & DEEP ANALYSIS
-
-Content to analyze: "{content}"
-
-Provide comprehensive expert analysis in this EXACT format:
-
-FORENSIC OVERVIEW
-Classification: [Threat category with technical specificity]
-Sophistication Level: [Amateur/Intermediate/Professional/Nation-State]
-Attack Vector: [Technical delivery method analysis]
-
-CREDIBILITY VERDICT: [TRUE/FALSE/MIXED/UNVERIFIABLE]
-
-EXPERT EXPLANATION PARAGRAPH: [Write exactly 300-350 words providing forensic-level analysis of WHY this content is credible or not credible. Include technical indicators, behavioral psychology analysis, attribution clues, campaign analysis, and detailed threat modeling. Explain sophisticated attack techniques, social engineering psychology, and infrastructure analysis. Discuss threat actor profiling and operational security patterns. Provide predictive analysis of threat evolution and countermeasures. Include analysis of linguistic patterns, metadata indicators, and technical artifacts. Explain how this fits into broader threat landscapes and what security professionals can learn from this case. DO NOT use asterisks or hashtag symbols anywhere.]
-
-CONFIDENCE SCORE: [90-98%] with margin of error [±2-5%]
-
-TECHNICAL VERIFICATION SOURCES: [List 4-6 specific technical analysis methods and intelligence sources used]
-
-COMMUNITY THREAT ASSESSMENT: [If threat level warrants community alert, provide detailed justification including scale, scope, and urgency. Include recommended community response protocols and escalation procedures. Explain potential for viral spread and network effects.]
-
-TECHNICAL DEEP DIVE
-Pattern Recognition:
-• [Advanced linguistic patterns detected with technical details and signature analysis]
-• [Behavioral psychology elements used with exploitation methods and cognitive bias targeting]
-• [Technical infrastructure analysis with IOCs and attribution indicators]
-
-Social Engineering Breakdown:
-• [Psychological manipulation techniques with cognitive bias analysis and exploitation frameworks]
-• [Emotional trigger analysis with target psychology and persuasion mechanisms]
-• [Trust exploitation methods with persuasion frameworks and social proof manipulation]
-
-Historical Context:
-• [Similar attack campaigns with attribution and evolution patterns over time]
-• [Threat intelligence correlations with timeline analysis and campaign tracking]
-• [Defensive lessons learned with implementation guidance and effectiveness metrics]
-
-THREAT MODELING
-Likely Threat Actor Profile:
-• [Skill level assessment with capability analysis and resource requirements]
-• [Resource requirements with operational infrastructure and funding indicators]
-• [Geographic and cultural attribution indicators with behavioral signatures]
-
-Campaign Analysis:
-• [Scale and scope assessment with victim profiling and targeting analysis]
-• [Timeline patterns with persistence analysis and operational cycles]
-• [Cross-platform distribution with reach assessment and amplification methods]
-
-ADVANCED COUNTERMEASURES
-Technical Defenses:
-1. [Network-level protections with implementation details and configuration guidance]
-2. [Endpoint security measures with detection signatures and behavioral analytics]
-3. [Behavioral analysis tools with machine learning indicators and anomaly detection]
-
-Research Applications:
-• [Threat intelligence value with sharing protocols and community benefits]
-• [Defense improvement opportunities with innovation areas and development priorities]
-• [Academic research contributions with methodology and peer review potential]
-
-PREDICTIVE INTELLIGENCE
-Future Evolution: [Likely adaptations and countermeasures this threat will develop]
-Defensive Innovation: [New technologies and approaches needed to counter evolving threats]
-Community Impact: [Long-term implications for digital security and social trust]
-
-SHOW_COMMUNITY_BUTTON: [YES if threat level is CRITICAL/HIGH/MEDIUM, NO otherwise]`
+    maxTokens: 2500,
+    temperature: 0.2
   },
   educational: {
+    id: 'educational',
     label: 'Educational Focus',
     icon: AcademicCapIcon,
     description: 'Learning-oriented with prevention tips (20-25 seconds)',
-    color: 'green',
-    gradient: 'from-green-500 to-emerald-600',
-    bgGradient: 'from-green-50 to-emerald-50',
-    darkBgGradient: 'from-green-900/20 to-emerald-900/20',
-    borderColor: 'border-green-200',
+    color: 'from-green-500 to-emerald-600',
+    bgColor: 'bg-gradient-to-r from-green-50 to-emerald-50',
+    darkBgColor: 'dark:bg-gradient-to-r dark:from-green-900/20 dark:to-emerald-900/20',
+    borderColor: 'border-green-400',
+    darkBorderColor: 'dark:border-green-600',
     textColor: 'text-green-600',
-    maxTokens: 2500,
-    temperature: 0.35,
-    priority: 'learning',
-    features: ['how_it_works', 'recognition_tips', 'prevention_strategies', 'real_examples'],
+    darkTextColor: 'dark:text-green-400',
     estimatedTime: '20-25s',
-    useCase: 'Learning and awareness building',
-    accuracy: 90,
-    confidenceBoost: 0.20,
-    promptTemplate: `EDUCATIONAL CYBERSECURITY & MISINFORMATION ANALYSIS
-
-Content to analyze: "{content}"
-
-Provide educational analysis in this EXACT format:
-
-LEARNING OBJECTIVES
-What you'll understand: [Key learning outcomes from this analysis]
-Threat Category: [Type of threat with educational context]
-Real-world Impact: [Why this matters in daily digital life]
-
-CREDIBILITY VERDICT: [TRUE/FALSE/MIXED/UNVERIFIABLE]
-
-DETAILED EXPLANATION PARAGRAPH: [Write exactly 250-280 words clearly explaining WHY this content is credible or not credible. State specific evidence that supports your conclusion in educational terms that anyone can understand. Explain what makes this trustworthy or suspicious using everyday examples. Include how psychological manipulation techniques work in simple terms, real-world impact of similar content with specific examples, and why people fall for this type of content using relatable scenarios. Discuss the broader implications for personal and community safety. Provide educational context about this threat type that helps people recognize similar cases in the future. Use teaching moments to explain digital literacy concepts. DO NOT use asterisks or hashtag symbols anywhere.]
-
-CONFIDENCE SCORE: [85-95%]
-
-SOURCES VERIFICATION: [List 3-4 specific verification methods explained in accessible terms]
-
-COMMUNITY IMPACT ASSESSMENT: [If threat level is CRITICAL/HIGH/MEDIUM, explain in educational terms why this poses risk to public safety and why community awareness is important. Include examples of how communities have been affected by similar content. If LOW/SAFE, explain the educational value for building digital literacy and community resilience.]
-
-HOW THIS WORKS - STEP BY STEP
-Attack/Deception Mechanics:
-1. [First step in the threat process explained in simple terms with examples]
-2. [How victims are identified/targeted with psychological and social factors]
-3. [Psychological hooks used with everyday examples people can recognize]
-4. [How the deception/attack progresses with timeline and escalation patterns]
-5. [Final goal of the threat actor with real-world consequences and motivations]
-
-RECOGNITION PATTERNS - LEARN TO SPOT THESE
-Red Flags to Remember:
-• [Visual indicators anyone can spot with specific examples and screenshots descriptions]
-• [Language patterns that reveal deception with common phrases and techniques]
-• [Behavioral requests that should trigger suspicion with context and alternatives]
-• [Technical indicators for more advanced users with explanation of significance]
-
-PSYCHOLOGY BEHIND THE THREAT
-Why People Fall For This:
-• [Cognitive biases being exploited with everyday examples and personal relevance]
-• [Emotional states that make people vulnerable with recognition techniques]
-• [Social pressures utilized with peer influence and authority manipulation]
-
-Who Gets Targeted Most:
-• [Demographic information for awareness with respectful explanation of vulnerabilities]
-• [Situational factors that increase risk with personal protection strategies]
-
-PROTECTION STRATEGIES - BUILD YOUR DEFENSES
-Immediate Protection:
-1. [First line of defense anyone can implement with step-by-step instructions]
-2. [Verification techniques with practical tools and reliable sources]
-3. [When and how to seek help with specific contacts and escalation procedures]
-
-Long-term Security Habits:
-• [Daily practices for digital hygiene with routine building and habit formation]
-• [Tools and settings to configure with user-friendly guides and regular maintenance]
-• [Knowledge areas to develop with learning resources and skill-building activities]
-
-FAMILY & COMMUNITY PROTECTION
-Helping Others:
-• [How to share this knowledge safely without spreading fear or the threat itself]
-• [Warning signs to watch for in others with respectful intervention techniques]
-• [Resources to recommend with trusted sources and professional help options]
-
-Teaching Moments:
-• [How to use this as an educational example with age-appropriate explanations]
-• [Conversation starters for digital safety discussions with family and friends]
-• [Age-appropriate ways to explain to children with developmental considerations]
-
-REAL-WORLD EXAMPLES
-Similar Cases: [Brief, educational examples without harmful details but with clear learning outcomes]
-Success Stories: [How people have avoided or recovered from this with positive examples and resilience building]
-Lessons Learned: [What the security community has discovered with practical applications for everyday users]
-
-KEY TAKEAWAYS
-Remember These 3 Things:
-1. [Most important lesson with memorable summary and practical application]
-2. [Critical recognition sign with specific examples and immediate action steps]
-3. [Essential protective action with implementation guidance and habit formation]
-
-Next Steps for Learning:
-• [Resources for deeper understanding with vetted sources and learning paths]
-• [Skills to develop with practical exercises and measurable progress indicators]
-• [Communities to join for ongoing education with safe spaces and expert guidance]
-
-SHOW_COMMUNITY_BUTTON: [YES if threat level is CRITICAL/HIGH/MEDIUM, NO otherwise]`
+    maxTokens: 2000,
+    temperature: 0.35
   },
-  forensic: {
-    label: 'Forensic Investigation',
-    icon: MagnifyingGlassIcon,
-    description: 'Investigation-grade analysis with evidence (30-40 seconds)',
-    color: 'red',
-    gradient: 'from-red-600 to-rose-600',
-    bgGradient: 'from-red-50 to-rose-50',
-    darkBgGradient: 'from-red-900/20 to-rose-900/20',
-    borderColor: 'border-red-200',
-    textColor: 'text-red-600',
-    maxTokens: 3500,
-    temperature: 0.2,
-    priority: 'evidence',
-    features: ['evidence_chain', 'attribution', 'impact_assessment', 'legal_context'],
+  expertdeepdive: {
+    id: 'expertdeepive',
+    label: 'Expert Deep Dive',
+    icon: SparklesIcon,
+    iconSolid: SparklesSolid,
+    description: 'Technical deep-dive for professionals (30-40 seconds)',
+    color: 'from-purple-600 to-pink-600',
+    bgColor: 'bg-gradient-to-r from-purple-50 to-pink-50',
+    darkBgColor: 'dark:bg-gradient-to-r dark:from-purple-900/20 dark:to-pink-900/20',
+    borderColor: 'border-purple-400',
+    darkBorderColor: 'dark:border-purple-600',
+    textColor: 'text-purple-600',
+    darkTextColor: 'dark:text-purple-400',
     estimatedTime: '30-40s',
-    useCase: 'Incident response and legal documentation',
-    accuracy: 98,
-    confidenceBoost: 0.40,
-    promptTemplate: `FORENSIC INVESTIGATION & EVIDENCE ANALYSIS
-
-Content to analyze: "{content}"
-
-Provide forensic-grade analysis in this EXACT format:
-
-EXECUTIVE SUMMARY
-Case Classification: [Threat type with legal/regulatory context]
-Severity Rating: [Impact scale 1-10 with justification]
-Legal Implications: [Relevant laws or regulations potentially violated]
-Recommended Response Level: [Internal/Law Enforcement/Regulatory]
-
-CREDIBILITY VERDICT: [TRUE/FALSE/MIXED/UNVERIFIABLE]
-
-FORENSIC EXPLANATION PARAGRAPH: [Write exactly 320-350 words providing investigation-grade analysis of WHY this content is credible or not credible. Include detailed evidence chain analysis, attribution indicators, legal implications, and forensic methodology. Explain technical artifacts, behavioral patterns, and infrastructure analysis with investigative rigor. Discuss evidentiary standards, chain of custody considerations, and admissibility factors. Include cross-reference verification, corroborating evidence assessment, and gap analysis. Provide risk assessment for ongoing threats, victim impact analysis, and community harm evaluation. Explain investigative techniques used and their reliability standards. Include precedent analysis and case law considerations where applicable. DO NOT use asterisks or hashtag symbols anywhere.]
-
-CONFIDENCE SCORE: [90-98%] with statistical significance [p<0.05] and margin of error [±1-3%]
-
-EVIDENCE SOURCES: [List 5-7 specific forensic methods and authoritative sources with verification standards]
-
-COMMUNITY THREAT ASSESSMENT: [If threat level warrants community alert, provide comprehensive threat assessment including victim potential, harm severity, spread velocity, and recommended community response protocols. Include law enforcement liaison requirements and public safety considerations.]
-
-EVIDENCE COLLECTION & ANALYSIS
-Digital Artifacts:
-• [Metadata and technical indicators with forensic extraction methods and validation procedures]
-• [Linguistic forensics findings with statistical analysis and comparative linguistics]
-• [Behavioral pattern analysis with psychological profiling and deviation measurement]
-• [Cross-reference verification results with database correlation and validation protocols]
-
-Chain of Evidence:
-1. [Source identification methods with provenance tracking and authenticity verification]
-2. [Verification steps taken with methodological rigor and peer review standards]
-3. [Corroborating evidence found with independent source validation and triangulation]
-4. [Gaps or limitations in evidence with impact assessment and mitigation strategies]
-
-ATTRIBUTION ANALYSIS
-Threat Actor Assessment:
-• [Skills and resource indicators with capability maturation analysis and operational signatures]
-• [Operational security patterns with OPSEC failure analysis and attribution confidence levels]
-• [Language and cultural markers with geographic profiling and demographic indicators]
-• [Historical campaign connections with timeline correlation and pattern evolution tracking]
-
-Infrastructure Analysis:
-• [Technical delivery mechanisms with network topology analysis and hosting patterns]
-• [Domain registration and hosting analysis with WHOIS forensics and infrastructure mapping]
-• [Payment method forensics with financial trail analysis and transaction pattern recognition]
-
-IMPACT ASSESSMENT
-Direct Harm Potential:
-• [Financial risk quantification with economic impact modeling and loss projections]
-• [Personal safety implications with threat escalation analysis and victim vulnerability assessment]
-• [Reputation/social harm assessment with social media impact analysis and viral coefficient calculation]
-• [System/data security risks with technical vulnerability assessment and exploitation potential]
-
-Scale and Scope:
-• [Estimated victim count/potential with demographic analysis and exposure modeling]
-• [Geographic spread analysis with distribution pattern mapping and regional impact assessment]
-• [Demographic targeting assessment with vulnerability profiling and risk stratification]
-
-Cascading Effects:
-• [Secondary harm possibilities with network effect modeling and amplification analysis]
-• [Community/organizational impact with social cohesion assessment and trust degradation metrics]
-• [Long-term consequence modeling with predictive analytics and trend extrapolation]
-
-LEGAL & REGULATORY CONTEXT
-Applicable Laws:
-• [Relevant criminal statutes with jurisdiction analysis and prosecution feasibility]
-• [Civil liability considerations with tort analysis and damage calculation frameworks]
-• [Regulatory compliance issues with agency notification requirements and penalty structures]
-
-Evidence Standards:
-• [Documentation quality assessment with legal admissibility evaluation and chain of custody verification]
-• [Authentication requirements with technical standards and expert testimony preparation]
-• [Additional evidence needs with investigation roadmap and resource requirements]
-
-INCIDENT RESPONSE RECOMMENDATIONS
-Immediate Actions:
-1. [Evidence preservation with forensic best practices and legal hold procedures]
-2. [Victim notification procedures with privacy protection and harm mitigation protocols]
-3. [Containment measures with technical implementation and effectiveness monitoring]
-
-Investigation Support:
-• [Additional forensic techniques needed with specialized expertise and equipment requirements]
-• [External expert consultation requirements with qualification standards and coordination protocols]
-• [Law enforcement coordination steps with reporting procedures and evidence sharing frameworks]
-
-PREVENTIVE MEASURES
-System Hardening:
-• [Technical controls to implement with configuration standards and effectiveness metrics]
-• [Policy and procedure updates with compliance frameworks and training requirements]
-• [Monitoring enhancement needs with detection capability improvement and alert optimization]
-
-Detection and Response:
-• [Behavioral indicators to monitor with automated detection rules and human analysis integration]
-• [Alert system configurations with threshold tuning and false positive management]
-• [Response playbook development with escalation procedures and recovery protocols]
-
-DOCUMENTATION REQUIREMENTS
-Evidence Retention: [Legal requirements and best practices for preserving investigation materials]
-Report Distribution: [Need-to-know basis with security classification and access controls]
-Follow-up Schedule: [Ongoing monitoring requirements with review intervals and success metrics]
-
-LESSONS LEARNED & INTELLIGENCE VALUE
-Defensive Improvements: [Systematic enhancements to prevent similar incidents with implementation roadmaps]
-Threat Intelligence: [Indicators of compromise and behavioral signatures for sharing with security community]
-Training Applications: [Case study development for security awareness and professional education programs]
-
-SHOW_COMMUNITY_BUTTON: [YES if threat level is CRITICAL/HIGH, NO otherwise - forensic cases typically require community awareness for public safety]`
+    maxTokens: 3000,
+    temperature: 0.4
   },
   realtime: {
+    id: 'realtime',
     label: 'Real-time Monitoring',
     icon: ClockIcon,
-    description: 'Continuous threat assessment with updates',
-    color: 'cyan',
-    gradient: 'from-cyan-500 to-teal-600',
-    bgGradient: 'from-cyan-50 to-teal-50',
-    darkBgGradient: 'from-cyan-900/20 to-teal-900/20',
-    borderColor: 'border-cyan-200',
-    textColor: 'text-cyan-600',
+    description: 'Continuous threat assessment (live)',
+    color: 'from-red-600 to-rose-600',
+    bgColor: 'bg-gradient-to-r from-red-50 to-rose-50',
+    darkBgColor: 'dark:bg-gradient-to-r dark:from-red-900/20 dark:to-rose-900/20',
+    borderColor: 'border-red-400',
+    darkBorderColor: 'dark:border-red-600',
+    textColor: 'text-red-600',
+    darkTextColor: 'dark:text-red-400',
+    estimatedTime: 'Live',
     maxTokens: 1800,
-    temperature: 0.25,
-    priority: 'monitoring',
-    features: ['live_analysis', 'trend_detection', 'alert_generation', 'adaptive_learning'],
-    estimatedTime: 'Continuous',
-    useCase: 'Ongoing security monitoring',
-    accuracy: 88,
-    confidenceBoost: 0.10,
-    promptTemplate: `REAL-TIME THREAT MONITORING & ASSESSMENT
-
-Content to analyze: "{content}"
-Timestamp: {timestamp}
-Previous Context: {context}
-
-Provide real-time monitoring analysis in this EXACT format:
-
-REAL-TIME THREAT STATUS
-Current Risk Level: [CRITICAL/HIGH/MEDIUM/LOW/BASELINE]
-Change from Previous: [ESCALATING/STABLE/DECREASING]
-Alert Priority: [IMMEDIATE/HIGH/MEDIUM/LOW/INFO]
-
-CREDIBILITY VERDICT: [TRUE/FALSE/MIXED/UNVERIFIABLE]
-
-MONITORING EXPLANATION PARAGRAPH: [Write exactly 220-250 words explaining the real-time threat assessment and WHY this content poses current risks or represents safety. Include trending analysis, velocity of spread, pattern evolution, and community impact potential. Explain how this fits into current threat landscapes, what makes it significant right now, and why immediate attention is warranted. Discuss network effects, viral potential, and cascade risk scenarios. Include behavioral indicators that suggest coordinated campaigns or organic spread. Provide context about timing factors, seasonal patterns, and current event correlations that amplify threat potential. Explain adaptive countermeasures and community resilience factors. DO NOT use asterisks or hashtag symbols anywhere.]
-
-CONFIDENCE SCORE: [80-95%] with real-time accuracy metrics
-
-MONITORING SOURCES: [List 3-4 real-time data sources and trending analysis methods]
-
-COMMUNITY IMPACT ASSESSMENT: [Real-time assessment of community risk including spread velocity, demographic targeting, and immediate harm potential. If threat level is CRITICAL/HIGH/MEDIUM, explain urgent community alert requirements and rapid response protocols.]
-
-TREND ANALYSIS
-Pattern Recognition:
-• [New patterns detected in this sample with emerging threat indicators and deviation analysis]
-• [Consistency with known threat trends with historical correlation and predictive modeling]
-• [Deviation from baseline behavior with anomaly significance and investigation priorities]
-
-Volume Assessment:
-• [Frequency of similar content with statistical trending and threshold analysis]
-• [Distribution velocity analysis with viral coefficient calculation and spread prediction]
-• [Geographic spread indicators with hotspot identification and regional risk assessment]
-
-ADAPTIVE LEARNING UPDATES
-New Indicators Discovered:
-• [Previously unseen threat markers with signature development and detection integration]
-• [Evolved attack techniques with countermeasure effectiveness and adaptation requirements]
-• [Updated social engineering methods with psychological targeting and defense updates]
-
-Model Adjustments:
-• [Confidence score recalibrations with accuracy improvement and validation testing]
-• [Detection rule updates with false positive optimization and sensitivity tuning]
-• [Behavioral baseline updates with normal pattern evolution and anomaly redefinition]
-
-ALERT GENERATION
-Immediate Notifications Required:
-□ Security Team Alert - [Urgency level and technical details]
-□ User Warning Required - [Risk communication and protective actions]
-□ System Admin Notice - [Infrastructure protection and monitoring enhancement]
-□ Law Enforcement Contact - [Legal threshold analysis and reporting requirements]
-□ Community Alert - [Public safety assessment and rapid response coordination]
-
-Alert Details:
-• [Specific threat indicators found with detection confidence and validation methods]
-• [Recommended response timeline with escalation triggers and decision points]
-• [Resource requirements with personnel allocation and technical support needs]
-
-CONTINUOUS MONITORING METRICS
-Detection Accuracy: [Current model performance with precision/recall metrics and improvement trends]
-Response Time: [Time from detection to alert with optimization opportunities and benchmark comparison]
-Community Coverage: [Population at risk with demographic analysis and protection effectiveness]
-
-Monitoring Adjustments:
-• [Sensitivity calibrations needed with threshold optimization and noise reduction]
-• [Coverage expansion requirements with resource scaling and geographic prioritization]
-• [Integration improvements with cross-platform monitoring and data fusion enhancement]
-
-PREDICTIVE ANALYSIS
-Threat Evolution Forecast: [Expected changes in threat patterns with timeline predictions and confidence intervals]
-Community Impact Projection: [Potential spread scenarios with harm modeling and intervention effectiveness]
-Resource Requirements: [Scaling needs for continued monitoring with cost-benefit analysis and optimization strategies]
-
-FEEDBACK INTEGRATION
-Community Response: [How user reports improve detection with crowdsource intelligence and validation protocols]
-System Learning: [Automated improvements with machine learning updates and performance optimization]
-Quality Assurance: [Detection validation with human oversight and continuous improvement processes]
-
-SHOW_COMMUNITY_BUTTON: [YES if threat level is CRITICAL/HIGH/MEDIUM and requires immediate community awareness, NO for routine monitoring alerts]`
-  }
-};
-
-
-// ===== COMPREHENSIVE THREAT PATTERN DATABASE =====
-const THREAT_PATTERNS = {
-  phishing: {
-    patterns: [
-      /urgent.{0,20}(account|verify|suspended|expire|action)/gi,
-      /click.{0,10}(here|link|now).{0,20}(verify|confirm|update)/gi,
-      /limited.{0,10}time.{0,20}(offer|act|expire|available)/gi,
-      /(suspended|locked|blocked|compromised).{0,20}(account|access)/gi,
-      /verify.{0,20}(identity|account|information|details|credentials)/gi,
-      /security.{0,20}(alert|warning|notice|breach|violation)/gi,
-      /unusual.{0,20}(activity|login|access|transaction)/gi,
-      /confirm.{0,20}your.{0,20}(identity|information|details)/gi,
-      /temporary.{0,20}(hold|suspension|block|restriction)/gi,
-      /act.{0,10}(now|immediately|quickly|fast)/gi
-    ],
-    weight: 0.85,
-    description: 'Phishing attempt indicators',
-    severity: 'HIGH',
-    category: 'Social Engineering'
-  },
-  financialScam: {
-    patterns: [
-      /(win|won).{0,20}(\$|\d+).{0,20}(prize|money|lottery|jackpot)/gi,
-      /guaranteed.{0,20}(profit|return|income|money|earnings)/gi,
-      /(invest|earn).{0,20}\$\d+.{0,20}(daily|weekly|monthly|guaranteed)/gi,
-      /work.{0,20}from.{0,20}home.{0,20}\$\d+/gi,
-      /nigerian.{0,20}prince/gi,
-      /(inheritance|beneficiary).{0,20}(\$|\d+).{0,20}(million|thousand)/gi,
-      /transfer.{0,20}(\$|\d+).{0,20}(funds|money|payment)/gi,
-      /bitcoin.{0,20}(giveaway|investment|opportunity|profit)/gi,
-      /cryptocurrency.{0,20}(trading|investment|bot|algorithm)/gi,
-      /(forex|trading|investment).{0,20}guaranteed/gi
-    ],
-    weight: 0.90,
-    description: 'Financial scam patterns',
-    severity: 'CRITICAL',
-    category: 'Financial Fraud'
-  },
-  healthMisinformation: {
-    patterns: [
-      /(cure|heals?).{0,20}(cancer|covid|diabetes|arthritis|aids)/gi,
-      /doctors?.{0,20}(hate|hide|suppress).{0,20}(this|secret)/gi,
-      /(miracle|secret|ancient|natural).{0,20}(cure|remedy|treatment)/gi,
-      /big.{0,20}pharma.{0,20}(hiding|conspiracy|secret|suppressing)/gi,
-      /(vaccine|vaccination|shot).{0,20}(dangerous|deadly|kills?|poison|toxic)/gi,
-      /(covid|coronavirus).{0,20}(hoax|fake|scam|conspiracy)/gi,
-      /essential.{0,20}oils?.{0,20}cure/gi,
-      /alternative.{0,20}medicine.{0,20}(cures?|heals?)/gi,
-      /(detox|cleanse).{0,20}(removes?|eliminates?).{0,20}(toxins?|poisons?)/gi,
-      /fda.{0,20}(hiding|suppressing|banned)/gi
-    ],
-    weight: 0.88,
-    description: 'Health misinformation indicators',
-    severity: 'HIGH',
-    category: 'Medical Misinformation'
-  },
-  politicalMisinformation: {
-    patterns: [
-      /(election|vote|voting).{0,20}(fraud|rigged|stolen|manipulated)/gi,
-      /(deep.{0,5}state|shadow.{0,5}government|cabal)/gi,
-      /(they|government|media).{0,20}don.?t.{0,20}want.{0,20}you.{0,20}to.{0,20}know/gi,
-      /mainstream.{0,20}media.{0,20}(lies?|lying|hiding|cover.?up)/gi,
-      /(conspiracy|cover.?up|hidden.{0,10}agenda)/gi,
-      /false.{0,20}flag.{0,20}(operation|attack|event)/gi,
-      /(globalist|illuminati|new.{0,5}world.{0,5}order)/gi,
-      /voter.{0,20}fraud.{0,20}(widespread|massive|extensive)/gi,
-      /(stolen|rigged).{0,20}election/gi,
-      /dominion.{0,20}(voting|machines).{0,20}(hacked|rigged)/gi
-    ],
-    weight: 0.75,
-    description: 'Political disinformation patterns',
-    severity: 'MEDIUM',
-    category: 'Political Misinformation'
-  },
-  technicalScam: {
-    patterns: [
-      /computer.{0,20}(virus|infected|hacked|compromised)/gi,
-      /microsoft.{0,20}(support|technician|security|windows)/gi,
-      /your.{0,20}(windows|computer|pc).{0,20}(has|infected|virus|error)/gi,
-      /call.{0,20}(now|immediately).{0,20}\d{3}.{0,5}\d{3}.{0,5}\d{4}/gi,
-      /remote.{0,20}access.{0,20}(software|tool|program)/gi,
-      /tech.{0,20}support.{0,20}(scam|fraud|fake)/gi,
-      /(teamviewer|anydesk).{0,20}download/gi,
-      /system.{0,20}(warning|alert|error|crash)/gi,
-      /security.{0,20}software.{0,20}(expired|outdated)/gi,
-      /firewall.{0,20}(breach|compromised|disabled)/gi
-    ],
-    weight: 0.92,
-    description: 'Technical support scam indicators',
-    severity: 'HIGH',
-    category: 'Technical Fraud'
-  },
-  socialEngineering: {
-    patterns: [
-      /urgent.{0,20}(action|response|attention).{0,20}required/gi,
-      /confirm.{0,20}your.{0,20}(identity|information|details)/gi,
-      /security.{0,20}(alert|breach|violation|compromise)/gi,
-      /suspicious.{0,20}activity.{0,20}(detected|found|identified)/gi,
-      /temporary.{0,20}(hold|suspension|lock|restriction)/gi,
-      /account.{0,20}will.{0,20}be.{0,20}(closed|suspended|terminated)/gi,
-      /update.{0,20}your.{0,20}(payment|billing|credit)/gi,
-      /prize.{0,20}(notification|award|winning|winner)/gi,
-      /congratulations.{0,20}you.{0,20}(have|won|are)/gi,
-      /claim.{0,20}your.{0,20}(prize|reward|refund|money)/gi
-    ],
-    weight: 0.70,
-    description: 'Social engineering tactics',
-    severity: 'MEDIUM',
-    category: 'Social Engineering'
-  },
-  cryptoScam: {
-    patterns: [
-      /(bitcoin|crypto|ethereum).{0,20}(giveaway|double|multiply|investment)/gi,
-      /send.{0,20}(btc|eth|crypto).{0,20}(get|receive).{0,20}back/gi,
-      /(elon|musk|bezos|gates).{0,20}(giving|crypto|bitcoin|giveaway)/gi,
-      /limited.{0,20}time.{0,20}crypto.{0,20}(offer|opportunity)/gi,
-      /cryptocurrency.{0,20}(trading|investment|bot|mining)/gi,
-      /blockchain.{0,20}(investment|opportunity|technology)/gi,
-      /ico.{0,20}(presale|launch|investment)/gi,
-      /defi.{0,20}(yield|farming|liquidity|mining)/gi,
-      /nft.{0,20}(minting|drop|exclusive|rare)/gi,
-      /pump.{0,20}and.{0,20}dump/gi
-    ],
-    weight: 0.95,
-    description: 'Cryptocurrency scam patterns',
-    severity: 'CRITICAL',
-    category: 'Cryptocurrency Fraud'
-  },
-  romanceScam: {
-    patterns: [
-      /lonely.{0,20}(widow|widower|divorced|single)/gi,
-      /military.{0,20}(deployed|overseas|afghanistan|iraq)/gi,
-      /oil.{0,20}rig.{0,20}(engineer|worker|contractor)/gi,
-      /doctor.{0,20}(overseas|abroad|peacekeeping|mission)/gi,
-      /money.{0,20}for.{0,20}(travel|visa|emergency|medical)/gi,
-      /western.{0,20}union.{0,20}(transfer|send|money)/gi,
-      /gift.{0,20}card.{0,20}(google|amazon|itunes|steam)/gi,
-      /true.{0,20}love.{0,20}(soulmate|destiny|fate)/gi,
-      /meet.{0,20}in.{0,20}person.{0,20}(soon|visit|travel)/gi,
-      /(i|we).{0,20}love.{0,20}you.{0,20}(so.{0,10}much|dearly)/gi
-    ],
-    weight: 0.80,
-    description: 'Romance scam indicators',
-    severity: 'HIGH',
-    category: 'Romance Fraud'
-  },
-  malwareDistribution: {
-    patterns: [
-      /download.{0,20}(now|free|crack|keygen|patch)/gi,
-      /(crack|keygen|serial|license).{0,20}(key|number|code)/gi,
-      /free.{0,20}(software|games|movies|music|ebooks)/gi,
-      /(torrent|warez|pirate|illegal).{0,20}download/gi,
-      /click.{0,20}here.{0,20}to.{0,20}(download|install|activate)/gi,
-      /codec.{0,20}(required|missing|install|download)/gi,
-      /flash.{0,20}player.{0,20}(update|outdated|install)/gi,
-      /java.{0,20}(update|security|critical|install)/gi,
-      /antivirus.{0,20}(download|install|scan|protect)/gi,
-      /system.{0,20}optimization.{0,20}(tool|software|cleaner)/gi
-    ],
-    weight: 0.87,
-    description: 'Malware distribution patterns',
-    severity: 'HIGH',
-    category: 'Malware'
-  },
-  phishingUrls: {
-    patterns: [
-      /(bit\.ly|tinyurl|goo\.gl|t\.co|ow\.ly)/gi,
-      /[a-z0-9]+-[a-z0-9]+-[a-z0-9]+\.(tk|ml|ga|cf)/gi,
-      /(paypal|amazon|google|microsoft|apple)[\w-]*\.(?!com)[a-z]{2,}/gi,
-      /secure[.-]?(update|verify|login)[\w.-]*\.(com|net|org)/gi,
-      /[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}/gi,
-      /(facebook|twitter|instagram)[\w-]*\.(?!(com|net))[a-z]{2,}/gi,
-      /banking?[.-]?(secure|online)[\w.-]*\.(com|net)/gi,
-      /verify[.-]?(account|identity)[\w.-]*\.(com|org)/gi,
-      /security[.-]?alert[\w.-]*\.(com|net|org)/gi,
-      /support[.-]?(team|help)[\w.-]*\.(com|org)/gi
-    ],
-    weight: 0.93,
-    description: 'Suspicious URL patterns',
-    severity: 'HIGH',
-    category: 'URL Analysis'
-  }
-};
-
-// ===== ADVANCED API SERVICES WITH REAL INTEGRATION =====
-const analysisService = {
-  // OpenRouter API Configuration (from September 14th working version)
-  apiKey: process.env.REACT_APP_OPENROUTER_API_KEY || 'sk-or-v1-38b6c4897d1234567890abcdef1234567890abcdef1234567890abcdef123456',
-  baseURL: 'https://openrouter.ai/api/v1',
-  model: 'deepseek/deepseek-r1',
-  fallbackModel: 'openai/gpt-3.5-turbo',
-  
-  // Advanced configuration
-  maxRetries: 3,
-  retryDelay: 1000,
-  timeout: 30000,
-  
-  async analyzeContent(content, mode = 'comprehensive', options = {}) {
-    const startTime = performance.now();
-    
-    try {
-      const analysisMode = ANALYSIS_MODES[mode] || ANALYSIS_MODES.comprehensive;
-      const prompt = this.buildPrompt(content, analysisMode, options);
-      
-      console.log(`[AnalysisService] Starting ${mode} analysis...`);
-      
-      const response = await this.makeAPIRequest(prompt, analysisMode, options);
-      
-      if (!response.ok) {
-        console.warn(`[AnalysisService] API request failed: ${response.status}`);
-        throw new Error(`API request failed: ${response.status} ${response.statusText}`);
-      }
-
-      const data = await response.json();
-      
-      if (!data.choices || !data.choices[0] || !data.choices[0].message) {
-        console.error('[AnalysisService] Invalid API response format:', data);
-        throw new Error('Invalid API response format');
-      }
-
-      const aiResponse = data.choices[0].message.content;
-      const patternAnalysis = this.analyzePatterns(content);
-      const urlAnalysis = await this.analyzeUrls(content);
-      const sentimentAnalysis = this.analyzeSentiment(content);
-      
-      const endTime = performance.now();
-      const responseTime = endTime - startTime;
-      
-      console.log(`[AnalysisService] Analysis completed in ${responseTime.toFixed(2)}ms`);
-      
-      return {
-        content: aiResponse,
-        confidence: this.calculateConfidence(aiResponse, patternAnalysis, urlAnalysis),
-        threatLevel: this.extractThreatLevel(aiResponse),
-        patterns: patternAnalysis,
-        urls: urlAnalysis,
-        sentiment: sentimentAnalysis,
-        analysisMode: mode,
-        timestamp: new Date().toISOString(),
-        responseTime: responseTime,
-        tokensUsed: data.usage?.total_tokens || 0,
-        model: this.model,
-        apiVersion: 'v1',
-        fallback: false
-      };
-      
-    } catch (error) {
-      console.error('[AnalysisService] Analysis failed:', error);
-      return this.fallbackAnalysis(content, mode, error);
-    }
-  },
-
-  async makeAPIRequest(prompt, analysisMode, options) {
-    const requestBody = {
-      model: this.model,
-      messages: [
-        {
-          role: 'system',
-          content: `You are XIST AI, an expert cybersecurity and misinformation detection system. You provide accurate, detailed, and actionable threat analysis. Always respond in the exact format requested, be thorough but concise, and prioritize user safety while being educational.
-
-Current Analysis Mode: ${analysisMode.label}
-Priority: ${analysisMode.priority}
-Expected Response Time: ${analysisMode.estimatedTime}
-Accuracy Target: ${analysisMode.accuracy}%
-
-Focus Areas: ${analysisMode.features.join(', ')}
-
-Important Guidelines:
-- Use ONLY text-based indicators (no visual elements like emojis)  
-- Provide specific, actionable recommendations
-- Include confidence scores and reasoning
-- Consider psychological and technical factors
-- Maintain professional, authoritative tone
-- Structure responses exactly as requested in prompts`
-        },
-        {
-          role: 'user',
-          content: prompt
-        }
-      ],
-      max_tokens: analysisMode.maxTokens,
-      temperature: analysisMode.temperature,
-      top_p: 0.9,
-      frequency_penalty: 0.1,
-      presence_penalty: 0.1,
-      stream: false
-    };
-
-    return fetch(`${this.baseURL}/chat/completions`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${this.apiKey}`,
-        'Content-Type': 'application/json',
-        'HTTP-Referer': window.location.origin,
-        'X-Title': 'XIST AI - Advanced Threat Detection',
-        'User-Agent': navigator.userAgent
-      },
-      body: JSON.stringify(requestBody),
-      signal: AbortSignal.timeout(this.timeout)
-    });
-  },
-
-  buildPrompt(content, analysisMode, options) {
-    let prompt = analysisMode.promptTemplate.replace('{content}', content);
-    
-    // Replace template variables
-    if (options.context) {
-      prompt = prompt.replace('{context}', options.context);
-    }
-    
-    if (options.timestamp) {
-      prompt = prompt.replace('{timestamp}', options.timestamp);
-    }
-    
-    // Add contextual information
-    const contextInfo = [];
-    
-    if (options.userAgent) {
-      contextInfo.push(`User Agent: ${options.userAgent}`);
-    }
-    
-    if (options.deviceCapabilities) {
-      const caps = Object.entries(options.deviceCapabilities)
-        .filter(([_, supported]) => supported)
-        .map(([capability, _]) => capability);
-      if (caps.length > 0) {
-        contextInfo.push(`Device Capabilities: ${caps.join(', ')}`);
-      }
-    }
-    
-    if (contextInfo.length > 0) {
-      prompt += `\n\nAdditional Context:\n${contextInfo.join('\n')}`;
-    }
-    
-    return prompt;
-  },
-
-  analyzePatterns(content) {
-    const results = {};
-    let totalWeight = 0;
-    let matchedPatterns = 0;
-    let criticalMatches = 0;
-
-    Object.entries(THREAT_PATTERNS).forEach(([threatType, config]) => {
-      const matches = [];
-      const matchDetails = [];
-      
-      config.patterns.forEach((pattern, index) => {
-        const found = content.match(pattern);
-        if (found) {
-          matches.push(...found);
-          matchDetails.push({
-            patternIndex: index,
-            matches: found,
-            pattern: pattern.source
-          });
-        }
-      });
-
-      if (matches.length > 0) {
-        const threatWeight = config.weight * matches.length;
-        
-        results[threatType] = {
-          matches: matches.length,
-          examples: matches.slice(0, 5), // Show up to 5 examples
-          weight: config.weight,
-          totalWeight: threatWeight,
-          description: config.description,
-          severity: config.severity,
-          category: config.category,
-          details: matchDetails
-        };
-        
-        totalWeight += threatWeight;
-        matchedPatterns++;
-        
-        if (config.severity === 'CRITICAL') {
-          criticalMatches++;
-        }
-      }
-    });
-
-    // Calculate overall risk score
-    const averageWeight = matchedPatterns > 0 ? totalWeight / matchedPatterns : 0;
-    const riskMultiplier = criticalMatches > 0 ? 1.5 : 1.0;
-    const overallRisk = Math.min(averageWeight * riskMultiplier, 1);
-
-    return {
-      threats: results,
-      overallRisk: overallRisk,
-      patternCount: matchedPatterns,
-      criticalThreats: criticalMatches,
-      totalMatches: Object.values(results).reduce((sum, threat) => sum + threat.matches, 0),
-      riskScore: Math.round(overallRisk * 100),
-      category: this.determineMainThreatCategory(results),
-      severity: this.determineSeverity(overallRisk, criticalMatches)
-    };
-  },
-
-  async analyzeUrls(content) {
-    const urlRegex = /https?:\/\/[^\s<>"{}|\\^`[\]]+/gi;
-    const urls = content.match(urlRegex) || [];
-    
-    if (urls.length === 0) {
-      return { urls: [], analysis: [], riskScore: 0, suspicious: [] };
-    }
-
-    const urlAnalyses = await Promise.all(
-      urls.slice(0, 10).map(async (url) => { // Limit to 10 URLs for performance
-        try {
-          return await this.checkURLReputation(url);
-        } catch (error) {
-          console.warn(`[URLAnalysis] Failed to analyze ${url}:`, error);
-          return { url, error: error.message, riskScore: 0.3 };
-        }
-      })
-    );
-
-    const suspiciousUrls = urlAnalyses.filter(analysis => analysis.riskScore > 0.5);
-    const averageRisk = urlAnalyses.reduce((sum, analysis) => sum + analysis.riskScore, 0) / urlAnalyses.length;
-
-    return {
-      urls: urls,
-      analysis: urlAnalyses,
-      riskScore: Math.round(averageRisk * 100),
-      suspicious: suspiciousUrls,
-      totalUrls: urls.length,
-      highRiskUrls: urlAnalyses.filter(a => a.riskScore > 0.7).length
-    };
-  },
-
-  async checkURLReputation(url) {
-    try {
-      const domain = new URL(url).hostname.toLowerCase();
-      const path = new URL(url).pathname;
-      
-      // Known suspicious domain patterns
-      const suspiciousTlds = ['.tk', '.ml', '.ga', '.cf', '.pw', '.cc'];
-      const shorteners = ['bit.ly', 'tinyurl.com', 'goo.gl', 't.co', 'ow.ly', 'fb.me', 'buff.ly'];
-      const legitDomains = ['google.com', 'microsoft.com', 'apple.com', 'amazon.com', 'facebook.com'];
-      
-      let riskScore = 0;
-      const indicators = [];
-      
-      // Check for suspicious TLDs
-      if (suspiciousTlds.some(tld => domain.endsWith(tld))) {
-        riskScore += 0.4;
-        indicators.push('Suspicious top-level domain');
-      }
-      
-      // Check for URL shorteners
-      if (shorteners.some(shortener => domain.includes(shortener))) {
-        riskScore += 0.3;
-        indicators.push('URL shortener detected');
-      }
-      
-      // Check for legitimate domain spoofing
-      const spoofingPatterns = [
-        /goog1e|g00gle|googIe/i,
-        /microsft|micr0soft|rnicrosoft/i,
-        /app1e|appl3|app|e/i,
-        /arnazon|amazom|amazon\./i,
-        /faceb00k|facebook\.|f4cebook/i
-      ];
-      
-      spoofingPatterns.forEach(pattern => {
-        if (pattern.test(domain) && !legitDomains.some(legit => domain.includes(legit))) {
-          riskScore += 0.6;
-          indicators.push('Potential domain spoofing');
-        }
-      });
-      
-      // Check for suspicious path patterns
-      const suspiciousPaths = [
-        /\/verify|\/confirm|\/update|\/secure|\/login/i,
-        /\/phishing|\/scam|\/fraud/i,
-        /\/download.*\.(exe|bat|scr|com|pif)/i
-      ];
-      
-      suspiciousPaths.forEach(pattern => {
-        if (pattern.test(path)) {
-          riskScore += 0.3;
-          indicators.push('Suspicious URL path');
-        }
-      });
-      
-      // Check HTTPS
-      const hasHTTPS = url.startsWith('https://');
-      if (!hasHTTPS) {
-        riskScore += 0.2;
-        indicators.push('No HTTPS encryption');
-      }
-      
-      // Check for IP addresses instead of domains
-      const ipPattern = /\b\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\b/;
-      if (ipPattern.test(domain)) {
-        riskScore += 0.5;
-        indicators.push('IP address instead of domain name');
-      }
-      
-      // Check domain length and complexity
-      if (domain.length > 50) {
-        riskScore += 0.2;
-        indicators.push('Unusually long domain name');
-      }
-      
-      const hyphenCount = (domain.match(/-/g) || []).length;
-      if (hyphenCount > 3) {
-        riskScore += 0.2;
-        indicators.push('Excessive hyphens in domain');
-      }
-      
-      return {
-        url,
-        domain,
-        riskScore: Math.min(riskScore, 1.0),
-        https: hasHTTPS,
-        indicators,
-        category: this.categorizeUrlRisk(riskScore),
-        analysis: `Domain analysis completed with ${indicators.length} risk factors identified`
-      };
-      
-    } catch (error) {
-      return {
-        url,
-        error: 'Invalid URL format',
-        riskScore: 0.5,
-        indicators: ['URL parsing failed'],
-        category: 'Unknown'
-      };
-    }
-  },
-
-  analyzeSentiment(content) {
-    const urgencyWords = ['urgent', 'immediate', 'now', 'quickly', 'asap', 'emergency', 'critical'];
-    const fearWords = ['danger', 'threat', 'risk', 'warning', 'alert', 'security', 'breach', 'attack'];
-    const greedWords = ['free', 'win', 'prize', 'money', 'profit', 'guaranteed', 'bonus', 'reward'];
-    const trustWords = ['secure', 'verified', 'trusted', 'official', 'legitimate', 'authentic'];
-    
-    const contentLower = content.toLowerCase();
-    
-    const urgencyScore = urgencyWords.filter(word => contentLower.includes(word)).length;
-    const fearScore = fearWords.filter(word => contentLower.includes(word)).length;
-    const greedScore = greedWords.filter(word => contentLower.includes(word)).length;
-    const trustScore = trustWords.filter(word => contentLower.includes(word)).length;
-    
-    const totalWords = content.split(/\s+/).length;
-    const emotionalIntensity = (urgencyScore + fearScore + greedScore) / totalWords;
-    
-    return {
-      urgency: urgencyScore,
-      fear: fearScore,
-      greed: greedScore,
-      trust: trustScore,
-      emotionalIntensity: Math.min(emotionalIntensity * 100, 100),
-      manipulation: this.detectManipulation(urgencyScore, fearScore, greedScore),
-      overall: this.calculateOverallSentiment(urgencyScore, fearScore, greedScore, trustScore)
-    };
-  },
-
-  detectManipulation(urgency, fear, greed) {
-    const manipulationScore = (urgency * 2) + (fear * 1.5) + (greed * 1.8);
-    
-    if (manipulationScore > 8) return 'HIGH';
-    if (manipulationScore > 4) return 'MEDIUM';
-    if (manipulationScore > 1) return 'LOW';
-    return 'NONE';
-  },
-
-  calculateOverallSentiment(urgency, fear, greed, trust) {
-    const negativeScore = urgency + fear + greed;
-    const positiveScore = trust;
-    
-    if (negativeScore > positiveScore * 2) return 'NEGATIVE';
-    if (positiveScore > negativeScore * 1.5) return 'POSITIVE';
-    return 'NEUTRAL';
-  },
-
-  calculateConfidence(aiResponse, patternAnalysis, urlAnalysis) {
-    let confidence = 0.7; // Base confidence
-    
-    // Boost confidence based on pattern matches
-    if (patternAnalysis.patternCount > 0) {
-      confidence += Math.min(patternAnalysis.patternCount * 0.08, 0.15);
-    }
-    
-    // Boost confidence for critical threats
-    if (patternAnalysis.criticalThreats > 0) {
-      confidence += 0.1;
-    }
-    
-    // Adjust based on URL analysis
-    if (urlAnalysis && urlAnalysis.suspicious.length > 0) {
-      confidence += 0.05;
-    }
-    
-    // Extract AI confidence if provided
-    if (aiResponse.includes('CONFIDENCE:') || aiResponse.includes('Confidence:')) {
-      const confidenceMatch = aiResponse.match(/confidence:?\s*(\d+)%?/i);
-      if (confidenceMatch) {
-        const aiConfidence = parseInt(confidenceMatch[1]) / 100;
-        confidence = (confidence + aiConfidence) / 2; // Average with AI confidence
-      }
-    }
-    
-    // Cap confidence at reasonable levels
-    return Math.min(Math.round(confidence * 100), 98);
-  },
-
-  extractThreatLevel(response) {
-    const threatLevels = ['CRITICAL', 'HIGH', 'MEDIUM', 'LOW', 'SAFE'];
-    const upperResponse = response.toUpperCase();
-    
-    for (const level of threatLevels) {
-      if (upperResponse.includes(level)) {
-        return level;
-      }
-    }
-    
-    return 'UNKNOWN';
-  },
-
-  determineMainThreatCategory(threats) {
-    if (!threats || Object.keys(threats).length === 0) return 'SAFE';
-    
-    let maxWeight = 0;
-    let mainThreat = 'UNKNOWN';
-    
-    Object.entries(threats).forEach(([threatType, data]) => {
-        if (data && data.totalWeight > maxWeight) {
-            maxWeight = data.totalWeight;
-            mainThreat = data.category || (threatType ? threatType.toUpperCase() : 'UNKNOWN');
-        }
-    });
-    return mainThreat;
-},
-
-
-  determineSeverity(overallRisk, criticalMatches) {
-    if (criticalMatches > 0 || overallRisk > 0.8) return 'CRITICAL';
-    if (overallRisk > 0.6) return 'HIGH';
-    if (overallRisk > 0.3) return 'MEDIUM';
-    if (overallRisk > 0.1) return 'LOW';
-    return 'SAFE';
-  },
-
-  categorizeUrlRisk(riskScore) {
-    if (riskScore > 0.7) return 'HIGH_RISK';
-    if (riskScore > 0.4) return 'MEDIUM_RISK';
-    if (riskScore > 0.2) return 'LOW_RISK';
-    return 'SAFE';
-  },
-
-  fallbackAnalysis(content, mode, originalError) {
-    console.warn('[AnalysisService] Using fallback analysis due to:', originalError?.message);
-    
-    const patternAnalysis = this.analyzePatterns(content);
-    const sentimentAnalysis = this.analyzeSentiment(content);
-    
-    let threatLevel = 'LOW';
-    let response = '';
-    let confidence = 60;
-
-    if (patternAnalysis.overallRisk > 0.8) {
-      threatLevel = 'HIGH';
-      confidence = 75;
-      response = `HIGH RISK CONTENT DETECTED
-
-Multiple threat patterns identified in this content. Exercise extreme caution.
-
-Threats found: ${Object.keys(patternAnalysis.threats).join(', ')}
-Risk Score: ${patternAnalysis.riskScore}%
-Pattern Matches: ${patternAnalysis.totalMatches}
-
-IMMEDIATE ACTION REQUIRED:
-- Do not interact with this content
-- Do not click any links or download files
-- Verify through official channels if this claims to be from a legitimate source
-- Report this content if received via email or messaging
-
-THREAT ANALYSIS:
-This content contains multiple indicators commonly associated with ${patternAnalysis.category} attacks. The high pattern match count and risk score suggest this is likely malicious.
-
-PROTECTION MEASURES:
-1. Block sender if received via email
-2. Delete the content immediately  
-3. Run security scan on your device
-4. Alert others who may have received similar content
-
-Confidence: ${confidence}%`;
-      
-    } else if (patternAnalysis.overallRisk > 0.5) {
-      threatLevel = 'MEDIUM';
-      confidence = 70;
-      response = `POTENTIAL RISKS IDENTIFIED
-
-Some suspicious patterns detected. Please verify carefully before taking any action.
-
-Concerns: ${Object.keys(patternAnalysis.threats).join(', ')}
-Risk Score: ${patternAnalysis.riskScore}%
-
-RECOMMENDED ACTIONS:
-- Research claims independently through trusted sources
-- Do not provide personal information
-- Verify sender identity through alternative means
-- Exercise caution with any links or attachments
-
-ANALYSIS DETAILS:
-Content shows ${patternAnalysis.patternCount} threat indicators with moderate confidence. While not definitively malicious, several red flags warrant careful consideration.
-
-Confidence: ${confidence}%`;
-      
-    } else if (patternAnalysis.overallRisk > 0.2) {
-      threatLevel = 'LOW';
-      confidence = 65;
-      response = `MINOR CONCERNS NOTED
-
-Content appears mostly safe but contains some elements that warrant attention.
-
-Detected Patterns: ${patternAnalysis.patternCount}
-Risk Level: Low
-
-GENERAL ADVICE:
-- Always verify important claims through multiple trusted sources
-- Be cautious of unsolicited offers or requests
-- Maintain healthy skepticism online
-- Keep security software updated
-
-This content has low-risk indicators but appears generally safe for interaction with normal precautions.
-
-Confidence: ${confidence}%`;
-      
-    } else {
-      threatLevel = 'SAFE';
-      confidence = 80;
-      response = `CONTENT APPEARS SAFE
-
-No significant threat patterns detected in this content.
-
-Analysis Results:
-- Risk Score: ${patternAnalysis.riskScore}%
-- Threat Patterns: ${patternAnalysis.patternCount}
-- Overall Assessment: Safe
-
-This appears to be legitimate content with no obvious red flags. However, always maintain good security practices online.
-
-GENERAL SECURITY REMINDERS:
-- Keep personal information private
-- Verify important requests through official channels
-- Stay updated on current security threats
-- Trust but verify all online communications
-
-Confidence: ${confidence}%`;
-    }
-
-    return {
-      content: response,
-      confidence: confidence,
-      threatLevel,
-      patterns: patternAnalysis,
-      sentiment: sentimentAnalysis,
-      analysisMode: mode,
-      timestamp: new Date().toISOString(),
-      responseTime: 0,
-      tokensUsed: 0,
-      model: 'fallback',
-      fallback: true,
-      fallbackReason: originalError?.message || 'API unavailable'
-    };
-  }
-};
-
-// ===== DETAILED CONFIGURATION OBJECTS =====
-const DETAIL_LEVELS = {
-  quick: {
-    label: 'Quick Summary',
-    icon: BoltIcon,
-    description: 'Essential findings only',
-    sections: ['threat_level', 'immediate_action'],
-    maxWords: 100,
-    showPatterns: false,
-    showUrls: false,
-    showRecommendations: true
-  },
-  standard: {
-    label: 'Standard Detail',
-    icon: InformationCircleIcon,
-    description: 'Balanced comprehensive analysis',
-    sections: ['threat_level', 'analysis', 'recommendations', 'evidence'],
-    maxWords: 300,
-    showPatterns: true,
-    showUrls: true,
-    showRecommendations: true
-  },
-  detailed: {
-    label: 'Detailed Report',
-    icon: DocumentTextIcon,
-    description: 'Complete analysis with explanations',
-    sections: ['threat_level', 'analysis', 'recommendations', 'evidence', 'context', 'prevention'],
-    maxWords: 500,
-    showPatterns: true,
-    showUrls: true,
-    showRecommendations: true
-  },
-  expert: {
-    label: 'Expert Analysis',
-    icon: SparklesIcon,
-    description: 'Technical depth for professionals',
-    sections: ['threat_level', 'analysis', 'recommendations', 'evidence', 'context', 'prevention', 'technical', 'attribution'],
-    maxWords: 800,
-    showPatterns: true,
-    showUrls: true,
-    showRecommendations: true
+    temperature: 0.25
   }
 };
 
 const INPUT_METHODS = {
   text: {
+    id: 'text',
     label: 'Text Input',
     icon: DocumentTextIcon,
     description: 'Type or paste text content',
-    placeholder: 'Paste suspicious text, URLs, messages, or content here for analysis...',
-    maxLength: 10000,
-    multiline: true,
-    acceptedFormats: ['Plain text', 'URLs', 'Email content', 'Social media posts']
+    placeholder: 'Paste suspicious text, messages, or claims here for analysis...'
   },
   url: {
+    id: 'url',
     label: 'URL Analysis',
     icon: LinkIcon,
     description: 'Analyze websites and links',
-    placeholder: 'Enter URL to analyze (e.g., https://suspicious-site.com)',
-    maxLength: 2000,
-    multiline: false,
-    validation: /^https?:\/\/.+/,
-    acceptedFormats: ['HTTP URLs', 'HTTPS URLs', 'Shortened URLs', 'Email links']
-  },
-  upload: {
-    label: 'File Upload',
-    icon: DocumentArrowUpIcon,
-    description: 'Upload documents or images',
-    acceptedTypes: ['.txt', '.pdf', '.doc', '.docx', '.jpg', '.png', '.webp', '.gif'],
-    maxSize: 10 * 1024 * 1024, // 10MB
-    acceptedFormats: ['Text documents', 'PDF files', 'Word documents', 'Images with text']
-  },
-  voice: {
-    label: 'Voice Input',
-    icon: MicrophoneIcon,
-    description: 'Record audio for analysis',
-    supported: 'webkitSpeechRecognition' in window || 'SpeechRecognition' in window,
-    languages: ['en-US', 'en-GB', 'es-ES', 'fr-FR', 'de-DE'],
-    maxDuration: 300 // 5 minutes
+    placeholder: 'Enter URL to analyze (e.g., https://example.com)'
   },
   image: {
-    label: 'Image Analysis',
+    id: 'image',
+    label: 'Image Upload',
     icon: PhotoIcon,
-    description: 'Analyze screenshots and images',
-    acceptedTypes: ['image/jpeg', 'image/png', 'image/webp', 'image/gif'],
-    maxSize: 5 * 1024 * 1024, // 5MB
-    acceptedFormats: ['Screenshots', 'Photos of text', 'Social media images', 'Document scans']
+    description: 'Upload images with text or suspicious content',
+    placeholder: 'Upload JPG, PNG, or WebP'
   },
-  camera: {
-    label: 'Camera Capture',
-    icon: CameraIcon,
-    description: 'Take photo for analysis',
-    supported: 'mediaDevices' in navigator && 'getUserMedia' in navigator.mediaDevices,
-    constraints: {
-      video: { width: 1280, height: 720 },
-      audio: false
+  video: {
+    id: 'video',
+    label: 'Video Upload',
+    icon: VideoCameraIcon,
+    description: 'Upload video for audio transcription & analysis',
+    placeholder: 'Upload MP4, WebM, or MOV'
+  },
+  voice: {
+    id: 'voice',
+    label: 'Voice Input',
+    icon: MicrophoneIcon,
+    description: 'Speak your concern - AI will transcribe and analyze',
+    placeholder: 'Click microphone to speak...'
+  }
+};
+
+const VIDEO_ANALYSIS_SERVICE = {
+  async extractAudioFromVideo(videoFile) {
+    return new Promise((resolve, reject) => {
+      try {
+        const fileReader = new FileReader();
+        fileReader.onload = (e) => {
+          const arrayBuffer = e.target.result;
+          const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+          
+          audioContext.decodeAudioData(
+            arrayBuffer,
+            (audioBuffer) => {
+              resolve({
+                success: true,
+                audioBuffer: audioBuffer,
+                sampleRate: audioBuffer.sampleRate,
+                duration: audioBuffer.duration,
+                message: `Video audio extracted: ${audioBuffer.duration.toFixed(2)}s`
+              });
+            },
+            (error) => {
+              reject(new Error(`Audio decoding failed: ${error.message}`));
+            }
+          );
+        };
+        
+        fileReader.onerror = () => {
+          reject(new Error('Failed to read video file'));
+        };
+        
+        fileReader.readAsArrayBuffer(videoFile);
+      } catch (error) {
+        reject(new Error(`Video extraction failed: ${error.message}`));
+      }
+    });
+  },
+
+  async transcribeAudio(audioBuffer) {
+    if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+      return {
+        success: false,
+        error: 'Speech recognition not supported in this browser',
+        fallback: 'Please provide audio transcription manually or paste text'
+      };
+    }
+
+    return new Promise((resolve) => {
+      try {
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        const recognition = new SpeechRecognition();
+        
+        recognition.continuous = true;
+        recognition.interimResults = true;
+        recognition.language = 'en-US';
+        
+        let finalTranscript = '';
+        
+        recognition.onstart = () => {
+          console.log('[VideoAnalysis] Audio transcription started...');
+        };
+
+        recognition.onresult = (event) => {
+          for (let i = event.resultIndex; i < event.results.length; i++) {
+            const transcript = event.results[i][0].transcript;
+            
+            if (event.results[i].isFinal) {
+              finalTranscript += transcript + ' ';
+            }
+          }
+        };
+
+        recognition.onend = () => {
+          console.log('[VideoAnalysis] Transcription complete');
+          
+          if (finalTranscript.trim()) {
+            resolve({
+              success: true,
+              transcript: finalTranscript.trim(),
+              wordCount: finalTranscript.trim().split(/\s+/).length,
+              duration: audioBuffer.duration,
+              message: `Transcribed ${finalTranscript.trim().split(/\s+/).length} words from video audio`
+            });
+          } else {
+            resolve({
+              success: false,
+              error: 'No speech detected in video',
+              fallback: 'Video appears to have no audio or inaudible content'
+            });
+          }
+        };
+
+        recognition.onerror = (event) => {
+          resolve({
+            success: false,
+            error: `Transcription failed: ${event.error}`,
+            fallback: 'Unable to transcribe video audio'
+          });
+        };
+
+        recognition.start();
+      } catch (error) {
+        resolve({
+          success: false,
+          error: `Transcription error: ${error.message}`,
+          fallback: 'Video transcription unavailable'
+        });
+      }
+    });
+  },
+
+  async analyzeVideoMetadata(videoFile) {
+    try {
+      const video = document.createElement('video');
+      
+      return new Promise((resolve) => {
+        video.onloadedmetadata = () => {
+          const metadata = {
+            duration: video.duration,
+            width: video.videoWidth,
+            height: video.videoHeight,
+            fileSize: videoFile.size,
+            fileType: videoFile.type,
+            fileName: videoFile.name,
+            lastModified: new Date(videoFile.lastModified).toISOString(),
+            bitrate: (videoFile.size * 8) / video.duration / 1000000,
+            aspectRatio: (video.videoWidth / video.videoHeight).toFixed(2),
+            quality: this.assessVideoQuality(video.videoWidth, video.videoHeight)
+          };
+          
+          resolve({
+            success: true,
+            metadata: metadata,
+            message: `Video metadata extracted: ${Math.floor(video.duration)}s, ${video.videoWidth}x${video.videoHeight}`
+          });
+          
+          video.src = '';
+        };
+        
+        video.onerror = () => {
+          resolve({
+            success: false,
+            error: 'Failed to load video metadata',
+            fallback: {
+              duration: 'Unknown',
+              resolution: 'Unknown',
+              fileSize: videoFile.size,
+              fileName: videoFile.name
+            }
+          });
+        };
+        
+        const blob = new Blob([videoFile], { type: videoFile.type });
+        video.src = URL.createObjectURL(blob);
+      });
+    } catch (error) {
+      return {
+        success: false,
+        error: `Video analysis failed: ${error.message}`,
+        fallback: null
+      };
+    }
+  },
+
+  assessVideoQuality(width, height) {
+    const resolution = width * height;
+    if (resolution >= 3840 * 2160) return '4K Ultra HD';
+    if (resolution >= 1920 * 1080) return '1080p Full HD';
+    if (resolution >= 1280 * 720) return '720p HD';
+    if (resolution >= 854 * 480) return '480p SD';
+    return 'Low Resolution';
+  },
+
+  async processVideoForAnalysis(videoFile) {
+    try {
+      const audioResult = await this.extractAudioFromVideo(videoFile);
+      
+      if (!audioResult.success) {
+        return {
+          stage: 'audio_extraction_failed',
+          error: audioResult.message,
+          fallback: 'Please provide video description or transcript manually'
+        };
+      }
+
+      const transcriptionResult = await this.transcribeAudio(audioResult.audioBuffer);
+      
+      if (!transcriptionResult.success) {
+        return {
+          stage: 'transcription_failed',
+          error: transcriptionResult.error,
+          fallback: transcriptionResult.fallback,
+          audioData: audioResult
+        };
+      }
+
+      const metadataResult = await this.analyzeVideoMetadata(videoFile);
+
+      return {
+        success: true,
+        stage: 'complete',
+        transcript: transcriptionResult.transcript,
+        metadata: metadataResult.metadata,
+        analysisInput: `Video Analysis Report:\n\nFile: ${videoFile.name}\nDuration: ${Math.floor(transcriptionResult.duration)}s\nResolution: ${metadataResult.metadata?.quality || 'Unknown'}\n\nTranscribed Content:\n${transcriptionResult.transcript}\n\nAnalyze the above video transcript for scams, misinformation, fraud, or suspicious claims.`,
+        message: 'Video processing complete - ready for analysis'
+      };
+    } catch (error) {
+      return {
+        success: false,
+        stage: 'processing_error',
+        error: error.message,
+        fallback: 'Video processing encountered an error'
+      };
     }
   }
 };
 
-// ===== ADVANCED SERVICES FOR ENHANCED FUNCTIONALITY =====
-const advancedServices = {
-  // Enhanced URL reputation and safety checking
-  async checkURLReputation(url) {
+const API_SERVICE = {
+  geminiApiKey: process.env.REACT_APP_GEMINI_API_KEY,
+  geminiEndpoint: 'https://generativelanguage.googleapis.com/v1beta/models/gemini-pro-latest:generateContent',
+
+  buildAnalysisPrompt(content, analysisMode) {
+    const mode = ANALYSIS_MODES[analysisMode];
+    
+    const prompts = {
+      lightning: `You are XIST AI, an expert threat detection system. Analyze this content for immediate threats.
+
+CONTENT: "${content}"
+
+Respond in EXACTLY this JSON format, no additional text:
+{
+  "verdict": "true/false/partial/unverifiable",
+  "threat_level": "CRITICAL/HIGH/MEDIUM/LOW/SAFE",
+  "confidence": 85-98,
+  "summary": "One sentence assessment",
+  "details": "2-3 sentence explanation of threats found",
+  "risks": ["risk1", "risk2", "risk3"],
+  "recommendations": ["action1", "action2"],
+  "sources": ["verification_method1", "verification_method2"]
+}`,
+
+      comprehensive: `You are XIST AI, a comprehensive threat analysis system. Perform balanced analysis.
+
+CONTENT: "${content}"
+
+Analyze for:
+1. Scams & Financial Fraud
+2. Health Misinformation
+3. Political Disinformation
+4. Technical Threats
+5. Social Engineering
+
+Respond in EXACTLY this JSON format, no additional text:
+{
+  "verdict": "true/false/partial/unverifiable",
+  "threat_level": "CRITICAL/HIGH/MEDIUM/LOW/SAFE",
+  "confidence": 85-98,
+  "summary": "Key findings summary",
+  "details": "Detailed threat analysis and reasoning",
+  "threats_identified": ["threat1", "threat2"],
+  "risks": ["specific_risk1", "specific_risk2"],
+  "recommendations": ["protective_action1", "protective_action2"],
+  "sources": ["source1", "source2"]
+}`,
+
+      forensic: `You are XIST AI Forensics. Provide investigation-grade analysis.
+
+CONTENT: "${content}"
+
+Perform forensic analysis including:
+1. Evidence chain analysis
+2. Pattern recognition
+3. Attribution indicators
+4. Legal implications
+
+Respond in EXACTLY this JSON format, no additional text:
+{
+  "verdict": "true/false/partial/unverifiable",
+  "threat_level": "CRITICAL/HIGH/MEDIUM/LOW/SAFE",
+  "confidence": 90-98,
+  "summary": "Executive summary of findings",
+  "details": "Detailed forensic investigation results",
+  "threat_classification": "primary_threat_type",
+  "sophistication_level": "amateur/intermediate/professional",
+  "evidence": ["evidence1", "evidence2", "evidence3"],
+  "risks": ["forensic_risk1", "forensic_risk2"],
+  "recommendations": ["forensic_action1", "forensic_action2"],
+  "sources": ["source1", "source2"]
+}`,
+
+      educational: `You are XIST AI Educational. Teach users to recognize threats.
+
+CONTENT: "${content}"
+
+Provide educational analysis with learning outcomes:
+1. How this type of threat works
+2. Red flags to recognize
+3. Psychology behind the threat
+4. Prevention strategies
+
+Respond in EXACTLY this JSON format, no additional text:
+{
+  "verdict": "true/false/partial/unverifiable",
+  "threat_level": "CRITICAL/HIGH/MEDIUM/LOW/SAFE",
+  "confidence": 85-95,
+  "summary": "Educational summary",
+  "details": "Detailed explanation suitable for learning",
+  "threat_type": "scam/misinformation/fraud/social_engineering",
+  "red_flags": ["flag1", "flag2", "flag3"],
+  "how_it_works": "Explanation of threat mechanism",
+  "risks": ["educational_risk1", "educational_risk2"],
+  "prevention": ["prevention_tip1", "prevention_tip2"],
+  "sources": ["source1", "source2"]
+}`,
+
+      expertdeepdive: `You are XIST AI Expert Analysis. Maximum technical depth.
+
+CONTENT: "${content}"
+
+Technical deep-dive analysis:
+1. Technical indicators & signatures
+2. Infrastructure analysis
+3. Campaign correlation
+4. Threat actor profiling
+
+Respond in EXACTLY this JSON format, no additional text:
+{
+  "verdict": "true/false/partial/unverifiable",
+  "threat_level": "CRITICAL/HIGH/MEDIUM/LOW/SAFE",
+  "confidence": 92-98,
+  "summary": "Technical analysis summary",
+  "details": "Comprehensive technical investigation",
+  "threat_actor_profile": "likely_attacker_profile",
+  "iocs": ["indicator_of_compromise1", "indicator_of_compromise2"],
+  "technical_analysis": "Deep technical breakdown",
+  "risks": ["technical_risk1", "technical_risk2"],
+  "recommendations": ["technical_mitigation1", "technical_mitigation2"],
+  "sources": ["source1", "source2"]
+}`,
+
+      realtime: `You are XIST AI Real-time Monitor. Assess current threat status.
+
+CONTENT: "${content}"
+
+Real-time threat assessment:
+1. Current risk level
+2. Trend analysis
+3. Alert generation
+4. Response recommendations
+
+Respond in EXACTLY this JSON format, no additional text:
+{
+  "verdict": "true/false/partial/unverifiable",
+  "threat_level": "CRITICAL/HIGH/MEDIUM/LOW/SAFE",
+  "confidence": 80-95,
+  "summary": "Real-time status summary",
+  "details": "Current threat assessment",
+  "trend": "escalating/stable/decreasing",
+  "spread_velocity": "slow/medium/fast",
+  "current_risk": "immediate_threat/emerging_threat/monitored/safe",
+  "risks": ["immediate_risk1", "immediate_risk2"],
+  "immediate_actions": ["urgent_action1", "urgent_action2"],
+  "sources": ["realtime_source1", "realtime_source2"]
+}`
+    };
+
+    return prompts[analysisMode] || prompts.comprehensive;
+  },
+
+  async analyze(content, analysisMode) {
     try {
-      const analysis = await analysisService.checkURLReputation(url);
-      
-      // Additional checks for known malicious domains
-      const domain = new URL(url).hostname.toLowerCase();
-      const knownMaliciousDomains = [
-        'malware-site.com',
-        'phishing-example.org',
-        'scam-domain.net'
-        // In production, this would be a comprehensive database
-      ];
-      
-      if (knownMaliciousDomains.includes(domain)) {
-        analysis.riskScore = 1.0;
-        analysis.indicators.push('Domain found in malware database');
-        analysis.category = 'BLACKLISTED';
-      }
-      
-      return analysis;
-    } catch (error) {
-      return { 
-        url, 
-        error: 'URL analysis failed', 
-        riskScore: 0.5,
-        details: error.message 
-      };
-    }
-  },
-
-  // Advanced image analysis with OCR capabilities
-  async analyzeImage(imageFile) {
-    try {
-      return new Promise((resolve) => {
-        const reader = new FileReader();
-        reader.onload = (e) => {
-          const img = new Image();
-          img.onload = () => {
-            const canvas = document.createElement('canvas');
-            const ctx = canvas.getContext('2d');
-            canvas.width = img.width;
-            canvas.height = img.height;
-            ctx.drawImage(img, 0, 0);
-            
-            // Advanced image analysis
-            const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-            const pixels = imageData.data;
-            
-            let totalBrightness = 0;
-            let redChannel = 0;
-            let greenChannel = 0;
-            let blueChannel = 0;
-            
-            for (let i = 0; i < pixels.length; i += 4) {
-              redChannel += pixels[i];
-              greenChannel += pixels[i + 1];
-              blueChannel += pixels[i + 2];
-              totalBrightness += (pixels[i] + pixels[i + 1] + pixels[i + 2]) / 3;
-            }
-            
-            const pixelCount = pixels.length / 4;
-            const avgBrightness = totalBrightness / pixelCount;
-            const avgRed = redChannel / pixelCount;
-            const avgGreen = greenChannel / pixelCount;
-            const avgBlue = blueChannel / pixelCount;
-            
-            // Calculate color variance and other metrics
-            const colorBalance = {
-              red: Math.round((avgRed / 255) * 100),
-              green: Math.round((avgGreen / 255) * 100),
-              blue: Math.round((avgBlue / 255) * 100)
-            };
-            
-            const aspectRatio = img.width / img.height;
-            const isSquare = Math.abs(aspectRatio - 1) < 0.1;
-            const isLandscape = aspectRatio > 1.3;
-            const isPortrait = aspectRatio < 0.7;
-            
-            resolve({
-              dimensions: { width: img.width, height: img.height },
-              brightness: Math.round(avgBrightness),
-              colorBalance: colorBalance,
-              aspectRatio: Math.round(aspectRatio * 100) / 100,
-              orientation: isSquare ? 'square' : isLandscape ? 'landscape' : isPortrait ? 'portrait' : 'standard',
-              fileSize: imageFile.size,
-              fileType: imageFile.type,
-              fileName: imageFile.name,
-              analysis: 'Image successfully processed for content analysis',
-              quality: this.assessImageQuality(avgBrightness, img.width, img.height),
-              readability: this.assessTextReadability(avgBrightness, colorBalance)
-            });
-          };
-          
-          img.onerror = () => {
-            resolve({
-              error: 'Failed to load image',
-              fileName: imageFile.name,
-              fileSize: imageFile.size
-            });
-          };
-          
-          img.src = e.target.result;
-        };
-        
-        reader.onerror = () => {
-          resolve({
-            error: 'Failed to read image file',
-            fileName: imageFile.name
-          });
-        };
-        
-        reader.readAsDataURL(imageFile);
-      });
-    } catch (error) {
-      return { 
-        error: 'Image analysis failed', 
-        details: error.message,
-        fileName: imageFile?.name || 'unknown'
-      };
-    }
-  },
-
-  assessImageQuality(brightness, width, height) {
-    const resolution = width * height;
-    let quality = 'medium';
-    
-    if (resolution > 2000000 && brightness > 50 && brightness < 200) {
-      quality = 'high';
-    } else if (resolution < 100000 || brightness < 30 || brightness > 220) {
-      quality = 'low';
-    }
-    
-    return quality;
-  },
-
-  assessTextReadability(brightness, colorBalance) {
-    const contrast = Math.abs(colorBalance.red - colorBalance.blue) + 
-                     Math.abs(colorBalance.green - colorBalance.blue) + 
-                     Math.abs(colorBalance.red - colorBalance.green);
-    
-    if (contrast > 50 && brightness > 40 && brightness < 200) {
-      return 'good';
-    } else if (contrast < 20 || brightness < 20 || brightness > 235) {
-      return 'poor';
-    }
-    
-    return 'fair';
-  },
-
-  // Enhanced voice recognition with multiple language support
-  async startVoiceRecognition(options = {}) {
-    return new Promise((resolve, reject) => {
-      if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
-        reject(new Error('Speech recognition not supported in this browser'));
-        return;
+      if (!this.geminiApiKey) {
+        throw new Error('Gemini API key not configured');
       }
 
-      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-      const recognition = new SpeechRecognition();
-      
-      // Enhanced configuration
-      recognition.continuous = options.continuous || false;
-      recognition.interimResults = options.interimResults || true;
-      recognition.lang = options.language || 'en-US';
-      recognition.maxAlternatives = options.maxAlternatives || 3;
-      
-      let finalTranscript = '';
-      let interimTranscript = '';
-      
-      recognition.onstart = () => {
-        console.log('[VoiceRecognition] Started listening...');
-      };
+      const prompt = this.buildAnalysisPrompt(content, analysisMode);
+      const mode = ANALYSIS_MODES[analysisMode];
 
-      recognition.onresult = (event) => {
-        interimTranscript = '';
-        
-        for (let i = event.resultIndex; i < event.results.length; i++) {
-          const transcript = event.results[i][0].transcript;
-          
-          if (event.results[i].isFinal) {
-            finalTranscript += transcript + ' ';
-          } else {
-            interimTranscript += transcript;
+      const response = await fetch(`${this.geminiEndpoint}?key=${this.geminiApiKey}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          contents: [{
+            parts: [{
+              text: prompt
+            }]
+          }],
+          generationConfig: {
+            temperature: mode.temperature,
+            topP: 0.9,
+            topK: 40,
+            maxOutputTokens: mode.maxTokens
           }
-        }
-        
-        // Provide interim results if requested
-        if (options.onInterim && interimTranscript) {
-          options.onInterim(interimTranscript);
-        }
-      };
+        })
+      });
 
-      recognition.onend = () => {
-        console.log('[VoiceRecognition] Recognition ended');
-        
-        if (finalTranscript.trim()) {
-          resolve({
-            transcript: finalTranscript.trim(),
-            confidence: 0.85, // Default confidence
-            language: recognition.lang,
-            alternatives: [], // Could be populated with alternative transcriptions
-            duration: Date.now() - startTime
-          });
-        } else {
-          reject(new Error('No speech detected'));
-        }
-      };
+      if (!response.ok) {
+        throw new Error(`Gemini API error: ${response.status}`);
+      }
 
-      recognition.onerror = (event) => {
-        console.error('[VoiceRecognition] Error:', event.error);
-        
-        const errorMessages = {
-          'no-speech': 'No speech detected. Please try again.',
-          'audio-capture': 'Microphone access denied or not available.',
-          'not-allowed': 'Microphone permission denied.',
-          'network': 'Network error occurred during recognition.',
-          'aborted': 'Speech recognition was aborted.',
-          'language-not-supported': `Language ${recognition.lang} is not supported.`
-        };
-        
-        reject(new Error(errorMessages[event.error] || `Speech recognition error: ${event.error}`));
-      };
+      const data = await response.json();
 
-      const startTime = Date.now();
+      if (data.error) {
+        throw new Error(`Gemini API error: ${data.error.code} - ${data.error.message}`);
+      }
+
+      if (!Array.isArray(data.candidates) || !data.candidates.length) {
+        console.error('Gemini returned:', data);
+        throw new Error('Gemini did not return a valid response. See console for full object.');
+      }
+
+      let responseText = "";
+      const parts = data.candidates[0]?.content?.parts;
+      if (Array.isArray(parts) && parts[0]?.text) {
+        responseText = parts[0].text;
+      } else if (data.candidates[0]?.content?.text) {
+        responseText = data.candidates[0].content.text;
+      } else {
+        throw new Error('Gemini did not return valid text in candidates.');
+      }
       
       try {
-        recognition.start();
-        
-        // Set timeout for recognition
-        setTimeout(() => {
-          recognition.stop();
-        }, options.timeout || 30000); // 30 second default timeout
-        
-      } catch (error) {
-        reject(new Error(`Failed to start speech recognition: ${error.message}`));
-      }
-      
-      return recognition;
-    });
-  },
-
-  // Enhanced file processing with multiple format support
-  async processFile(file) {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      
-      reader.onload = (e) => {
-        try {
-          let content = '';
-          
-          if (file.type.startsWith('text/') || file.name.endsWith('.txt')) {
-            content = e.target.result;
-          } else if (file.type === 'application/pdf') {
-            // Basic PDF text extraction (in production, would use a PDF library)
-            content = 'PDF content extraction requires additional libraries. Please convert to text format.';
-          } else if (file.type.includes('word') || file.name.endsWith('.docx') || file.name.endsWith('.doc')) {
-            // Basic Word document handling (in production, would use appropriate libraries)
-            content = 'Word document processing requires additional libraries. Please save as text format.';
-          } else {
-            content = e.target.result;
-          }
-          
-          const wordCount = content.split(/\s+/).filter(word => word.length > 0).length;
-          const charCount = content.length;
-          const lineCount = content.split('\n').length;
-          
-          // Basic content analysis
-          const containsUrls = /https?:\/\/[^\s]+/gi.test(content);
-          const containsEmails = /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/gi.test(content);
-          const containsPhones = /(\+?1?[-.\s]?)?\(?[0-9]{3}\)?[-.\s]?[0-9]{3}[-.\s]?[0-9]{4}/gi.test(content);
-          
-          resolve({
-            content: content,
-            fileName: file.name,
-            fileSize: file.size,
-            fileType: file.type,
-            lastModified: new Date(file.lastModified),
-            wordCount: wordCount,
-            charCount: charCount,
-            lineCount: lineCount,
-            containsUrls: containsUrls,
-            containsEmails: containsEmails,
-            containsPhones: containsPhones,
-            encoding: 'UTF-8', // Assumption for most text files
-            analysis: {
-              readingTime: Math.ceil(wordCount / 200), // Assuming 200 WPM reading speed
-              complexity: wordCount > 1000 ? 'high' : wordCount > 200 ? 'medium' : 'low',
-              dataTypes: [
-                containsUrls && 'URLs',
-                containsEmails && 'Email addresses',
-                containsPhones && 'Phone numbers'
-              ].filter(Boolean)
-            }
-          });
-        } catch (processingError) {
-          reject(new Error(`File processing failed: ${processingError.message}`));
+        const jsonMatch = responseText.match(/\{[\s\S]*\}/);
+        if (!jsonMatch) {
+          throw new Error('No JSON found in response');
         }
-      };
-      
-      reader.onerror = () => {
-        reject(new Error(`Failed to read file: ${file.name}`));
-      };
-      
-      // Choose appropriate reading method based on file type
-      if (file.type.startsWith('text/') || file.name.endsWith('.txt')) {
-        reader.readAsText(file);
-      } else {
-        // For other file types, read as text and handle appropriately
-        reader.readAsText(file);
+        
+        const parsedResponse = JSON.parse(jsonMatch[0]);
+        return {
+          success: true,
+          data: parsedResponse,
+          model: 'gemini-pro-latest',
+          responseTime: Date.now()
+        };
+      } catch (parseError) {
+        throw new Error(`Response parsing failed: ${parseError.message}`);
       }
-    });
-  },
-
-  // Advanced camera capture with quality settings
-  async initializeCamera(constraints = {}) {
-    try {
-      if (!('mediaDevices' in navigator && 'getUserMedia' in navigator.mediaDevices)) {
-        throw new Error('Camera access not supported in this browser');
-      }
-
-      const defaultConstraints = {
-        video: {
-          width: { ideal: 1280 },
-          height: { ideal: 720 },
-          facingMode: 'environment' // Use back camera by default
-        },
-        audio: false
-      };
-
-      const mergedConstraints = { ...defaultConstraints, ...constraints };
-      
-      const stream = await navigator.mediaDevices.getUserMedia(mergedConstraints);
-      
-      console.log('[Camera] Stream initialized successfully');
-      
-      return {
-        stream: stream,
-        videoTracks: stream.getVideoTracks(),
-        settings: stream.getVideoTracks()[0]?.getSettings() || {},
-        capabilities: stream.getVideoTracks()[0]?.getCapabilities() || {}
-      };
-      
     } catch (error) {
-      console.error('[Camera] Initialization failed:', error);
-      
-      const errorMessages = {
-        'NotAllowedError': 'Camera permission denied. Please allow camera access.',
-        'NotFoundError': 'No camera found on this device.',
-        'NotReadableError': 'Camera is already in use by another application.',
-        'OverconstrainedError': 'Camera settings are not supported.',
-        'SecurityError': 'Camera access blocked due to security restrictions.',
-        'AbortError': 'Camera initialization was aborted.'
-      };
-      
-      throw new Error(errorMessages[error.name] || `Camera error: ${error.message}`);
-    }
-  },
-
-  // Capture photo from video stream
-  async capturePhoto(videoElement, options = {}) {
-    try {
-      if (!videoElement || !videoElement.srcObject) {
-        throw new Error('Video stream not available');
-      }
-
-      const canvas = document.createElement('canvas');
-      const ctx = canvas.getContext('2d');
-      
-      canvas.width = options.width || videoElement.videoWidth;
-      canvas.height = options.height || videoElement.videoHeight;
-      
-      ctx.drawImage(videoElement, 0, 0, canvas.width, canvas.height);
-      
-      return new Promise((resolve) => {
-        canvas.toBlob((blob) => {
-          const file = new File([blob], `camera-capture-${Date.now()}.jpg`, {
-            type: 'image/jpeg',
-            lastModified: Date.now()
-          });
-          
-          resolve({
-            file: file,
-            dataURL: canvas.toDataURL('image/jpeg', options.quality || 0.9),
-            dimensions: { width: canvas.width, height: canvas.height },
-            timestamp: new Date().toISOString()
-          });
-        }, 'image/jpeg', options.quality || 0.9);
-      });
-      
-    } catch (error) {
-      throw new Error(`Photo capture failed: ${error.message}`);
+      console.error('[API] Analysis failed:', error);
+      throw error;
     }
   }
 };
 
+const COMMUNITY_SERVICE = {
+  async createPost(analysisResult, userId, username, userVerified = false) {
+    try {
+      if (!analysisResult) {
+        throw new Error('Analysis result required');
+      }
 
-// ===== NOTIFICATION SYSTEM COMPONENT =====
-const NotificationSystem = ({ notifications, onDismiss }) => {
-  return (
-    <div className="fixed top-4 right-4 z-50 space-y-2">
-      <AnimatePresence>
-        {notifications.map((notification) => (
-          <motion.div
-            key={notification.id}
-            initial={{ opacity: 0, x: 100, scale: 0.8 }}
-            animate={{ opacity: 1, x: 0, scale: 1 }}
-            exit={{ opacity: 0, x: 100, scale: 0.8 }}
-            className={`max-w-sm p-4 rounded-lg shadow-lg border ${
-              notification.type === 'success' 
-                ? 'bg-green-50 border-green-200 text-green-800' 
-                : notification.type === 'warning'
-                ? 'bg-yellow-50 border-yellow-200 text-yellow-800'
-                : notification.type === 'error'
-                ? 'bg-red-50 border-red-200 text-red-800'
-                : 'bg-blue-50 border-blue-200 text-blue-800'
-            }`}
-          >
-            <div className="flex items-start">
-              <div className="flex-shrink-0">
-                {notification.type === 'success' && <CheckCircleIcon className="w-5 h-5 text-green-600" />}
-                {notification.type === 'warning' && <ExclamationTriangleIcon className="w-5 h-5 text-yellow-600" />}
-                {notification.type === 'error' && <XCircleIcon className="w-5 h-5 text-red-600" />}
-                {notification.type === 'info' && <InformationCircleIcon className="w-5 h-5 text-blue-600" />}
-              </div>
-              <div className="ml-3 flex-1">
-                <p className="text-sm font-medium">{notification.message}</p>
-                {notification.details && (
-                  <p className="text-xs mt-1 opacity-75">{notification.details}</p>
-                )}
-              </div>
-              <button
-                onClick={() => onDismiss(notification.id)}
-                className="ml-3 flex-shrink-0"
-              >
-                <XMarkIcon className="w-4 h-4 opacity-60 hover:opacity-100" />
-              </button>
-            </div>
-          </motion.div>
-        ))}
-      </AnimatePresence>
-    </div>
-  );
+      const threatLevel = analysisResult.data?.threat_level || 'medium';
+      const postContent = `Analysis Result: ${analysisResult.data?.summary || 'Threat detected'}\n\nVerdict: ${analysisResult.data?.verdict || 'Unknown'}\nConfidence: ${analysisResult.data?.confidence || 0}%\n\n${analysisResult.data?.details || ''}`;
 
+      const { data, error } = await supabase
+        .from('community_posts')
+        .insert([
+          {
+            content: postContent,
+            user_id: userId,
+            username: username,
+            user_verified: userVerified,
+            threat_level: threatLevel,
+            likes: 0,
+            reposts: 0,
+            replies_count: 0,
+            engagement_score: 0,
+            created_at: new Date().toISOString()
+          }
+        ])
+        .select();
+
+      if (error) {
+        throw new Error(`Supabase insert error: ${error.message}`);
+      }
+
+      return {
+        success: true,
+        postId: data[0].id,
+        message: 'Post created successfully',
+        data: data[0]
+      };
+    } catch (error) {
+      console.error('[CommunityService] Post creation failed:', error);
+      throw error;
+    }
+  }
 };
 
-// ===== MAIN VERIFY SECTION COMPONENT =====
-const VerifySection = ({ user, userStats, onUpdateStats, onSectionChange,userAnalysisHistory = [], onNavigateToSection, isMobile, onAnalysisComplete, theme }) => {
-  // ===== CORE STATE MANAGEMENT =====
+export default function VerifySection() {
+  const [selectedMode, setSelectedMode] = useState('comprehensive');
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [inputMethod, setInputMethod] = useState('text');
   const [inputContent, setInputContent] = useState('');
   const [analysisResult, setAnalysisResult] = useState(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
-  const [inputMethod, setInputMethod] = useState('text');
-  const [localAnalysisHistory, setLocalAnalysisHistory] = useState(userAnalysisHistory || []);
-  const [analysisInput, setAnalysisInput] = useState(''); // Added missing state
-
-  
-  // ===== ADVANCED CONFIGURATION STATE =====
-  const [detailLevel, setDetailLevel] = useState('standard');
-  const [analysisMode, setAnalysisMode] = useState('comprehensive');
-  const [analysisContext, setAnalysisContext] = useState('general');
-  const [showVisualization, setShowVisualization] = useState(false);
-  const [realTimeMode, setRealTimeMode] = useState(false);
-  
-  // ===== VOICE AND MEDIA STATE =====
-  const [isListening, setIsListening] = useState(false);
+  const [jobs, setJobs] = useState([]);
+  const [expandedJob, setExpandedJob] = useState(null);
+  const [user, setUser] = useState(null);
+  const [isVoiceInputActive, setIsVoiceInputActive] = useState(false);
   const [voiceTranscript, setVoiceTranscript] = useState('');
-  const [currentRecognition, setCurrentRecognition] = useState(null);
-  const [uploadedFile, setUploadedFile] = useState(null);
+  const [currentlyPlayingTTS, setCurrentlyPlayingTTS] = useState(null);
   const [imagePreview, setImagePreview] = useState(null);
-  const [cameraStream, setCameraStream] = useState(null);
-  const [isCameraActive, setIsCameraActive] = useState(false);
-  
-  // ===== API AND PERFORMANCE STATE =====
-  const [apiHealth, setApiHealth] = useState([]);
-  const [performanceMetrics, setPerformanceMetrics] = useState({
-    averageResponseTime: 0,
-    successRate: 100,
-    totalQueries: 0,
-    lastUpdated: null
-  });
-  
-  // ===== UI AND INTERACTION STATE =====
-  const [expandedSections, setExpandedSections] = useState(new Set(['input', 'results']));
-  const [showSettings, setShowSettings] = useState(false);
-  const [deviceCapabilities, setDeviceCapabilities] = useState({});
-  const [darkMode, setDarkMode] = useState(false);
-  const [notifications, setNotifications] = useState([]);
-  const [showAdvancedOptions, setShowAdvancedOptions] = useState(false);
-  
-  // ===== REFS =====
-  const textareaRef = useRef(null);
+  const [uploadedFile, setUploadedFile] = useState(null);
+  const [showCommunityShare, setShowCommunityShare] = useState(false);
+  const [videoProcessing, setVideoProcessing] = useState(false);
+
   const fileInputRef = useRef(null);
-  const videoRef = useRef(null);
-  const canvasRef = useRef(null);
-  const analysisTimeoutRef = useRef(null);
-  const [historyCount, setHistoryCount] = useState(0);
-  const [isProcessingCommunityAlert, setIsProcessingCommunityAlert] = useState(false);
-  const [successMessage, setSuccessMessage] = useState('');
-  const [communityAlertSent, setCommunityAlertSent] = useState(false);
-  const [showCommunityButton, setShowCommunityButton] = useState(false);
-  const [communityButtonEnabled, setCommunityButtonEnabled] = useState(false);
-  const [historyLoaded, setHistoryLoaded] = useState(false);
+  const videoInputRef = useRef(null);
+  const textareaRef = useRef(null);
+  const recognitionRef = useRef(null);
+  const dropdownRef = useRef(null);
 
-  // ===== INITIALIZATION EFFECTS =====
-  useEffect(() => {
-    detectDeviceCapabilities();
-    loadUserPreferences();
-    initializeRealTimeMode();
-    
-    return () => {
-      cleanup();
-    };
-  }, []);
+    const { user: authUser } = useAuth();
+
 
   useEffect(() => {
-    if (realTimeMode && inputContent.trim().length > 10) {
-      debouncedRealTimeAnalysis();
-    }
-    
-    return () => {
-      if (analysisTimeoutRef.current) {
-        clearTimeout(analysisTimeoutRef.current);
+    console.log('[VerifySection] Auth user from context:', authUser?.id || authUser?.email || 'null');
+    setUser(authUser);
+  }, [authUser]);
+
+
+
+      useEffect(() => {
+  if (!user || !user.id) {
+    setJobs([]);
+    return;
+  }
+  const userId = user.id;
+  const loadHistory = async () => {
+    const { data, error } = await supabase
+      .from("community_posts")
+      .select("*")
+      .eq("user_id", userId)
+      .order("created_at", { ascending: false })
+      .limit(100);
+    if (data) setJobs(data);
+    if (error) console.error("History load error:", error);
+  };
+  loadHistory();
+}, [user]);
+
+
+
+
+
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setIsDropdownOpen(false);
       }
     };
-  }, [inputContent, realTimeMode]);
 
-  useEffect(() => {
-    adjustTextareaHeight();
-  }, [inputContent]);
-
-  useEffect(() => {
-    saveUserPreferences();
-  }, [analysisMode, detailLevel, realTimeMode, darkMode]);
-
-  useEffect(() => {
-    loadHistoryFromStorage();
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  useEffect(() => {
-    if (analysisResult) {
-      checkCommunityButtonVisibility();
+  const announceMode = useCallback((modeName) => {
+    if ('speechSynthesis' in window) {
+      window.speechSynthesis.cancel();
+      const utterance = new SpeechSynthesisUtterance(`${modeName} selected`);
+      utterance.rate = 1;
+      utterance.pitch = 1;
+      window.speechSynthesis.speak(utterance);
     }
-  }, [analysisResult]);
-
-  // ===== UTILITY FUNCTIONS =====
-  const detectDeviceCapabilities = useCallback(() => {
-    const capabilities = {
-      voice: 'webkitSpeechRecognition' in window || 'SpeechRecognition' in window,
-      camera: 'mediaDevices' in navigator && 'getUserMedia' in navigator.mediaDevices,
-      geolocation: 'geolocation' in navigator,
-      clipboard: 'clipboard' in navigator,
-      fullscreen: 'requestFullscreen' in document.documentElement,
-      notifications: 'Notification' in window,
-      serviceWorker: 'serviceWorker' in navigator,
-      webGL: !!document.createElement('canvas').getContext('webgl'),
-      touchScreen: 'ontouchstart' in window || navigator.maxTouchPoints > 0,
-      deviceOrientation: 'DeviceOrientationEvent' in window,
-      webRTC: 'RTCPeerConnection' in window,
-      fileAPI: 'FileReader' in window,
-      dragDrop: 'ondragstart' in document.createElement('div'),
-      localStorage: (() => {
-        try {
-          const test = '__test__';
-          localStorage.setItem(test, test);
-          localStorage.removeItem(test);
-          return true;
-        } catch {
-          return false;
-        }
-      })()
-    };
-    
-    console.log('[DeviceCapabilities] Detected:', capabilities);
-    setDeviceCapabilities(capabilities);
   }, []);
 
-  const loadUserPreferences = useCallback(() => {
-    try {
-      if (!deviceCapabilities.localStorage) return;
-      
-      const preferences = localStorage.getItem('xistai_preferences');
-      if (preferences) {
-        const parsed = JSON.parse(preferences);
-        setAnalysisMode(parsed.analysisMode || 'comprehensive');
-        setDetailLevel(parsed.detailLevel || 'standard');
-        setRealTimeMode(parsed.realTimeMode || false);
-        setDarkMode(parsed.darkMode || false);
-        setAnalysisContext(parsed.analysisContext || 'general');
-        
-        // Load analysis history
-        if (parsed.localAnalysisHistory && Array.isArray(parsed.localAnalysisHistory)) {
-          setLocalAnalysisHistory(parsed.localAnalysisHistory.slice(0, 10)); // Keep last 10
-        }
-        
-        console.log('[Preferences] Loaded user preferences');
-      }
-    } catch (error) {
-      console.error('[Preferences] Failed to load:', error);
-      showNotification('Failed to load user preferences', 'warning');
+  const handleModeSelect = useCallback((modeId) => {
+    const mode = ANALYSIS_MODES[modeId];
+    if (mode) {
+      setSelectedMode(modeId);
+      announceMode(mode.label);
+      setIsDropdownOpen(false);
+      toast.success(`${mode.label} selected`);
     }
-  }, [deviceCapabilities.localStorage]);
+  }, [announceMode]);
 
-  const saveUserPreferences = useCallback(() => {
-    try {
-      if (!deviceCapabilities.localStorage) return;
-      
-      const preferences = {
-        analysisMode,
-        detailLevel,
-        realTimeMode,
-        darkMode,
-        analysisContext,
-        localAnalysisHistory: localAnalysisHistory.slice(0, 10), // Save last 10
-        lastUpdated: new Date().toISOString(),
-        version: '2.0'
-      };
-      
-      localStorage.setItem('xistai_preferences', JSON.stringify(preferences));
-      console.log('[Preferences] Saved successfully');
-    } catch (error) {
-      console.error('[Preferences] Failed to save:', error);
-    }
-  }, [analysisMode, detailLevel, realTimeMode, darkMode, analysisContext, localAnalysisHistory, deviceCapabilities.localStorage]);
-
-  const initializeRealTimeMode = useCallback(() => {
-    if (realTimeMode) {
-      showNotification('Real-time monitoring enabled', 'info', 3000);
-      console.log('[RealTime] Monitoring activated');
-    }
-  }, [realTimeMode]);
-
-  const cleanup = useCallback(() => {
-    if (currentRecognition) {
-      currentRecognition.stop();
-    }
-    if (cameraStream) {
-      cameraStream.getTracks().forEach(track => track.stop());
-    }
-    if (analysisTimeoutRef.current) {
-      clearTimeout(analysisTimeoutRef.current);
-    }
-    console.log('[Cleanup] Resources cleaned up');
-  }, [currentRecognition, cameraStream]);
-
-  const adjustTextareaHeight = useCallback(() => {
-    if (textareaRef.current) {
-      textareaRef.current.style.height = 'auto';
-      const maxHeight = isMobile ? 150 : 200;
-      const newHeight = Math.min(textareaRef.current.scrollHeight, maxHeight);
-      textareaRef.current.style.height = `${newHeight}px`;
-    }
-  }, [isMobile]);
-
-  const showNotification = useCallback((message, type = 'info', duration = 5000, details = null) => {
-    const id = Date.now() + Math.random();
-    const notification = { 
-      id, 
-      message, 
-      type, 
-      details,
-      timestamp: new Date() 
-    };
-    
-    setNotifications(prev => [...prev, notification]);
-    
-    if (duration > 0) {
-      setTimeout(() => {
-        setNotifications(prev => prev.filter(n => n.id !== id));
-      }, duration);
-    }
-    
-    console.log(`[Notification] ${type.toUpperCase()}: ${message}`, details || '');
-  }, []);
-
-  const dismissNotification = useCallback((id) => {
-    setNotifications(prev => prev.filter(n => n.id !== id));
-  }, []);
-
-  // ===== ANALYSIS FUNCTIONS =====
-  const analyzeContent = useCallback(async () => {
-    if (!inputContent.trim()) {
-      showNotification('Please enter content to analyze', 'warning');
+  const initVoiceRecognition = useCallback(() => {
+    if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+      toast.error('Speech recognition not supported');
       return;
     }
 
-    if (inputContent.trim().length < 3) {
-      showNotification('Content too short for meaningful analysis', 'warning');
-      return;
-    }
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    recognitionRef.current = new SpeechRecognition();
+    recognitionRef.current.continuous = false;
+    recognitionRef.current.interimResults = false;
+    recognitionRef.current.language = 'en-US';
+    recognitionRef.current.maxAlternatives = 1;
 
-    setIsAnalyzing(true);
-    const startTime = performance.now();
+    let finalTranscript = '';
 
-    try {
-      showNotification('Starting analysis...', 'info', 2000);
-      
-      const analysisOptions = {
-        context: analysisContext,
-        timestamp: new Date().toISOString(),
-        userAgent: navigator.userAgent,
-        deviceCapabilities,
-        detailLevel,
-        realTimeMode
-      };
+    recognitionRef.current.onstart = () => {
+      setIsVoiceInputActive(true);
+      finalTranscript = '';
+      toast.loading('Listening... Speak now');
+    };
 
-      console.log(`[Analysis] Starting ${analysisMode} analysis with ${inputContent.length} characters`);
-
-      const result = await analysisService.analyzeContent(
-        inputContent,
-        analysisMode,
-        analysisOptions
-      );
-
-      const endTime = performance.now();
-      const responseTime = endTime - startTime;
-
-      // Update performance metrics
-      setPerformanceMetrics(prev => {
-        const newTotal = prev.totalQueries + 1;
-        const newAvgTime = (prev.averageResponseTime * prev.totalQueries + responseTime) / newTotal;
-        const newSuccessRate = ((prev.successRate * prev.totalQueries) + (result.fallback ? 75 : 100)) / newTotal;
+    recognitionRef.current.onresult = (event) => {
+      for (let i = event.resultIndex; i < event.results.length; i++) {
+        const transcript = event.results[i][0].transcript;
         
-        return {
-          totalQueries: newTotal,
-          averageResponseTime: newAvgTime,
-          successRate: newSuccessRate,
-          lastUpdated: new Date().toISOString()
-        };
-      });
-
-            // Enhanced result with additional metadata
-      const enhancedResult = {
-        ...result,
-        responseTime,
-        userAgent: navigator.userAgent,
-        analysisId: `analysis_${Date.now()}`,
-        inputMethod,
-        detailLevel,
-        wordCount: inputContent.trim().split(/\s+/).length,
-        charCount: inputContent.length,
-        processingDetails: {
-          patternMatches: result.patterns?.totalMatches || 0,
-          urlsAnalyzed: result.urls?.totalUrls || 0,
-          threatCategories: Object.keys(result.patterns?.threats || {}),
-          apiModel: result.model,
-          fallbackUsed: result.fallback
+        if (event.results[i].isFinal) {
+          finalTranscript += transcript + ' ';
         }
-      };
-
-      setAnalysisResult(enhancedResult);
-      if (onAnalysisComplete) {
-  onAnalysisComplete(enhancedResult);
-}
-
-      // Add to history with enhanced metadata
-     setLocalAnalysisHistory(prev => [
-        {
-          ...enhancedResult,
-          inputContent: inputContent.substring(0, 100) + (inputContent.length > 100 ? '...' : ''),
-          timestamp: new Date().toISOString(),
-          quickSummary: generateQuickSummary(enhancedResult)
-        },
-        ...prev.slice(0, 9) // Keep last 10 analyses
-      ]);
-
-      // Update user stats with detailed tracking
-      if (onUpdateStats) {
-        onUpdateStats(prev => ({
-          ...prev,
-          totalScans: (prev.totalScans || 0) + 1,
-          threatsDetected: (prev.threatsDetected || 0) + (
-            enhancedResult.threatLevel === 'HIGH' || enhancedResult.threatLevel === 'CRITICAL' ? 1 : 0
-          ),
-          totalProcessingTime: (prev.totalProcessingTime || 0) + responseTime,
-          averageAnalysisTime: ((prev.averageAnalysisTime || 0) * (prev.totalScans || 0) + responseTime) / ((prev.totalScans || 0) + 1),
-          lastAnalysis: new Date().toISOString(),
-          analysisStreak: (prev.analysisStreak || 0) + 1
-        }));
       }
+    };
 
-      // Show completion notification with threat-appropriate styling
-      const threatEmoji = getThreatEmoji(enhancedResult.threatLevel);
-      const notificationType = enhancedResult.threatLevel === 'HIGH' || enhancedResult.threatLevel === 'CRITICAL' 
-        ? 'warning' : 'success';
+    recognitionRef.current.onend = () => {
+      setIsVoiceInputActive(false);
       
-      showNotification(
-        `Analysis complete: ${enhancedResult.threatLevel} threat level detected`,
-        notificationType,
-        5000,
-        `Processed in ${Math.round(responseTime)}ms with ${enhancedResult.confidence}% confidence`
-      );
+      if (finalTranscript.trim()) {
+        setVoiceTranscript(finalTranscript.trim());
+        setInputContent(prev => (prev ? prev + ' ' : '') + finalTranscript.trim());
+        toast.success(`Captured: "${finalTranscript.trim()}"`);
+      } else {
+        toast.error('No speech detected');
+      }
+      
+      toast.dismiss();
+    };
 
-      console.log(`[Analysis] Completed successfully:`, {
-        threatLevel: enhancedResult.threatLevel,
-        confidence: enhancedResult.confidence,
-        responseTime: Math.round(responseTime),
-        patterns: result.patterns?.patternCount || 0,
-        mode: analysisMode
-      });
+    recognitionRef.current.onerror = (event) => {
+      toast.error(`Voice error: ${event.error}`);
+      setIsVoiceInputActive(false);
+      console.error('[Voice] Error:', event.error);
+    };
 
-    } catch (error) {
-      console.error('[Analysis] Failed:', error);
-      
-      showNotification(
-        'Analysis failed. Please try again.',
-        'error',
-        7000,
-        error.message || 'Unknown error occurred'
-      );
-      
-      // Update performance metrics for failure
-      setPerformanceMetrics(prev => ({
-        ...prev,
-        totalQueries: prev.totalQueries + 1,
-        successRate: (prev.successRate * prev.totalQueries) / (prev.totalQueries + 1),
-        lastError: error.message,
-        lastErrorTime: new Date().toISOString()
-      }));
-      
-    } finally {
-      setIsAnalyzing(false);
-      saveUserPreferences();
-    }
-  }, [inputContent, analysisMode, analysisContext, deviceCapabilities, inputMethod, detailLevel, onUpdateStats]);
-
-  const generateQuickSummary = useCallback((result) => {
-    const threatLevel = result.threatLevel || 'UNKNOWN';
-    const confidence = result.confidence || 0;
-    const patternCount = result.patterns?.patternCount || 0;
-    
-    if (threatLevel === 'HIGH' || threatLevel === 'CRITICAL') {
-      return `High risk detected with ${patternCount} threat patterns`;
-    } else if (threatLevel === 'MEDIUM') {
-      return `Moderate risk with ${confidence}% confidence`;
-    } else if (threatLevel === 'LOW') {
-      return `Low risk, likely safe content`;
-    } else {
-      return `Content appears safe, no threats detected`;
-    }
+    recognitionRef.current.start();
   }, []);
-
-  const getThreatEmoji = useCallback((threatLevel) => {
-    switch (threatLevel) {
-      case 'CRITICAL': return '🚨';
-      case 'HIGH': return '⚠️';
-      case 'MEDIUM': return '⚡';
-      case 'LOW': return '✓';
-      case 'SAFE': return '✅';
-      default: return '❓';
-    }
-  }, []);
-
-  const debouncedRealTimeAnalysis = useMemo(
-    () => {
-      return () => {
-        if (analysisTimeoutRef.current) {
-          clearTimeout(analysisTimeoutRef.current);
-        }
-        analysisTimeoutRef.current = setTimeout(() => {
-          if (inputContent.trim().length > 10 && !isAnalyzing) {
-            console.log('[RealTime] Triggering auto-analysis');
-            analyzeContent();
-          }
-        }, 2000);
-      };
-    },
-    [inputContent, isAnalyzing, analyzeContent]
-  );
-
-  // ===== VOICE RECOGNITION FUNCTIONS =====
-  const startVoiceRecognition = useCallback(async () => {
-    if (!deviceCapabilities.voice) {
-      showNotification(
-        'Voice recognition not supported',
-        'warning',
-        5000,
-        'This browser or device does not support speech recognition'
-      );
-      return;
-    }
-
-    try {
-      setIsListening(true);
-      showNotification('Voice recognition started', 'info', 2000);
-      
-      const options = {
-        continuous: false,
-        interimResults: true,
-        language: 'en-US',
-        timeout: 30000,
-        onInterim: (transcript) => {
-          setVoiceTranscript(transcript);
-        }
-      };
-      
-      const recognition = await advancedServices.startVoiceRecognition(options);
-      setCurrentRecognition(recognition);
-      
-      const result = await recognition;
-      
-      setVoiceTranscript(result.transcript);
-      setInputContent(prev => {
-        const newContent = prev.trim() + (prev.trim() ? ' ' : '') + result.transcript;
-        return newContent;
-      });
-      
-      showNotification(
-        `Voice recognized successfully`,
-        'success',
-        3000,
-        `${Math.round(result.confidence * 100)}% confidence, ${result.transcript.length} characters`
-      );
-      
-      console.log('[Voice] Recognition successful:', {
-        transcript: result.transcript,
-        confidence: result.confidence,
-        duration: result.duration
-      });
-      
-    } catch (error) {
-      console.error('[Voice] Recognition failed:', error);
-      showNotification(
-        'Voice recognition failed',
-        'error',
-        5000,
-        error.message
-      );
-    } finally {
-      setIsListening(false);
-      setCurrentRecognition(null);
-    }
-  }, [deviceCapabilities.voice, inputContent]);
 
   const stopVoiceRecognition = useCallback(() => {
-    if (currentRecognition) {
-      currentRecognition.stop();
-      setCurrentRecognition(null);
+    if (recognitionRef.current) {
+      recognitionRef.current.stop();
+      setIsVoiceInputActive(false);
     }
-    setIsListening(false);
-    showNotification('Voice recognition stopped', 'info', 2000);
-  }, [currentRecognition]);
+  }, []);
 
-  // ===== FILE AND MEDIA HANDLING =====
-  const handleFileUpload = useCallback(async (event) => {
-    const file = event.target.files[0];
+  const playTextToSpeech = useCallback((text) => {
+    if (!('speechSynthesis' in window)) {
+      toast.error('Text-to-speech not supported');
+      return;
+    }
+
+    if (currentlyPlayingTTS) {
+      window.speechSynthesis.cancel();
+      setCurrentlyPlayingTTS(null);
+      return;
+    }
+
+    const cleanText = typeof text === 'string' ? text : JSON.stringify(text, null, 2);
+    const utterance = new SpeechSynthesisUtterance(cleanText);
+    utterance.rate = 1;
+    utterance.pitch = 1;
+    utterance.volume = 1;
+
+    utterance.onstart = () => setCurrentlyPlayingTTS(true);
+    utterance.onend = () => setCurrentlyPlayingTTS(null);
+    utterance.onerror = () => {
+      toast.error('TTS error');
+      setCurrentlyPlayingTTS(null);
+    };
+
+    window.speechSynthesis.speak(utterance);
+  }, [currentlyPlayingTTS]);
+
+  const handleFileUpload = useCallback(async (e, type) => {
+    const file = e.target.files?.[0];
     if (!file) return;
 
-    const methodConfig = INPUT_METHODS[inputMethod];
-    
-    // Validate file type
-    if (methodConfig.acceptedTypes && !methodConfig.acceptedTypes.some(type => 
-      file.name.toLowerCase().endsWith(type.replace('.', '')) || 
-      file.type.startsWith(type.replace('.', '').replace('jpg', 'jpeg'))
-    )) {
-      showNotification(
-        'Unsupported file type',
-        'warning',
-        5000,
-        `Accepted formats: ${methodConfig.acceptedTypes.join(', ')}`
-      );
-      return;
-    }
-
-    // Validate file size
-    if (methodConfig.maxSize && file.size > methodConfig.maxSize) {
-      const maxSizeMB = methodConfig.maxSize / (1024 * 1024);
-      showNotification(
-        'File too large',
-        'warning',
-        5000,
-        `Maximum size: ${maxSizeMB}MB. Your file: ${(file.size / (1024 * 1024)).toFixed(1)}MB`
-      );
-      return;
-    }
-
-    setUploadedFile(file);
-    showNotification('Processing file...', 'info', 2000);
-
     try {
-      if (inputMethod === 'image' || file.type.startsWith('image/')) {
-        const imageAnalysis = await advancedServices.analyzeImage(file);
-        
-        if (imageAnalysis.error) {
-          throw new Error(imageAnalysis.error);
-        }
-        
-        setImagePreview(URL.createObjectURL(file));
-        
-        const imageDescription = `Image Analysis Results:
-        
-File: ${file.name} (${Math.round(file.size / 1024)}KB)
-Dimensions: ${imageAnalysis.dimensions?.width || 'Unknown'}x${imageAnalysis.dimensions?.height || 'Unknown'}
-Quality: ${imageAnalysis.quality || 'Unknown'}
-Text Readability: ${imageAnalysis.readability || 'Unknown'}
-Orientation: ${imageAnalysis.orientation || 'Unknown'}
+      if (type === 'image') {
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          setImagePreview(event.target?.result);
+          setInputContent(`[Image: ${file.name}] Please describe what you see or paste any visible text for analysis.`);
+          setUploadedFile(file);
+        };
+        reader.readAsDataURL(file);
+        toast.success('Image loaded');
+      } else if (type === 'video') {
+        setVideoProcessing(true);
+        toast.loading('Processing video...');
 
-Note: Image content requires manual review for potential threats. Please describe what you see in the image or paste any text visible in the image for analysis.`;
+        const result = await VIDEO_ANALYSIS_SERVICE.processVideoForAnalysis(file);
 
-        setInputContent(imageDescription);
-        
-        showNotification(
-          'Image processed successfully',
-          'success',
-          3000,
-          `${imageAnalysis.dimensions?.width}x${imageAnalysis.dimensions?.height} pixels`
-        );
-        
-      } else {
-        const fileContent = await advancedServices.processFile(file);
-        
-        if (fileContent.error) {
-          throw new Error(fileContent.error);
-        }
-        
-        const processedContent = `File Content Analysis:
-
-File: ${fileContent.fileName}
-Size: ${Math.round(fileContent.fileSize / 1024)}KB
-Type: ${fileContent.fileType}
-Words: ${fileContent.wordCount}
-Characters: ${fileContent.charCount}
-Lines: ${fileContent.lineCount}
-
-${fileContent.containsUrls ? 'Contains URLs: Yes' : 'Contains URLs: No'}
-${fileContent.containsEmails ? 'Contains Emails: Yes' : 'Contains Emails: No'}
-${fileContent.containsPhones ? 'Contains Phone Numbers: Yes' : 'Contains Phone Numbers: No'}
-
-Content to analyze:
-${fileContent.content}`;
-
-        setInputContent(processedContent);
-        
-        showNotification(
-          'File processed successfully',
-          'success',
-          3000,
-          `${fileContent.wordCount} words, ${fileContent.charCount} characters`
-        );
-      }
-      
-      console.log('[FileUpload] Processing completed:', {
-        fileName: file.name,
-        fileSize: file.size,
-        fileType: file.type,
-        inputMethod
-      });
-      
-    } catch (error) {
-      console.error('[FileUpload] Processing failed:', error);
-      showNotification(
-        'File processing failed',
-        'error',
-        7000,
-        error.message
-      );
-      
-      // Reset file input
-      if (fileInputRef.current) {
-        fileInputRef.current.value = '';
-      }
-      setUploadedFile(null);
-      setImagePreview(null);
-    }
-  }, [inputMethod]);
-
-  const initializeCamera = useCallback(async () => {
-    if (!deviceCapabilities.camera) {
-      showNotification(
-        'Camera not supported',
-        'warning',
-        5000,
-        'This device does not have camera access or camera is not supported'
-      );
-      return;
-    }
-
-    try {
-      setIsCameraActive(true);
-      showNotification('Initializing camera...', 'info', 2000);
-      
-      const cameraData = await advancedServices.initializeCamera({
-        video: {
-          width: { ideal: isMobile ? 720 : 1280 },
-          height: { ideal: isMobile ? 480 : 720 },
-          facingMode: 'environment'
-        }
-      });
-      
-      setCameraStream(cameraData.stream);
-      
-      if (videoRef.current) {
-        videoRef.current.srcObject = cameraData.stream;
-        await videoRef.current.play();
-      }
-      
-      showNotification(
-        'Camera initialized successfully',
-        'success',
-        3000,
-        `Resolution: ${cameraData.settings.width}x${cameraData.settings.height}`
-      );
-      
-      console.log('[Camera] Initialized:', {
-        settings: cameraData.settings,
-        capabilities: cameraData.capabilities
-      });
-      
-    } catch (error) {
-      console.error('[Camera] Initialization failed:', error);
-      showNotification(
-        'Camera initialization failed',
-        'error',
-        7000,
-        error.message
-      );
-      setIsCameraActive(false);
-    }
-  }, [deviceCapabilities.camera, isMobile]);
-
-  const capturePhoto = useCallback(async () => {
-    if (!videoRef.current || !cameraStream) {
-      showNotification('Camera not ready', 'warning');
-      return;
-    }
-
-    try {
-      showNotification('Capturing photo...', 'info', 1000);
-      
-      const captureResult = await advancedServices.capturePhoto(videoRef.current, {
-        quality: 0.9,
-        width: isMobile ? 720 : 1280,
-        height: isMobile ? 480 : 720
-      });
-      
-      setImagePreview(captureResult.dataURL);
-      setUploadedFile(captureResult.file);
-      
-      // Process the captured image
-      const imageAnalysis = await advancedServices.analyzeImage(captureResult.file);
-      
-      const captureDescription = `Camera Capture Analysis:
-
-Captured: ${new Date(captureResult.timestamp).toLocaleString()}
-Dimensions: ${captureResult.dimensions.width}x${captureResult.dimensions.height}
-File Size: ${Math.round(captureResult.file.size / 1024)}KB
-Quality: ${imageAnalysis.quality || 'Good'}
-
-Note: Please describe what is visible in the captured image or paste any readable text for threat analysis.`;
-
-      setInputContent(captureDescription);
-      
-      showNotification(
-        'Photo captured successfully',
-        'success',
-        3000,
-        `${captureResult.dimensions.width}x${captureResult.dimensions.height} pixels`
-      );
-      
-      // Stop camera after capture
-      stopCamera();
-      
-    } catch (error) {
-      console.error('[Camera] Capture failed:', error);
-      showNotification(
-        'Photo capture failed',
-        'error',
-        5000,
-        error.message
-      );
-    }
-  }, [cameraStream, isMobile]);
-
-  const stopCamera = useCallback(() => {
-    if (cameraStream) {
-      cameraStream.getTracks().forEach(track => {
-        track.stop();
-        console.log(`[Camera] Stopped track: ${track.kind}`);
-      });
-      setCameraStream(null);
-    }
-    
-    if (videoRef.current) {
-      videoRef.current.srcObject = null;
-    }
-    
-    setIsCameraActive(false);
-    showNotification('Camera stopped', 'info', 2000);
-  }, [cameraStream]);
-
-  // ===== INPUT METHOD HANDLERS =====
-  const handleInputMethodChange = useCallback((method) => {
-    setInputMethod(method);
-    setInputContent('');
-    setUploadedFile(null);
-    setImagePreview(null);
-    setVoiceTranscript('');
-    
-    // Stop any active processes
-    if (isListening) {
-      stopVoiceRecognition();
-    }
-    
-    if (isCameraActive) {
-      stopCamera();
-    }
-    
-    showNotification(
-      `Switched to ${INPUT_METHODS[method].label}`,
-      'info',
-      2000,
-      INPUT_METHODS[method].description
-    );
-    
-    console.log(`[InputMethod] Changed to: ${method}`);
-  }, [isListening, isCameraActive, stopVoiceRecognition, stopCamera]);
-
-  const clearInput = useCallback(() => {
-    setInputContent('');
-    setUploadedFile(null);
-    setImagePreview(null);
-    setVoiceTranscript('');
-    setAnalysisResult(null);
-    
-    if (fileInputRef.current) {
-      fileInputRef.current.value = '';
-    }
-    
-    showNotification('Input cleared', 'info', 1500);
-    console.log('[Input] Cleared all content');
-  }, []);
-
-  const pasteFromClipboard = useCallback(async () => {
-    if (!deviceCapabilities.clipboard) {
-      showNotification(
-        'Clipboard access not supported',
-        'warning',
-        3000
-      );
-      return;
-    }
-
-    try {
-      const text = await navigator.clipboard.readText();
-      if (text.trim()) {
-        setInputContent(prev => {
-          const newContent = prev.trim() + (prev.trim() ? '\n\n' : '') + text.trim();
-          return newContent;
-        });
-        
-        showNotification(
-          'Content pasted from clipboard',
-          'success',
-          2000,
-          `${text.length} characters added`
-        );
-        
-        console.log('[Clipboard] Pasted content:', text.length, 'characters');
-      } else {
-        showNotification('Clipboard is empty', 'info', 2000);
-      }
-    } catch (error) {
-      console.error('[Clipboard] Paste failed:', error);
-      showNotification(
-        'Failed to access clipboard',
-        'error',
-        3000,
-        'Permission may be required'
-      );
-    }
-  }, [deviceCapabilities.clipboard]);
-
-  // ===== UI HELPER FUNCTIONS =====
-  const toggleSection = useCallback((section) => {
-    setExpandedSections(prev => {
-      const newSet = new Set(prev);
-      if (newSet.has(section)) {
-        newSet.delete(section);
-      } else {
-        newSet.add(section);
-      }
-      return newSet;
-    });
-  }, []);
-
-  const getThreatColor = useCallback((threatLevel) => {
-    switch (threatLevel?.toUpperCase()) {
-      case 'CRITICAL': return 'text-red-600 bg-red-50 border-red-200';
-      case 'HIGH': return 'text-orange-600 bg-orange-50 border-orange-200';
-      case 'MEDIUM': return 'text-yellow-600 bg-yellow-50 border-yellow-200';
-      case 'LOW': return 'text-blue-600 bg-blue-50 border-blue-200';
-      case 'SAFE': return 'text-green-600 bg-green-50 border-green-200';
-      default: return 'text-gray-600 bg-gray-50 border-gray-200';
-    }
-  }, []);
-
-  const getThreatIcon = useCallback((threatLevel) => {
-    switch (threatLevel?.toUpperCase()) {
-      case 'CRITICAL': return ShieldExclamationIcon;
-      case 'HIGH': return ExclamationTriangleIcon;
-      case 'MEDIUM': return ExclamationCircleIcon;
-      case 'LOW': return InformationCircleIcon;
-      case 'SAFE': return CheckCircleIcon;
-      default: return QuestionMarkCircleIcon;
-    }
-  }, []);
-
-  const formatResponseTime = useCallback((time) => {
-    if (time < 1000) return `${Math.round(time)}ms`;
-    return `${(time / 1000).toFixed(1)}s`;
-  }, []);
-
-  const formatFileSize = useCallback((bytes) => {
-    if (bytes < 1024) return `${bytes} B`;
-    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
-    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
-  }, []);
-
-    // ===== ADD THESE ENHANCED FUNCTIONS AFTER EXISTING FUNCTIONS =====
-  
-  const loadHistoryFromStorage = useCallback(() => {
-    try {
-      const storedHistory = localStorage.getItem('xist_analysis_history');
-      const storedStats = localStorage.getItem('xist_performance_metrics');
-      
-      if (storedHistory) {
-        const parsedHistory = JSON.parse(storedHistory);
-        if (Array.isArray(parsedHistory)) {
-          setLocalAnalysisHistory(parsedHistory);
-          setHistoryCount(parsedHistory.length);
+        if (result.success) {
+          setInputContent(result.analysisInput);
+          setUploadedFile(file);
+          toast.success('Video processed - transcription ready for analysis');
+        } else {
+          toast.error(result.fallback || 'Video processing failed');
+          setInputContent(result.fallback || '');
         }
       }
-      
-      if (storedStats) {
-        const parsedStats = JSON.parse(storedStats);
-        setPerformanceMetrics(prev => ({
-          ...prev,
-          ...parsedStats
-        }));
-      }
-      
-      setHistoryLoaded(true);
-      console.log('[History] Loaded from localStorage successfully');
     } catch (error) {
-      console.error('[History] Failed to load from localStorage:', error);
-      setHistoryLoaded(true);
-    }
-  }, []);
-
-  const saveToHistory = useCallback((analysisData) => {
-    try {
-      const historyItem = {
-        id: Date.now().toString(),
-        timestamp: new Date().toISOString(),
-        input: analysisData.input || analysisInput,
-        result: analysisData.result || analysisResult,
-        mode: analysisData.mode || analysisMode,
-        threatLevel: analysisData.threatLevel || 'UNKNOWN',
-        confidence: analysisData.confidence || 0,
-        patterns: analysisData.patterns || {},
-        communityAlerted: communityAlertSent,
-        responseTime: analysisData.responseTime || 0,
-        userId: generateUserId(),
-        sessionId: getSessionId()
-      };
-
-      const updatedHistory = [historyItem, ...localAnalysisHistory.slice(0, 49)]; // Keep last 50
-      setLocalAnalysisHistory(updatedHistory);
-      setHistoryCount(updatedHistory.length);
-      
-      // Save to localStorage
-      localStorage.setItem('xist_analysis_history', JSON.stringify(updatedHistory));
-      
-      // Update performance metrics
-      const updatedMetrics = {
-        ...performanceMetrics,
-        totalQueries: performanceMetrics.totalQueries + 1,
-        lastUpdate: new Date().toISOString()
-      };
-      
-      setPerformanceMetrics(updatedMetrics);
-      localStorage.setItem('xist_performance_metrics', JSON.stringify(updatedMetrics));
-      
-      console.log('[History] Saved analysis to history and localStorage');
-      return historyItem;
-    } catch (error) {
-      console.error('[History] Failed to save to localStorage:', error);
-      return null;
-    }
-  }, [analysisInput, analysisResult, analysisMode, localAnalysisHistory, communityAlertSent, performanceMetrics]);
-
-  const handleCommunityAlert = useCallback(async () => {
-    if (!analysisResult || isProcessingCommunityAlert) return;
-
-    setIsProcessingCommunityAlert(true);
-    setSuccessMessage('');
-
-    try {
-      const alertData = {
-        content: analysisInput,
-        threatLevel: analysisResult.threatLevel || 'UNKNOWN',
-        analysis: analysisResult.content,
-        confidence: analysisResult.confidence || 0,
-        timestamp: new Date().toISOString(),
-        userId: generateUserId(),
-        sessionId: getSessionId(),
-        analysisMode: analysisMode,
-        patterns: analysisResult.patterns || {}
-      };
-
-      // Simulate community alert API (replace with actual API call)
-      await new Promise(resolve => setTimeout(resolve, 2000));
-
-      // Save to history with community alert flag
-      const historyItem = saveToHistory({
-        ...alertData,
-        communityAlerted: true
-      });
-
-      setCommunityAlertSent(true);
-      setShowCommunityButton(false); // Hide button after successful alert
-      setSuccessMessage('✅ Community Alert Sent Successfully! Your report helps protect others from this threat.');
-
-      // Auto-navigate to Community section after successful alert
-      setTimeout(() => {
-        if (typeof onSectionChange === 'function') {
-          onSectionChange('community');
-        }
-      }, 3000);
-
-      // Show success toast
-      toast.success('Community alert sent successfully!', {
-        duration: 4000,
-        position: 'top-center'
-      });
-
-      console.log('[CommunityAlert] Successfully sent alert for threat:', alertData.threatLevel);
-
-    } catch (error) {
-      console.error('[CommunityAlert] Failed to send alert:', error);
-      setSuccessMessage('❌ Failed to send community alert. Please try again.');
-      
-      toast.error('Failed to send community alert', {
-        duration: 4000,
-        position: 'top-center'
-      });
+      toast.error('File processing failed: ' + error.message);
     } finally {
-      setIsProcessingCommunityAlert(false);
+      setVideoProcessing(false);
     }
-  }, [analysisResult, analysisInput, analysisMode, isProcessingCommunityAlert, saveToHistory, onSectionChange]);
+  }, []);
 
-  const checkCommunityButtonVisibility = useCallback(() => {
-    if (!analysisResult) {
-      setShowCommunityButton(false);
-      setCommunityButtonEnabled(false);
+  const runAnalysis = useCallback(async () => {
+  if (!inputContent.trim()) {
+    toast.error('Please enter content to analyze');
+    return;
+  }
+
+  setIsAnalyzing(true);
+  const newJob = {
+    id: Date.now().toString(),
+    input: inputContent.substring(0, 200),
+    inputMethod: inputMethod,
+    analysisMode: selectedMode,
+    status: 'pending',
+    result: null,
+    error: null,
+    created_at: new Date().toISOString(),
+    user_id: user?.id
+  };
+
+  setJobs(prev => [newJob, ...prev]);
+
+  let apiResult = null;
+
+  // 1. Try Gemini first
+  try {
+    const geminiRes = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-pro:generateContent?key=${process.env.REACT_APP_GEMINI_API_KEY}`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          contents: [{role: "user", parts: [{text: inputContent}]}],
+        }),
+      }
+    );
+
+    if (geminiRes.ok) {
+      apiResult = await geminiRes.json();
+    } else {
+      const err = await geminiRes.json();
+      if (!err?.error || (!err.error.message?.includes("quota") && err.error.code !== 429)) {
+        throw new Error(err?.error?.message || "Unknown Gemini error.");
+      }
+    }
+  } catch (err) {}
+
+  // 2. Fallback to DeepSeek via OpenRouter if Gemini failed or is null
+  if (!apiResult) {
+    try {
+      const dsRes = await fetch(`${process.env.REACT_APP_OPENROUTER_BASE_URL}/chat/completions`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${process.env.REACT_APP_OPENROUTER_API_KEY}`,
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          model: process.env.REACT_APP_DEEPSEEK_MODEL,
+          messages: [{role: "user", content: inputContent}]
+        })
+      });
+      if (!dsRes.ok) throw new Error("DeepSeek error: " + (await dsRes.text()));
+      apiResult = await dsRes.json();
+    } catch (finalErr) {
+      const failedJob = {...newJob, status: "error", error: finalErr?.message || "Analysis failed"};
+      setJobs(prev => prev.map(j => j.id === newJob.id ? failedJob : j));
+      toast.error(finalErr?.message || "Analysis failed");
+      setIsAnalyzing(false);
+      return;
+    }
+  }
+
+  // --- Save result and DB logic ---
+  const updatedJob = {
+    ...newJob,
+    status: 'completed',
+    result: apiResult.data || apiResult // keep like your original
+  };
+  setJobs(prev => prev.map(j => j.id === newJob.id ? updatedJob : j));
+  setAnalysisResult(updatedJob);
+
+  if (user && user.id) {
+    try {
+      const postContent = `[Analysis] ${newJob.input.substring(0, 100)}...
+Mode: ${selectedMode}
+Verdict: ${apiResult.data?.verdict}
+Threat Level: ${apiResult.data?.threat_level}
+
+Full Result:
+${JSON.stringify(apiResult.data, null, 2)}`;
+
+      const { error } = await supabase.from('community_posts').insert([{
+        content: postContent,
+        user_id: user.id, // fixed for your schema!
+        username: user.email || user.user_metadata?.username || 'Anonymous',
+        user_verified: user.user_metadata?.verified || false,
+        threat_level: apiResult.data?.threat_level || 'low',
+        created_at: new Date().toISOString()
+      }]);
+      if (window.updateHomeStats) window.updateHomeStats();
+      if (error) {
+        console.error('[runAnalysis] Database save error:', error);
+        toast.error('Could not save to history: ' + error.message);
+      }
+    } catch (dbErr) {
+      console.error('[runAnalysis] Database error:', dbErr);
+    }
+  } else {
+    console.log('[runAnalysis] No user, not saving job');
+  }
+
+  const threatLevel = apiResult.data?.threat_level || 'medium';
+  if (['CRITICAL', 'HIGH'].includes(threatLevel.toUpperCase())) {
+    setShowCommunityShare(true);
+  }
+
+  toast.success('Analysis complete');
+  setInputContent('');
+  setIsAnalyzing(false);
+}, [inputContent, inputMethod, selectedMode, user]);
+
+
+
+
+    const shareToCommunity = useCallback(async () => {
+    console.log('[shareToCommunity] Attempting share. User:', user?.id, 'Result:', analysisResult?.id);
+    
+    if (!user) {
+      toast.error('Please log in first to share to community');
+      console.error('[shareToCommunity] User not authenticated');
       return;
     }
 
-    const threatLevel = analysisResult.threatLevel?.toUpperCase();
-    const confidence = analysisResult.confidence || 0;
-    const hasHighRiskPatterns = analysisResult.patterns?.criticalThreats > 0;
-    const showCommunityResponse = analysisResult.content?.includes('SHOW_COMMUNITY_BUTTON: YES');
-
-    // Show community button for high-risk threats
-    const shouldShow = (
-      ['CRITICAL', 'HIGH'].includes(threatLevel) ||
-      confidence > 85 ||
-      hasHighRiskPatterns ||
-      showCommunityResponse
-    ) && !communityAlertSent;
-
-    setShowCommunityButton(shouldShow);
-    setCommunityButtonEnabled(shouldShow && !isProcessingCommunityAlert);
-
-    console.log('[CommunityButton] Visibility check:', {
-      threatLevel,
-      confidence,
-      hasHighRiskPatterns,
-      shouldShow,
-      communityAlertSent
-    });
-  }, [analysisResult, communityAlertSent, isProcessingCommunityAlert]);
-
-  const generateUserId = useCallback(() => {
-    let userId = localStorage.getItem('xist_user_id');
-    if (!userId) {
-      userId = 'user_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
-      localStorage.setItem('xist_user_id', userId);
+    if (!analysisResult) {
+      toast.error('No analysis result to share');
+      return;
     }
-    return userId;
-  }, []);
 
-  const getSessionId = useCallback(() => {
-    let sessionId = sessionStorage.getItem('xist_session_id');
-    if (!sessionId) {
-      sessionId = 'session_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
-      sessionStorage.setItem('xist_session_id', sessionId);
-    }
-    return sessionId;
-  }, []);
-
-  const clearHistory = useCallback(() => {
     try {
-      localStorage.removeItem('xist_analysis_history');
-      localStorage.removeItem('xist_performance_metrics');
-      sessionStorage.removeItem('xist_session_id');
+      const username = user.user_metadata?.username || user.email || 'Anonymous';
+      const isVerified = user.user_metadata?.verified || false;
       
-      setLocalAnalysisHistory([]);
-      setHistoryCount(0);
-      setPerformanceMetrics({
-        totalQueries: 0,
-        successfulQueries: 0,
-        averageResponseTime: 0,
-        successRate: 0,
-        lastUpdate: new Date().toISOString()
-      });
+      console.log('[shareToCommunity] Sharing as:', username, 'Verified:', isVerified);
       
-      toast.success('History cleared successfully');
-      console.log('[History] Cleared all stored data');
+      const result = await COMMUNITY_SERVICE.createPost(
+        analysisResult,
+        user.id,
+        username,
+        isVerified
+      );
+
+      if (result.success) {
+        console.log('[shareToCommunity] Success! Post ID:', result.postId);
+        toast.success('Posted to community successfully');
+        setShowCommunityShare(false);
+      } else {
+        throw new Error('Post creation returned false');
+      }
     } catch (error) {
-      console.error('[History] Failed to clear history:', error);
-      toast.error('Failed to clear history');
+      console.error('[shareToCommunity] Failed:', error);
+      toast.error('Failed to share: ' + error.message);
     }
-  }, []);
+  }, [user, analysisResult]);
 
-  // ===== RENDER COMPONENT =====
+
+  const deleteJob = useCallback(async (jobId) => {
+  setJobs(prev => prev.filter(j => j.id !== jobId));
+  if (user) {
+    const { error } = await supabase.from('community_posts').delete().eq('id', jobId);
+    if (error) {
+      console.error('[deleteJob] Error:', error);
+      toast.error('Could not delete');
+    } else {
+      toast.success('Deleted');
+    }
+  }
+}, [user]);
+
+
+  const getThreatColor = (threatLevel) => {
+    const level = threatLevel?.toUpperCase();
+    if (level === 'CRITICAL') return 'text-red-700 bg-red-50 border-red-200 dark:text-red-400 dark:bg-red-900/20 dark:border-red-800';
+    if (level === 'HIGH') return 'text-orange-700 bg-orange-50 border-orange-200 dark:text-orange-400 dark:bg-orange-900/20 dark:border-orange-800';
+    if (level === 'MEDIUM') return 'text-yellow-700 bg-yellow-50 border-yellow-200 dark:text-yellow-400 dark:bg-yellow-900/20 dark:border-yellow-800';
+    if (level === 'LOW') return 'text-blue-700 bg-blue-50 border-blue-200 dark:text-blue-400 dark:bg-blue-900/20 dark:border-blue-800';
+    return 'text-green-700 bg-green-50 border-green-200 dark:text-green-400 dark:bg-green-900/20 dark:border-green-800';
+  };
+
+  const getThreatIcon = (threatLevel) => {
+    const level = threatLevel?.toUpperCase();
+    if (['CRITICAL', 'HIGH'].includes(level)) return ExclamationTriangleIcon;
+    if (level === 'MEDIUM') return InformationCircleIcon;
+    if (['LOW', 'SAFE'].includes(level)) return CheckCircleIcon;
+    return QuestionMarkCircleIcon;
+  };
+
+  const selectedModeData = ANALYSIS_MODES[selectedMode];
+
   return (
-    <div className="min-h-screen">
-      {/* Notification System */}
-      <NotificationSystem 
-        notifications={notifications} 
-        onDismiss={dismissNotification} 
-      />
-      <div className="container mx-auto px-4 py-8 max-w-6xl">
-  {/* Header Section */}
-  <motion.div
-    initial={{ opacity: 0, y: -20 }}
-    animate={{ opacity: 1, y: 0 }}
-    className="text-center mb-8"
-  >
-    <div className="flex items-center justify-center mb-4">
-      <div className="w-16 h-16 rounded-2xl flex items-center justify-center mr-4">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 text-gray-900 dark:text-gray-100 transition-colors">
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        className="max-w-7xl mx-auto px-4 py-8"
+      >
         <motion.div
-          initial={{ scale: 0 }}
-          animate={{ scale: 1 }}
-          transition={{ type: "spring", duration: 0.8 }}
-          className="relative inline-block"
+          initial={{ opacity: 0, x: -20 }}
+          animate={{ opacity: 1, x: 0 }}
         >
-          <ShieldCheckIcon className="w-12 h-12 md:w-16 md:h-16 mx-auto mb-4 text-purple-600" />
+          <h1 className="text-5xl font-black flex items-center gap-4 bg-gradient-to-r from-cyan-500 via-blue-500 to-purple-600 bg-clip-text text-transparent">
+            <ShieldCheckIcon className="w-12 h-12 text-cyan-500" />
+            Xist AI Verify
+          </h1>
+          <p className="text-sm mt-2 text-gray-600 dark:text-gray-400">
+            Advanced AI-powered threat detection and analysis
+          </p>
         </motion.div>
-      </div>
-      <div className="text-left">
-        <div>
-        <h1 className="text-2xl md:text-4xl font-bold mb-4 text-gray-900 dark:text-white">
-          Xist AI Verify
-        </h1>
-</div>
-        <p className="text-gray-600 dark:text-gray-400 text-lg">
-          Advanced Threat Detection & Analysis
-        </p>
-        {/* QR/Share Button - Always visible next to Verify button */}
 
-
-      </div>
-    </div>
-    
-    <div className="flex items-center justify-center space-x-6 text-sm text-gray-600 dark:text-gray-400">
-      <div className="flex items-center space-x-2">
-        <CpuChipIcon className="w-4 h-4" />
-        <span>AI-Powered</span>
-      </div>
-      <div className="flex items-center space-x-2">
-        <ClockIcon className="w-4 h-4" />
-        <span>Real-time Analysis</span>
-      </div>
-      <div className="flex items-center space-x-2">
-        <ShieldCheckIcon className="w-4 h-4" />
-        <span>99.2% Accuracy</span>
-      </div>
-    </div>
-  </motion.div>
-
-
-        {/* Quick Stats */}
-        {performanceMetrics.totalQueries > 0 && (
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-8">
           <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8"
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            className="lg:col-span-1 space-y-6"
           >
-            <div className="bg-white dark:bg-gray-800 rounded-xl p-4 border border-gray-200 dark:border-gray-700 shadow-sm">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                    {performanceMetrics.totalQueries}
-                  </p>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">Total Scans</p>
-                </div>
-                <ChartBarIcon className="w-8 h-8 text-blue-600" />
-              </div>
-            </div>
-
-            <div className="bg-white dark:bg-gray-800 rounded-xl p-4 border border-gray-200 dark:border-gray-700 shadow-sm">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                    {formatResponseTime(performanceMetrics.averageResponseTime)}
-                  </p>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">Avg Response</p>
-                </div>
-                <BoltIcon className="w-8 h-8 text-yellow-500" />
-              </div>
-            </div>
-
-            <div className="bg-white dark:bg-gray-800 rounded-xl p-4 border border-gray-200 dark:border-gray-700 shadow-sm">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                    {Math.round(performanceMetrics.successRate)}%
-                  </p>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">Success Rate</p>
-                </div>
-                <CheckCircleIcon className="w-8 h-8 text-green-600" />
-              </div>
-            </div>
-
-            <div className="bg-white dark:bg-gray-800 rounded-xl p-4 border border-gray-200 dark:border-gray-700 shadow-sm">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                    {localAnalysisHistory.length}
-                  </p>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">History</p>
-                </div>
-                <ClockIcon className="w-8 h-8 text-purple-600" />
-              </div>
-            </div>
-          </motion.div>
-        )}
-
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Main Input Section */}
-          <div className="lg:col-span-2 space-y-6">
-            {/* Input Method Selection */}
             <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="bg-white dark:bg-gray-800 rounded-2xl p-6 border border-gray-200 dark:border-gray-700 shadow-lg"
+              ref={dropdownRef}
+              className="rounded-xl p-6 backdrop-blur-sm bg-white/50 dark:bg-gray-800/50 border border-white dark:border-gray-700 hover:border-gray-200 dark:hover:border-gray-600 shadow-xl transition-all"
             >
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
-                  Input Method
-                </h2>
-                <button
-                  onClick={() => setShowAdvancedOptions(!showAdvancedOptions)}
-                  className="p-2 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
-                >
-                  <Cog6ToothIcon className="w-5 h-5" />
-                </button>
-              </div>
+              <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                <Cog6ToothIcon className="w-5 h-5" />
+                Analysis Mode
+              </h3>
 
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mb-4">
-                {Object.entries(INPUT_METHODS).map(([method, config]) => {
-                  const Icon = config.icon;
-                  const isDisabled = (method === 'voice' && !deviceCapabilities.voice) || 
-                                   (method === 'camera' && !deviceCapabilities.camera);
-                  
-                  return (
-                    <button
-                      key={method}
-                      onClick={() => !isDisabled && handleInputMethodChange(method)}
-                      disabled={isDisabled}
-                      className={`p-4 rounded-xl border-2 transition-all duration-200 ${
-                        inputMethod === method
-                          ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
-                          : isDisabled
-                          ? 'border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 opacity-50 cursor-not-allowed'
-                          : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 bg-white dark:bg-gray-800'
-                      }`}
-                    >
-                      <Icon className={`w-6 h-6 mx-auto mb-2 ${
-                        inputMethod === method 
-                          ? 'text-blue-600' 
-                          : isDisabled 
-                          ? 'text-gray-400' 
-                          : 'text-gray-600 dark:text-gray-400'
-                      }`} />
-                      <p className={`text-sm font-medium ${
-                        inputMethod === method 
-                          ? 'text-blue-900 dark:text-blue-100' 
-                          : isDisabled
-                          ? 'text-gray-400'
-                          : 'text-gray-700 dark:text-gray-300'
-                      }`}>
-                        {config.label}
-                      </p>
-                    </button>
-                  );
-                })}
-              </div>
-            {/* Analysis Mode Selection */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.1 }}
-              className="bg-white dark:bg-gray-800 rounded-2xl p-6 border border-gray-200 dark:border-gray-700 shadow-lg"
-            >
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
-                  Analysis Mode
-                </h2>
-                <div className="flex items-center space-x-2 text-sm text-gray-500 dark:text-gray-400">
-                  <ClockIcon className="w-4 h-4" />
-                  <span>{ANALYSIS_MODES[analysisMode].estimatedTime}</span>
+              <motion.button
+                onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                className={`w-full px-4 py-3 rounded-lg font-medium flex items-center justify-between transition-all border-2 ${
+                  isDropdownOpen
+                    ? `border-cyan-500 bg-cyan-50 dark:bg-cyan-900/30`
+                    : `border-gray-300 dark:border-gray-600 bg-gray-100/50 dark:bg-gray-700/30 hover:bg-gray-100 dark:hover:bg-gray-600/40`
+                }`}
+                whileHover={{ scale: 1.02 }}
+              >
+                <div className="flex items-center gap-2">
+                  {React.createElement(selectedModeData.icon, { className: 'w-5 h-5' })}
+                  <span>{selectedModeData.label}</span>
                 </div>
-              </div>
+                <ChevronDownIcon className={`w-4 h-4 transition-transform ${isDropdownOpen ? 'rotate-180' : ''}`} />
+              </motion.button>
 
-              <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
-                Choose how deep you want the analysis to be. Each mode provides different levels of detail and accuracy.
-              </p>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
-                {Object.entries(ANALYSIS_MODES).map(([mode, config]) => {
-                  const Icon = config.icon;
-                  
-                  return (
-                    <button
-                      key={mode}
-                      onClick={() => setAnalysisMode(mode)}
-                      className={`p-4 rounded-xl border-2 transition-all duration-200 text-left ${
-                        analysisMode === mode
-                          ? `border-${config.color}-500 ${config.bgGradient} dark:${config.darkBgGradient} shadow-lg transform scale-105`
-                          : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 bg-white dark:bg-gray-800 hover:shadow-md'
-                      }`}
-                    >
-                      <div className="flex items-center mb-3">
-                        <div className={`p-2 rounded-lg ${analysisMode === mode ? config.bgGradient : 'bg-gray-100 dark:bg-gray-700'} mr-3`}>
-                          <Icon className={`w-5 h-5 ${
-                            analysisMode === mode 
-                              ? 'text-white' 
-                              : 'text-gray-600 dark:text-gray-400'
-                          }`} />
-                        </div>
-                        <div className="flex-1">
-                          <h3 className={`font-semibold text-sm ${
-                            analysisMode === mode 
-                              ? config.textColor
-                              : 'text-gray-700 dark:text-gray-300'
-                          }`}>
-                            {config.label}
-                          </h3>
-                          <p className="text-xs text-gray-500 dark:text-gray-400">
-                            {config.estimatedTime}
-                          </p>
-                        </div>
-                      </div>
-                      
-                      <p className="text-xs text-gray-600 dark:text-gray-400 mb-2 line-clamp-2">
-                        {config.description}
-                      </p>
-                      
-                      <div className="flex items-center justify-between text-xs">
-                        <span className={`px-2 py-1 rounded-full ${
-                          analysisMode === mode 
-                            ? `bg-${config.color}-100 text-${config.color}-800 dark:bg-${config.color}-900 dark:text-${config.color}-200`
-                            : 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400'
-                        }`}>
-                          {config.accuracy}% Accurate
-                        </span>
-                        <span className="text-gray-500 dark:text-gray-400">
-                          {config.useCase}
-                        </span>
-                      </div>
-                    </button>
-                  );
-                })}
-              </div>
-
-              {/* Current Mode Details */}
-              <div className={`p-4 rounded-xl border-2 ${ANALYSIS_MODES[analysisMode].borderColor} ${ANALYSIS_MODES[analysisMode].bgGradient} dark:${ANALYSIS_MODES[analysisMode].darkBgGradient}`}>
-                <div className="flex items-center mb-2">
-                  {(() => {
-                    const Icon = ANALYSIS_MODES[analysisMode].icon;
-                    return <Icon className={`w-5 h-5 mr-2 ${ANALYSIS_MODES[analysisMode].textColor}`} />;
-                  })()}
-                  <h4 className={`font-semibold ${ANALYSIS_MODES[analysisMode].textColor}`}>
-                    Selected: {ANALYSIS_MODES[analysisMode].label}
-                  </h4>
-                </div>
-                <p className="text-sm text-gray-600 dark:text-gray-300 mb-2">
-                  {ANALYSIS_MODES[analysisMode].description}
-                </p>
-                <div className="grid grid-cols-3 gap-2 text-xs">
-                  <div className="text-center p-2 bg-white/50 dark:bg-gray-800/50 rounded">
-                    <p className="font-medium">Speed</p>
-                    <p className="text-gray-600 dark:text-gray-400">
-                      {ANALYSIS_MODES[analysisMode].estimatedTime}
-                    </p>
-                  </div>
-                  <div className="text-center p-2 bg-white/50 dark:bg-gray-800/50 rounded">
-                    <p className="font-medium">Accuracy</p>
-                    <p className="text-gray-600 dark:text-gray-400">
-                      {ANALYSIS_MODES[analysisMode].accuracy}%
-                    </p>
-                  </div>
-                  <div className="text-center p-2 bg-white/50 dark:bg-gray-800/50 rounded">
-                    <p className="font-medium">Detail</p>
-                    <p className="text-gray-600 dark:text-gray-400">
-                      {ANALYSIS_MODES[analysisMode].priority}
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </motion.div>
-
-              {/* Advanced Options */}
               <AnimatePresence>
-                {showAdvancedOptions && (
+                {isDropdownOpen && (
                   <motion.div
-                    initial={{ opacity: 0, height: 0 }}
-                    animate={{ opacity: 1, height: 'auto' }}
-                    exit={{ opacity: 0, height: 0 }}
-                    className="border-t border-gray-200 dark:border-gray-700 pt-4 mt-4 space-y-4"
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                    className="mt-3 rounded-lg border bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 overflow-hidden"
                   >
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    
-
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                          Detail Level
-                        </label>
-                        <select
-                          value={detailLevel}
-                          onChange={(e) => setDetailLevel(e.target.value)}
-                          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                        >
-                          {Object.entries(DETAIL_LEVELS).map(([level, config]) => (
-                            <option key={level} value={level}>
-                              {config.label}
-                            </option>
-                          ))}
-                        </select>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center space-x-3">
-                        <input
-                          type="checkbox"
-                          id="realTimeMode"
-                          checked={realTimeMode}
-                          onChange={(e) => setRealTimeMode(e.target.checked)}
-                          className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
-                        />
-                        <label htmlFor="realTimeMode" className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                          Real-time Analysis
-                        </label>
-                      </div>
-
-                      
-                    </div>
+                    {Object.entries(ANALYSIS_MODES).map(([key, mode]) => (
+                      <motion.button
+                        key={key}
+                        onClick={() => handleModeSelect(key)}
+                        className={`w-full px-4 py-3 text-left transition-all border-b dark:border-gray-700 last:border-b-0 flex items-center justify-between group ${
+                          selectedMode === key
+                            ? `${mode.bgColor} ${mode.darkBgColor}`
+                            : 'hover:bg-gray-50 dark:hover:bg-gray-700/50'
+                        }`}
+                        whileHover={{ x: 4 }}
+                      >
+                        <div className="flex items-center gap-2">
+                          {React.createElement(mode.icon, { className: 'w-4 h-4' })}
+                          <div>
+                            <p className="font-medium text-sm">{mode.label}</p>
+                            <p className="text-xs text-gray-600 dark:text-gray-400">
+                              {mode.estimatedTime}
+                            </p>
+                          </div>
+                        </div>
+                        {selectedMode === key && <CheckIcon className="w-4 h-4 text-green-500" />}
+                      </motion.button>
+                    ))}
                   </motion.div>
                 )}
               </AnimatePresence>
             </motion.div>
 
-            {/* Input Area */}
             <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.1 }}
-              className="bg-white dark:bg-gray-800 rounded-2xl p-6 border border-gray-200 dark:border-gray-700 shadow-lg"
+              className="rounded-xl p-6 backdrop-blur-sm bg-white/50 dark:bg-gray-800/50 border border-white dark:border-gray-700 shadow-xl"
             >
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
-                  {INPUT_METHODS[inputMethod].label}
-                </h2>
-                <div className="flex items-center space-x-2">
-                  {deviceCapabilities.clipboard && (
-                    <button
-                      onClick={pasteFromClipboard}
-                      className="p-2 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
-                      title="Paste from clipboard"
-                    >
-                      <ClipboardIcon className="w-4 h-4" />
-                    </button>
-                  )}
-                  <button
-                    onClick={clearInput}
-                    className="p-2 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
-                    title="Clear input"
+              <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                <DocumentTextIcon className="w-5 h-5" />
+                Input Method
+              </h3>
+              <div className="grid grid-cols-2 gap-2">
+                {Object.entries(INPUT_METHODS).map(([key, method]) => (
+                  <motion.button
+                    key={key}
+                    onClick={() => {
+                      setInputMethod(key);
+                      setInputContent('');
+                      setImagePreview(null);
+                      setVoiceTranscript('');
+                    }}
+                    className={`p-3 rounded-lg transition-all text-center font-medium text-sm ${
+                      inputMethod === key
+                        ? 'bg-gradient-to-r from-cyan-500 to-blue-600 text-white shadow-lg'
+                        : 'bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300'
+                    }`}
+                    whileHover={{ scale: 1.05 }}
                   >
-                    <XMarkIcon className="w-4 h-4" />
-                  </button>
-                </div>
+                    {React.createElement(method.icon, { className: 'w-5 h-5 mx-auto mb-1' })}
+                    <p>{method.label}</p>
+                  </motion.button>
+                ))}
               </div>
+            </motion.div>
+          </motion.div>
 
-              <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
-                {INPUT_METHODS[inputMethod].description}
-              </p>
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="lg:col-span-2 space-y-6"
+          >
+            <motion.div
+              className="rounded-xl p-6 backdrop-blur-sm bg-white/50 dark:bg-gray-800/50 border border-white dark:border-gray-700 shadow-xl"
+            >
+              <h3 className="text-lg font-semibold mb-4">{INPUT_METHODS[inputMethod].label}</h3>
 
-              {/* Text Input */}
-              {inputMethod === 'text' && (
-                <div className="space-y-4">
-                  <textarea
-                    ref={textareaRef}
-                    value={inputContent}
-                    onChange={(e) => {
-  setInputContent(e.target.value);
-  setAnalysisInput(e.target.value); // ✅ Now properly synced
-}}
-                    placeholder={INPUT_METHODS[inputMethod].placeholder}
-                    className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none transition-all"
-                    rows={4}
-                    maxLength={INPUT_METHODS[inputMethod].maxLength}
-                  />
-                  <div className="flex items-center justify-between text-sm text-gray-500 dark:text-gray-400">
-                    <span>
-                      {inputContent.length} / {INPUT_METHODS[inputMethod].maxLength} characters
-                    </span>
-                    <span>
-                      {inputContent.trim().split(/\s+/).filter(word => word.length > 0).length} words
-                    </span>
-                  </div>
-                </div>
+              {(inputMethod === 'text' || inputMethod === 'url') && (
+                <textarea
+                  ref={textareaRef}
+                  value={inputContent}
+                  onChange={(e) => setInputContent(e.target.value)}
+                  placeholder={INPUT_METHODS[inputMethod].placeholder}
+                  className="w-full px-4 py-3 rounded-lg border outline-none resize-none transition-all bg-white dark:bg-gray-900/50 border-gray-300 dark:border-gray-700 text-gray-900 dark:text-gray-100 focus:border-cyan-500 dark:focus:border-cyan-400 focus:ring-2 focus:ring-cyan-500/20"
+                  rows={6}
+                  maxLength={10000}
+                />
               )}
 
-              {/* URL Input */}
-              {inputMethod === 'url' && (
-                <div className="space-y-4">
-                  <input
-                    type="url"
-                    value={inputContent}
-                    onChange={(e) => {
-  setInputContent(e.target.value);
-  setAnalysisInput(e.target.value); // ✅ Now properly synced
-}}
-                    placeholder={INPUT_METHODS[inputMethod].placeholder}
-                    className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    maxLength={INPUT_METHODS[inputMethod].maxLength}
-                  />
-                  <div className="text-sm text-gray-500 dark:text-gray-400">
-                    Enter a complete URL starting with http:// or https://
-                  </div>
-                </div>
-              )}
-
-              {/* File Upload */}
-              {inputMethod === 'upload' && (
-                <div className="space-y-4">
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    onChange={handleFileUpload}
-                    accept={INPUT_METHODS[inputMethod].acceptedTypes?.join(',')}
-                    className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
-                  />
-                  <div className="text-sm text-gray-500 dark:text-gray-400">
-                    Supported formats: {INPUT_METHODS[inputMethod].acceptedTypes?.join(', ')}
-                    <br />
-                    Maximum size: {INPUT_METHODS[inputMethod].maxSize ? formatFileSize(INPUT_METHODS[inputMethod].maxSize) : 'No limit'}
-                  </div>
-                  {uploadedFile && (
-                    <div className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
-                      <div className="flex items-center space-x-3">
-                        <DocumentIcon className="w-5 h-5 text-blue-600" />
-                        <div className="flex-1">
-                          <p className="text-sm font-medium text-blue-900 dark:text-blue-100">
-                            {uploadedFile.name}
-                          </p>
-                          <p className="text-xs text-blue-600 dark:text-blue-400">
-                            {formatFileSize(uploadedFile.size)} • {uploadedFile.type}
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {/* Voice Input */}
-              {inputMethod === 'voice' && (
-                <div className="space-y-4">
-                  <div className="text-center">
-                    <button
-                      onClick={isListening ? stopVoiceRecognition : startVoiceRecognition}
-                      disabled={!deviceCapabilities.voice}
-                      className={`p-8 rounded-full transition-all duration-300 ${
-                        isListening
-                          ? 'bg-red-500 hover:bg-red-600 text-white animate-pulse'
-                          : 'bg-blue-500 hover:bg-blue-600 text-white'
-                      }`}
-                    >
-                      {isListening ? (
-                        <StopIcon className="w-12 h-12" />
-                      ) : (
-                        <MicrophoneIcon className="w-12 h-12" />
-                      )}
-                    </button>
-                    <p className="mt-4 text-sm text-gray-600 dark:text-gray-400">
-                      {isListening ? 'Listening... Click to stop' : 'Click to start voice recognition'}
-                    </p>
-                  </div>
-                  
-                  {voiceTranscript && (
-                    <div className="p-4 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-800">
-                      <p className="text-sm font-medium text-green-900 dark:text-green-100 mb-2">
-                        Voice Transcript:
-                      </p>
-                      <p className="text-sm text-green-800 dark:text-green-200">
-                        {voiceTranscript}
-                      </p>
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {/* Image Analysis */}
               {inputMethod === 'image' && (
-                <div className="space-y-4">
+                <>
                   <input
                     ref={fileInputRef}
                     type="file"
-                    onChange={handleFileUpload}
-                    accept={INPUT_METHODS[inputMethod].acceptedTypes?.join(',')}
-                    className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-purple-50 file:text-purple-700 hover:file:bg-purple-100"
+                    accept="image/*"
+                    onChange={(e) => handleFileUpload(e, 'image')}
+                    className="hidden"
                   />
+                  <button
+                    onClick={() => fileInputRef.current?.click()}
+                    className="w-full p-8 border-2 border-dashed rounded-lg transition-all text-center border-cyan-400 dark:border-cyan-500/50 hover:border-cyan-500 dark:hover:border-cyan-500 hover:bg-cyan-50 dark:hover:bg-cyan-900/20"
+                  >
+                    <PhotoIcon className="w-10 h-10 mx-auto mb-2 text-cyan-500" />
+                    <p className="font-medium">Click to upload image</p>
+                  </button>
                   {imagePreview && (
-                    <div className="relative">
-                      <img
-                        src={imagePreview}
-                        alt="Preview"
-                        className="w-full max-h-64 object-contain rounded-lg border border-gray-200 dark:border-gray-700"
-                      />
+                    <div className="mt-4 relative">
+                      <img src={imagePreview} alt="Preview" className="w-full max-h-64 object-contain rounded-lg" />
                       <button
                         onClick={() => {
                           setImagePreview(null);
                           setUploadedFile(null);
-                          if (fileInputRef.current) fileInputRef.current.value = '';
                         }}
-                        className="absolute top-2 right-2 p-1 bg-red-500 text-white rounded-full hover:bg-red-600 transition-colors"
+                        className="absolute top-2 right-2 p-1 bg-red-500 text-white rounded-full hover:bg-red-600"
                       >
                         <XMarkIcon className="w-4 h-4" />
                       </button>
                     </div>
                   )}
-                </div>
+                </>
               )}
 
-              {/* Camera Capture */}
-              {inputMethod === 'camera' && (
-                <div className="space-y-4">
-                  {!isCameraActive ? (
-                    <div className="text-center">
-                      <button
-                        onClick={initializeCamera}
-                        disabled={!deviceCapabilities.camera}
-                        className="px-6 py-3 bg-green-500 hover:bg-green-600 text-white rounded-xl font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                      >
-                        <div className="flex items-center space-x-2">
-                          <CameraIcon className="w-5 h-5" />
-                          <span>Start Camera</span>
-                        </div>
-                      </button>
-                    </div>
-                  ) : (
-                    <div className="space-y-4">
-                      <div className="relative bg-black rounded-lg overflow-hidden">
-                        <video
-                          ref={videoRef}
-                          autoPlay
-                          playsInline
-                          muted
-                          className="w-full h-64 object-cover"
-                        />
-                        <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex space-x-4">
-                          <button
-                            onClick={capturePhoto}
-                            className="p-4 bg-white text-gray-900 rounded-full hover:bg-gray-100 transition-colors shadow-lg"
-                          >
-                            <CameraIcon className="w-6 h-6" />
-                          </button>
-                          <button
-                            onClick={stopCamera}
-                            className="p-4 bg-red-500 text-white rounded-full hover:bg-red-600 transition-colors shadow-lg"
-                          >
-                            <XMarkIcon className="w-6 h-6" />
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  )}
+              {inputMethod === 'video' && (
+                <>
+                  <input
+                    ref={videoInputRef}
+                    type="file"
+                    accept="video/*"
+                    onChange={(e) => handleFileUpload(e, 'video')}
+                    className="hidden"
+                    disabled={videoProcessing}
+                  />
+                  <button
+                    onClick={() => videoInputRef.current?.click()}
+                    disabled={videoProcessing}
+                    className={`w-full p-8 border-2 border-dashed rounded-lg transition-all text-center ${
+                      videoProcessing
+                        ? 'opacity-50 cursor-not-allowed'
+                        : 'border-cyan-400 dark:border-cyan-500/50 hover:border-cyan-500 dark:hover:border-cyan-500 hover:bg-cyan-50 dark:hover:bg-cyan-900/20'
+                    }`}
+                  >
+                    <VideoCameraIcon className="w-10 h-10 mx-auto mb-2 text-cyan-500" />
+                    <p className="font-medium">{videoProcessing ? 'Processing video...' : 'Click to upload video'}</p>
+                  </button>
+                </>
+              )}
+
+              {inputMethod === 'voice' && (
+                <div className="text-center space-y-4">
+                  <motion.button
+                    onClick={isVoiceInputActive ? stopVoiceRecognition : initVoiceRecognition}
+                    className={`p-6 rounded-full transition-all mx-auto block ${
+                      isVoiceInputActive
+                        ? 'bg-red-500 hover:bg-red-600 text-white animate-pulse'
+                        : 'bg-blue-500 hover:bg-blue-600 text-white'
+                    }`}
+                    whileHover={{ scale: 1.05 }}
+                  >
+                    {isVoiceInputActive ? (
+                      <StopIcon className="w-8 h-8" />
+                    ) : (
+                      <MicrophoneIcon className="w-8 h-8" />
+                    )}
+                  </motion.button>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">{isVoiceInputActive ? 'Listening... Click to stop' : 'Click to start voice recognition'}</p>
                   
-                  {imagePreview && (
-                    <div className="relative">
-                      <img
-                        src={imagePreview}
-                        alt="Captured"
-                        className="w-full max-h-64 object-contain rounded-lg border border-gray-200 dark:border-gray-700"
-                      />
+                  {voiceTranscript && (
+                    <div className="p-4 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-800">
+                      <p className="text-sm font-medium text-green-900 dark:text-green-100 mb-2">Voice Transcript:</p>
+                      <p className="text-sm text-green-800 dark:text-green-200">{voiceTranscript}</p>
                     </div>
                   )}
                 </div>
               )}
 
-              {/* Analysis Button */}
-              <div className="mt-6">
-                <button
-                  onClick={analyzeContent}
-                  disabled={!inputContent.trim() || isAnalyzing}
-                  className={`w-full py-4 rounded-xl font-semibold text-white transition-all duration-300 ${
-                    isAnalyzing
-                      ? 'bg-gray-400 cursor-not-allowed'
-                      : inputContent.trim()
-                      ? 'bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 shadow-lg hover:shadow-xl'
-                      : 'bg-gray-300 cursor-not-allowed'
-                  }`}
-                >
-                  {isAnalyzing ? (
-                    <div className="flex items-center justify-center space-x-2">
-                      <ArrowPathIcon className="w-5 h-5 animate-spin" />
-                      <span>Analyzing... ({ANALYSIS_MODES[analysisMode].estimatedTime})</span>
-                    </div>
-                  ) : (
-                    <div className="flex items-center justify-center space-x-2">
-                      <SparklesIcon className="w-5 h-5" />
-                      <span>
-                        Start {ANALYSIS_MODES[analysisMode].label}
-                      </span>
-                    </div>
-                  )}
-                </button>
+              <div className="mt-4 text-sm text-gray-500 dark:text-gray-400">
+                {inputContent.length} / 10000 characters
               </div>
             </motion.div>
 
-            {/* Analysis Results */}
-            {analysisResult && (
+            <motion.button
+              onClick={runAnalysis}
+              disabled={!inputContent.trim() || isAnalyzing || videoProcessing}
+              className={`w-full py-4 px-6 rounded-xl font-bold text-white flex items-center justify-center gap-2 transition-all ${
+                isAnalyzing || !inputContent.trim() || videoProcessing
+                  ? 'bg-gray-400 cursor-not-allowed'
+                  : 'bg-gradient-to-r from-cyan-500 to-blue-600 hover:shadow-xl hover:shadow-blue-500/50'
+              }`}
+              whileHover={!isAnalyzing && inputContent.trim() && !videoProcessing ? { scale: 1.05 } : {}}
+              whileTap={!isAnalyzing && inputContent.trim() && !videoProcessing ? { scale: 0.95 } : {}}
+            >
+              {isAnalyzing ? (
+                <>
+                  <ArrowPathIcon className="w-5 h-5 animate-spin" />
+                  Analyzing... {selectedModeData.estimatedTime}
+                </>
+              ) : (
+                <>
+                  <SparklesIcon className="w-5 h-5" />
+                  Analyze with {selectedModeData.label}
+                </>
+              )}
+            </motion.button>
+
+            {analysisResult && analysisResult.status === 'completed' && (
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.2 }}
-                className="bg-white dark:bg-gray-800 rounded-2xl p-6 border border-gray-200 dark:border-gray-700 shadow-lg"
+                className="rounded-xl p-6 backdrop-blur-sm bg-white/50 dark:bg-gray-800/50 border border-white dark:border-gray-700 shadow-xl space-y-6"
               >
-                <div className="flex items-center justify-between mb-6">
-                  <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
-                    Analysis Results
-                  </h2>
-                  <div className="flex items-center space-x-2">
-                    <button
-                      onClick={() => setShowVisualization(!showVisualization)}
-                      className="p-2 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
-                      title="Toggle visualization"
-                    >
-                      <ChartBarIcon className="w-4 h-4" />
-                    </button>
-                    <button
-                      onClick={() => navigator.clipboard?.writeText(analysisResult.content)}
-                      className="p-2 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
-                      title="Copy results"
-                    >
-                      <DocumentDuplicateIcon className="w-4 h-4" />
-                    </button>
+                <div className={`rounded-lg p-6 border-2 ${getThreatColor(analysisResult.result?.threat_level)}`}>
+                  <div className="flex items-start gap-4">
+                    {React.createElement(getThreatIcon(analysisResult.result?.threat_level), { className: 'w-8 h-8 flex-shrink-0 mt-1' })}
+                    <div className="flex-1">
+                      <h3 className="text-xl font-bold mb-2">
+                        {analysisResult.result?.threat_level || 'Unknown'} - Threat Level
+                      </h3>
+                      <p className="text-sm font-semibold mb-2">Verdict: {analysisResult.result?.verdict || 'Unknown'}</p>
+                      <p className="mb-3">{analysisResult.result?.summary}</p>
+                      <p className="text-sm opacity-90">{analysisResult.result?.details}</p>
+                    </div>
                   </div>
                 </div>
 
-                {/* Threat Level Badge */}
-                <div className="mb-6">
-                  <div className={`inline-flex items-center px-4 py-2 rounded-full border ${getThreatColor(analysisResult.threatLevel)}`}>
-                    {(() => {
-                      const ThreatIcon = getThreatIcon(analysisResult.threatLevel);
-                      return <ThreatIcon className="w-5 h-5 mr-2" />;
-                    })()}
-                    <span className="font-semibold">
-                      {analysisResult.threatLevel} THREAT LEVEL
-                    </span>
-                    <span className="ml-2 text-sm opacity-75">
-                      ({analysisResult.confidence}% confidence)
-                    </span>
-                  </div>
+                <div className="p-4 rounded-lg text-center bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800">
+                  <p className="text-sm font-semibold text-blue-700 dark:text-blue-300">Confidence Score</p>
+                  <p className="text-3xl font-bold text-cyan-500">{analysisResult.result?.confidence}%</p>
                 </div>
 
-                {/* Analysis Content */}
-                <div className="prose prose-sm max-w-none dark:prose-invert mb-6">
-                  <div className="whitespace-pre-wrap text-gray-800 dark:text-gray-200 leading-relaxed">
-                    {analysisResult.content}
+                {analysisResult.result?.risks && analysisResult.result.risks.length > 0 && (
+                  <div>
+                    <h4 className="font-semibold mb-3 flex items-center gap-2">
+                      <ExclamationTriangleIcon className="w-5 h-5 text-orange-500" />
+                      Identified Risks
+                    </h4>
+                    <ul className="space-y-2">
+                      {analysisResult.result.risks.map((risk, i) => (
+                        <li key={i} className="flex items-start gap-2 text-sm">
+                          <span className="text-orange-500 mt-1">•</span>
+                          <span>{risk}</span>
+                        </li>
+                      ))}
+                    </ul>
                   </div>
-                </div>
+                )}
 
-                {/* Metadata */}
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-4 border-t border-gray-200 dark:border-gray-700">
-                  <div className="text-center">
-                    <p className="text-2xl font-bold text-blue-600">
-                      {formatResponseTime(analysisResult.responseTime)}
-                    </p>
-                    <p className="text-xs text-gray-500 dark:text-gray-400">Response Time</p>
+                {analysisResult.result?.recommendations && analysisResult.result.recommendations.length > 0 && (
+                  <div>
+                    <h4 className="font-semibold mb-3 flex items-center gap-2">
+                      <LightBulbIcon className="w-5 h-5 text-yellow-500" />
+                      Recommendations
+                    </h4>
+                    <ul className="space-y-2">
+                      {analysisResult.result.recommendations.map((rec, i) => (
+                        <li key={i} className="flex items-start gap-2 text-sm">
+                          <CheckIcon className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" />
+                          <span>{rec}</span>
+                        </li>
+                      ))}
+                    </ul>
                   </div>
-                  <div className="text-center">
-                    <p className="text-2xl font-bold text-green-600">
-                      {analysisResult.tokensUsed || 0}
-                    </p>
-                    <p className="text-xs text-gray-500 dark:text-gray-400">Tokens Used</p>
-                  </div>
-                  <div className="text-center">
-                    <p className="text-2xl font-bold text-purple-600">
-                      {analysisResult.patterns?.patternCount || 0}
-                    </p>
-                    <p className="text-xs text-gray-500 dark:text-gray-400">Patterns</p>
-                  </div>
-                  <div className="text-center">
-                    <p className="text-2xl font-bold text-orange-600">
-                      {analysisResult.analysisMode.toUpperCase()}
-                    </p>
-                    <p className="text-xs text-gray-500 dark:text-gray-400">Mode</p>
-                  </div>
-                </div>
+                )}
 
-                {/* Detailed Analysis */}
-                {showVisualization && analysisResult.patterns && (
-                  <motion.div
-                    initial={{ opacity: 0, height: 0 }}
-                    animate={{ opacity: 1, height: 'auto' }}
-                    exit={{ opacity: 0, height: 0 }}
-                    className="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700"
+                <div className="flex gap-3">
+                  <motion.button
+                    onClick={() => playTextToSpeech(analysisResult.result?.details)}
+                    className="flex-1 py-2 px-4 rounded-lg font-medium bg-purple-500 hover:bg-purple-600 text-white transition-all flex items-center justify-center gap-2"
+                    whileHover={{ scale: 1.05 }}
                   >
-                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-                      Pattern Analysis
-                    </h3>
-                    
-                    {Object.keys(analysisResult.patterns.threats).length > 0 ? (
-                      <div className="space-y-3">
-                        {Object.entries(analysisResult.patterns.threats).map(([threatType, data]) => (
-  <div key={threatType} className="p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                    <SpeakerWaveIcon className="w-4 h-4" />
+                    Listen
+                  </motion.button>
+                  <motion.button
+                    onClick={() => deleteJob(analysisResult.id)}
+                    className="flex-1 py-2 px-4 rounded-lg font-medium bg-red-500 hover:bg-red-600 text-white transition-all flex items-center justify-center gap-2"
+                    whileHover={{ scale: 1.05 }}
+                  >
+                    <TrashIcon className="w-4 h-4" />
+                    Delete
+                  </motion.button>
+                </div>
 
-                            <div className="flex items-center justify-between mb-2">
-                              <h4 className="font-medium text-gray-900 dark:text-white capitalize">
-                                {threatType.replace(/([A-Z])/g, ' $1').trim()}
-                              </h4>
-                              <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                                data.severity === 'CRITICAL' ? 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200' :
-                                data.severity === 'HIGH' ? 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200' :
-                                data.severity === 'MEDIUM' ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200' :
-                                'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200'
-                              }`}>
-                                {data.severity}
-                              </span>
-                            </div>
-                            <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
-                              {data.description}
-                            </p>
-                            <div className="flex items-center justify-between text-sm">
-                              <span className="text-gray-500 dark:text-gray-400">
-                                {data.matches} matches found
-                              </span>
-                              <span className="font-medium text-gray-700 dark:text-gray-300">
-                                Weight: {(data.weight * 100).toFixed(0)}%
-                              </span>
-                            </div>
-                            {data.examples && data.examples.length > 0 && (
-                              <div className="mt-2">
-                                <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Examples:</p>
-                                <div className="flex flex-wrap gap-1">
-                                  {data.examples.slice(0, 3).map((example, index) => (
-  <span key={`example-${index}`} className="px-2 py-1 bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-300 rounded text-xs font-mono">
-    {example.substring(0, 20)}{example.length > 20 ? '...' : ''}
-  </span>
-))
-}
-                                </div>
-                              </div>
-                            )}
-                          </div>
-                        ))}
-                      </div>
-                    ) : (
-                      <div className="text-center py-8">
-                        <CheckCircleIcon className="w-12 h-12 text-green-500 mx-auto mb-2" />
-                        <p className="text-gray-600 dark:text-gray-400">
-                          No threat patterns detected
-                        </p>
-                      </div>
-                    )}
-
-                    {/* URL Analysis */}
-                    {analysisResult.urls && analysisResult.urls.totalUrls > 0 && (
-                      <div className="mt-6">
-                        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-                          URL Analysis
-                        </h3>
-                        <div className="space-y-3">
-                          {analysisResult.urls.analysis.map((urlData, index) => (
-  <div key={`url-${index}`} className="p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
-
-                              <div className="flex items-center justify-between mb-2">
-                                <p className="font-mono text-sm text-gray-800 dark:text-gray-200 break-all">
-                                  {urlData.url}
-                                </p>
-                                <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                                  urlData.category === 'HIGH_RISK' ? 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200' :
-                                  urlData.category === 'MEDIUM_RISK' ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200' :
-                                  urlData.category === 'LOW_RISK' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200' :
-                                  'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
-                                }`}>
-                                  {urlData.category.replace('_', ' ')}
-                                </span>
-                              </div>
-                              <div className="flex items-center justify-between text-sm">
-                                <span className="text-gray-600 dark:text-gray-400">
-                                  Risk Score: {Math.round(urlData.riskScore * 100)}%
-                                </span>
-                                <div className="flex items-center space-x-2">
-                                  {urlData.https && (
-                                    <span className="flex items-center text-green-600">
-                                      <LockClosedIcon className="w-3 h-3 mr-1" />
-                                      HTTPS
-                                    </span>
-                                  )}
-                                </div>
-                              </div>
-                              {urlData.indicators && urlData.indicators.length > 0 && (
-                                <div className="mt-2">
-                                  <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Risk Indicators:</p>
-                                  <div className="flex flex-wrap gap-1">
-                                    {urlData.indicators.map((indicator, i) => (
-  <span key={`indicator-${i}`} className="px-2 py-1 bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200 rounded text-xs">
-    {indicator}
-  </span>
-))
-}
-                                  </div>
-                                </div>
-                              )}
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
+                {showCommunityShare && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className={`rounded-lg p-4 border-2 ${
+                      ['CRITICAL', 'HIGH'].includes(analysisResult.result?.threat_level?.toUpperCase())
+                        ? 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800'
+                        : 'bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800'
+                    }`}
+                  >
+                    <p className="text-sm font-medium mb-3 text-gray-900 dark:text-gray-100">
+                      {['CRITICAL', 'HIGH'].includes(analysisResult.result?.threat_level?.toUpperCase())
+                        ? 'High-threat content detected - consider alerting the community'
+                        : 'Share this finding with the community?'}
+                    </p>
+                    <motion.button
+                      onClick={shareToCommunity}
+                      className="w-full py-2 px-4 rounded-lg font-medium bg-gradient-to-r from-cyan-500 to-blue-600 text-white hover:shadow-lg transition-all flex items-center justify-center gap-2"
+                      whileHover={{ scale: 1.02 }}
+                    >
+                      <ShareIcon className="w-4 h-4" />
+                      Share to Community Thread
+                    </motion.button>
                   </motion.div>
                 )}
               </motion.div>
             )}
 
-                      {/* ===== ADD THIS COMMUNITY ALERT SECTION AFTER ANALYSIS RESULTS ===== */}
-          {showCommunityButton && analysisResult && (
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="mt-6 p-6 bg-gradient-to-r from-red-50 to-orange-50 dark:from-red-900/20 dark:to-orange-900/20 border border-red-200 dark:border-red-800 rounded-xl"
-            >
-              <div className="flex items-start space-x-4">
-                <div className="flex-shrink-0">
-                  <ExclamationTriangleSolid className="h-8 w-8 text-red-500" />
-                </div>
-                <div className="flex-1">
-                  <h3 className="text-lg font-semibold text-red-900 dark:text-red-100 mb-2">
-                    🚨 High-Risk Content Detected
-                  </h3>
-                  <p className="text-red-700 dark:text-red-200 mb-4">
-                    This content poses significant risks to community safety. Your report helps protect others from similar threats.
-                  </p>
-                  
-                  <div className="flex flex-col sm:flex-row gap-3">
-                    <motion.button
-                      onClick={handleCommunityAlert}
-                      disabled={!communityButtonEnabled || isProcessingCommunityAlert}
-                      whileHover={{ scale: communityButtonEnabled ? 1.02 : 1 }}
-                      whileTap={{ scale: communityButtonEnabled ? 0.98 : 1 }}
-                      className={`
-                        flex items-center justify-center px-6 py-3 rounded-lg font-semibold text-white
-                        transition-all duration-200 transform
-                        ${communityButtonEnabled && !isProcessingCommunityAlert
-                          ? 'bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-700 hover:to-orange-700 shadow-lg hover:shadow-xl'
-                          : 'bg-gray-400 cursor-not-allowed opacity-60'
-                        }
-                      `}
-                    >
-                      {isProcessingCommunityAlert ? (
-                        <>
-                          <ArrowPathIcon className="animate-spin -ml-1 mr-2 h-5 w-5" />
-                          Sending Alert...
-                        </>
-                      ) : (
-                        <>
-                          <MegaphoneIcon className="-ml-1 mr-2 h-5 w-5" />
-                          Alert Community
-                        </>
-                      )}
-                    </motion.button>
-                    
-                    <button
-                      onClick={() => setShowCommunityButton(false)}
-                      className="px-4 py-3 text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-200 font-medium transition-colors duration-200"
-                    >
-                      Dismiss
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </motion.div>
-          )}
+            {jobs.length > 0 && (
 
-          {/* ===== SUCCESS MESSAGE DISPLAY ===== */}
-          {successMessage && (
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              className="mt-4 p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg"
-            >
-              <p className="text-green-800 dark:text-green-200 font-medium">
-                {successMessage}
-              </p>
-            </motion.div>
-          )}
-
-          </div>
-
-          {/* Sidebar */}
-          <div className="space-y-6">
-            {/* Analysis Mode Info */}
-            <motion.div
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              className="bg-white dark:bg-gray-800 rounded-2xl p-6 border border-gray-200 dark:border-gray-700 shadow-lg"
-            >
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-                Current Mode
-              </h3>
               
-              <div className={`p-4 rounded-xl border-2 ${ANALYSIS_MODES[analysisMode].borderColor} ${ANALYSIS_MODES[analysisMode].bgGradient} dark:${ANALYSIS_MODES[analysisMode].darkBgGradient}`}>
-                <div className="flex items-center mb-3">
-                  {(() => {
-                    const Icon = ANALYSIS_MODES[analysisMode].icon;
-                    return <Icon className={`w-6 h-6 mr-2 ${ANALYSIS_MODES[analysisMode].textColor}`} />;
-                  })()}
-                  <h4 className={`font-semibold ${ANALYSIS_MODES[analysisMode].textColor}`}>
-                    {ANALYSIS_MODES[analysisMode].label}
-                  </h4>
-                </div>
-                <p className="text-sm text-gray-600 dark:text-gray-300 mb-3">
-                  {ANALYSIS_MODES[analysisMode].description}
-                </p>
-                <div className="grid grid-cols-2 gap-2 text-xs">
-                  <div className="text-center p-2 bg-white/50 dark:bg-gray-800/50 rounded">
-                    <p className="font-medium">Speed</p>
-                    <p className="text-gray-600 dark:text-gray-400">
-                      {ANALYSIS_MODES[analysisMode].estimatedTime}
-                    </p>
-                  </div>
-                  <div className="text-center p-2 bg-white/50 dark:bg-gray-800/50 rounded">
-                    <p className="font-medium">Accuracy</p>
-                    <p className="text-gray-600 dark:text-gray-400">
-                      {ANALYSIS_MODES[analysisMode].accuracy}%
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </motion.div>
-
-            {/* Analysis History */}
-            {localAnalysisHistory.length > 0 && (
               <motion.div
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.1 }}
-                className="bg-white dark:bg-gray-800 rounded-2xl p-6 border border-gray-200 dark:border-gray-700 shadow-lg"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="rounded-xl p-6 backdrop-blur-sm bg-white/50 dark:bg-gray-800/50 border border-white dark:border-gray-700 shadow-xl"
               >
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-                    Recent Analysis
-                  </h3>
-                  <button
-                    onClick={() => setLocalAnalysisHistory([])}
-                    className="text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200"
-                  >
-                    Clear All
-                  </button>
-                </div>
-                
-                <div className="space-y-3 max-h-96 overflow-y-auto">
-                  {localAnalysisHistory.slice(0, 5).map((analysis, index) => (
-  <div key={analysis.analysisId || `history-${index}`} className="p-3 bg-gray-50 dark:bg-gray-700 rounded-lg cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors">
-
-                      <div className="flex items-center justify-between mb-1">
-                        <span className={`text-xs font-medium px-2 py-1 rounded-full ${getThreatColor(analysis.threatLevel)}`}>
-                          {analysis.threatLevel}
-                        </span>
-                        <span className="text-xs text-gray-500 dark:text-gray-400">
-                          {new Date(analysis.timestamp).toLocaleDateString()}
-                        </span>
+                <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                  <ChartBarIcon className="w-5 h-5" />
+                  Analysis History ({jobs.length})
+                </h3>
+                <div className="space-y-2 max-h-64 overflow-y-auto">
+                  {jobs.map((job) => (
+                    <motion.button
+                      key={job.id}
+                      onClick={() => setExpandedJob(job)}
+                      className={`w-full p-3 rounded-lg text-left transition-all border ${
+                        job.status === 'completed'
+                          ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800 hover:bg-green-100 dark:hover:bg-green-900/30'
+                          : job.status === 'error'
+                          ? 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800 hover:bg-red-100 dark:hover:bg-red-900/30'
+                          : 'bg-yellow-50 dark:bg-yellow-900/20 border-yellow-200 dark:border-yellow-800 hover:bg-yellow-100 dark:hover:bg-yellow-900/30'
+                      }`}
+                      whileHover={{ x: 4 }}
+                    >
+                      <div className="flex items-center justify-between">
+                        <div className="flex-1 min-w-0">
+                          <p className="font-medium truncate text-sm">{job.input}</p>
+                          <p className="text-xs text-gray-600 dark:text-gray-400">
+                            {new Date(job.created_at).toLocaleString()}
+                          </p>
+                        </div>
+                        {job.status === 'completed' ? (
+                          <CheckCircleIcon className="w-4 h-4 text-green-500 flex-shrink-0" />
+                        ) : job.status === 'error' ? (
+                          <XCircleIcon className="w-4 h-4 text-red-500 flex-shrink-0" />
+                        ) : (
+                          <ArrowPathIcon className="w-4 h-4 animate-spin flex-shrink-0" />
+                        )}
                       </div>
-                      <p className="text-sm text-gray-700 dark:text-gray-300 mb-1">
-                        {analysis.quickSummary || 'Analysis completed'}
-                      </p>
-                      <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
-                        "{analysis.inputContent}"
-                      </p>
-                      <div className="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400 mt-2">
-                        <span>{analysis.confidence}% confidence</span>
-                        <span>{formatResponseTime(analysis.responseTime)}</span>
-                      </div>
-                    </div>
+                    </motion.button>
                   ))}
                 </div>
               </motion.div>
             )}
+            {jobs.length > 0 && (
+  <motion.button
+    onClick={async () => {
+  if (!user || !user.id) return;
+  await supabase.from('community_posts').delete().eq('user_id', user.id);
+  setJobs([]);
+  toast.success('History cleared');
+}}
 
-            {/* Tips & Best Practices */}
-            <motion.div
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.2 }}
-              className="bg-white dark:bg-gray-800 rounded-2xl p-6 border border-gray-200 dark:border-gray-700 shadow-lg"
-            >
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-                Security Tips
-              </h3>
-              
-              <div className="space-y-3">
-                <div className="flex items-start space-x-3">
-                  <LightBulbIcon className="w-5 h-5 text-yellow-500 mt-0.5" />
-                  <div>
-                    <p className="text-sm font-medium text-gray-900 dark:text-white">
-                      Verify Sources
-                    </p>
-                    <p className="text-xs text-gray-600 dark:text-gray-400">
-                      Always check information through multiple trusted sources
-                    </p>
-                  </div>
-                </div>
-                
-                <div className="flex items-start space-x-3">
-                  <ShieldCheckIcon className="w-5 h-5 text-green-500 mt-0.5" />
-                  <div>
-                    <p className="text-sm font-medium text-gray-900 dark:text-white">
-                      Trust Your Instincts
-                    </p>
-                    <p className="text-xs text-gray-600 dark:text-gray-400">
-                      If something seems too good to be true, it probably is
-                    </p>
-                  </div>
-                </div>
-                
-                <div className="flex items-start space-x-3">
-                  <ExclamationTriangleIcon className="w-5 h-5 text-orange-500 mt-0.5" />
-                  <div>
-                    <p className="text-sm font-medium text-gray-900 dark:text-white">
-                      Be Cautious with Links
-                    </p>
-                    <p className="text-xs text-gray-600 dark:text-gray-400">
-                      Hover over links to preview URLs before clicking
-                    </p>
-                  </div>
-                </div>
-                
-                <div className="flex items-start space-x-3">
-                  <LockClosedIcon className="w-5 h-5 text-blue-500 mt-0.5" />
-                  <div>
-                    <p className="text-sm font-medium text-gray-900 dark:text-white">
-                      Protect Personal Data
-                    </p>
-                    <p className="text-xs text-gray-600 dark:text-gray-400">
-                      Never share sensitive information through unsecured channels
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </motion.div>
-          </div>
+    className="w-full mt-3 py-2 px-4 rounded-lg font-medium bg-red-500 hover:bg-red-600 text-white transition-all flex items-center justify-center gap-2"
+    whileHover={{ scale: 1.02 }}
+  >
+    <TrashIcon className="w-4 h-4" />
+    Clear All History
+  </motion.button>
+)}
+
+          </motion.div>
         </div>
-      </div>
+
+        <AnimatePresence>
+          {expandedJob && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 overflow-y-auto"
+              onClick={() => setExpandedJob(null)}
+            >
+              <motion.div
+                initial={{ scale: 0.9, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0.9, opacity: 0 }}
+                onClick={(e) => e.stopPropagation()}
+                className="w-full max-w-2xl rounded-xl p-6 my-20 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700"
+              >
+                <button onClick={() => setExpandedJob(null)} className="float-right">
+                  <XMarkIcon className="w-6 h-6" />
+                </button>
+                <h2 className="text-2xl font-bold mb-4">{ANALYSIS_MODES[expandedJob.analysisMode]?.label}</h2>
+                <div className="mb-4 p-4 rounded-lg bg-gray-50 dark:bg-gray-700/50">
+                  <p className="text-sm font-semibold mb-2">ANALYSIS INPUT:</p>
+                  <p>{expandedJob.input}</p>
+                </div>
+                {expandedJob.result && (
+                  <div className="mb-4 p-4 rounded-lg bg-gray-50 dark:bg-gray-700/50 max-h-64 overflow-y-auto">
+                    <p className="text-sm font-semibold mb-3">ANALYSIS RESULT:</p>
+                    <div className="space-y-3 text-sm">
+                      {Object.entries(expandedJob.result).map(([key, value]) => (
+                        <div key={key}>
+                          <p className="font-semibold text-cyan-500 capitalize">{key.replace(/_/g, ' ')}:</p>
+                          <p className="text-sm mt-1">{typeof value === 'object' ? JSON.stringify(value, null, 2) : String(value)}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => {
+                      navigator.clipboard.writeText(JSON.stringify(expandedJob.result, null, 2));
+                      toast.success('Copied');
+                    }}
+                    className="flex-1 py-2 px-4 rounded-lg bg-blue-500 hover:bg-blue-600 text-white font-medium transition-all"
+                  >
+                    Copy
+                  </button>
+                  <button
+                    onClick={() => setExpandedJob(null)}
+                    className="flex-1 py-2 px-4 rounded-lg bg-gray-500 hover:bg-gray-600 text-white font-medium transition-all"
+                  >
+                    Close
+                  </button>
+                </div>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </motion.div>
     </div>
   );
-};
-
-export default VerifySection;
-
+}

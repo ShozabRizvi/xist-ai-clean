@@ -86,7 +86,7 @@ const SupportSection = ({ user }) => {
 
   return (
     <div className={`space-y-6 ${screenSize.isMobile ? 'px-4' : 'px-6'}`}>
-      {/* Header */}
+      {}
       <div className="text-center">
         <QuestionMarkCircleIcon className="w-12 h-12 md:w-16 md:h-16 mx-auto mb-4 text-purple-600" />
         <h1 className="text-2xl md:text-4xl font-bold mb-4 text-gray-900 dark:text-white">
@@ -97,7 +97,7 @@ const SupportSection = ({ user }) => {
         </p>
       </div>
 
-      {/* Search */}
+      {}
       <Card className="p-6">
         <div className="relative">
           <MagnifyingGlassIcon className="w-5 h-5 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
@@ -111,7 +111,7 @@ const SupportSection = ({ user }) => {
         </div>
       </Card>
 
-      {/* Help Resources */}
+      {}
       <div className={`grid gap-6 ${screenSize.isMobile ? 'grid-cols-1' : 'md:grid-cols-3'}`}>
         {helpResources.map((resource, index) => {
           const IconComponent = resource.icon;
@@ -127,7 +127,7 @@ const SupportSection = ({ user }) => {
         })}
       </div>
 
-      {/* FAQs */}
+      {}
       <Card className="p-6">
         <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-6">Frequently Asked Questions</h3>
         <div className="space-y-6">
