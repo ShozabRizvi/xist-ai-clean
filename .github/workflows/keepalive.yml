@@ -1,0 +1,19 @@
+name: Keep Xist AI Alive
+on:
+  schedule:
+    - cron: '0 */6 * * *'
+  workflow_dispatch:
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Ping Supabase
+      env:
+        SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+        SUPABASE_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+      run: |
+        curl -X GET "${SUPABASE_URL}/rest/v1/?select=id" \
+          -H "apikey: $SUPABASE_KEY" \
+          -H "Authorization: Bearer $SUPABASE_KEY"
+        echo "✅ Supabase pinged successfully!"
