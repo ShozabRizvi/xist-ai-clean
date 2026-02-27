@@ -3,7 +3,7 @@ import apiKeyPool from './ApiKeyPool';
 class AIService {
   constructor() {
     this.baseURL = process.env.REACT_APP_OPENROUTER_BASE_URL || 'https://openrouter.ai/api/v1';
-    this.model = process.env.REACT_APP_MICROSOFT_MODEL || "microsoft/mai-ds-r1:free";
+    this.model = process.env.REACT_APP_MICROSOFT_MODEL || 'deepseek/deepseek-r1-0528:free';
     this.maxRetries = 5; // Increased since we have 20 keys
     this.retryDelay = 1000; // 1 second base delay
     this.successCount = 0;
