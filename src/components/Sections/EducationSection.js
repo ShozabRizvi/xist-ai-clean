@@ -1,430 +1,435 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  BookOpenIcon, PlayIcon, CheckCircleIcon, StarIcon, ClockIcon, TagIcon,
-  UserGroupIcon, AcademicCapIcon, TrophyIcon, FireIcon, SparklesIcon,
-  XMarkIcon, ArrowRightIcon, ArrowLeftIcon, QuestionMarkCircleIcon,
-  BoltIcon, GiftIcon, LightBulbIcon, RocketLaunchIcon, EyeIcon,
-  LockClosedIcon, PlayCircleIcon, PauseIcon, ShieldCheckIcon
+  PlayIcon, ClockIcon, ShieldCheckIcon, QuestionMarkCircleIcon, 
+  ArrowRightIcon, ArrowLeftIcon, XMarkIcon, AcademicCapIcon, 
+  CpuChipIcon, ArrowTopRightOnSquareIcon
 } from '@heroicons/react/24/outline';
-import Card from '../UI/Card';
-import { useResponsive } from '../../hooks/useResponsive';
 import { showNotification } from '../UI/NotificationToast';
 
-// Enhanced education entries with YouTube thumbnails and full quiz logic
+// ==============================
+// THEMES & TYPEWRITER
+// ==============================
+const THEMES = {
+  dark: { 
+    background: 'bg-slate-950', 
+    card: 'bg-slate-900/60 backdrop-blur-xl border-slate-800 shadow-2xl', 
+    inner: 'bg-slate-950 border-slate-800', 
+    textPrimary: 'text-slate-100', 
+    textSecondary: 'text-slate-400', 
+    muted: 'text-slate-500',
+    glow: 'from-indigo-500/10 via-cyan-500/5 to-transparent'
+  },
+  light: { 
+    background: 'bg-slate-50', 
+    card: 'bg-white/80 backdrop-blur-xl border-slate-200 shadow-xl', 
+    inner: 'bg-slate-100 border-slate-200', 
+    textPrimary: 'text-slate-900', 
+    textSecondary: 'text-slate-600', 
+    muted: 'text-slate-400',
+    glow: 'from-indigo-500/5 via-blue-500/5 to-transparent'
+  }
+};
+
+const useTypewriter = (text, speed = 60, delay = 200) => {
+  const [displayedText, setDisplayedText] = useState("");
+  const [started, setStarted] = useState(false);
+  useEffect(() => { const timeout = setTimeout(() => setStarted(true), delay); return () => clearTimeout(timeout); }, [delay]);
+  useEffect(() => {
+    if (!started) return;
+    if (displayedText.length < text.length) {
+      const timeout = setTimeout(() => { setDisplayedText(text.slice(0, displayedText.length + 1)); }, speed);
+      return () => clearTimeout(timeout);
+    }
+  }, [displayedText, text, speed, started]);
+  return displayedText;
+};
+
+// ==============================
+// 20 REAL MODULES WITH FULL QUIZZES
+// ==============================
+// ==============================
+// 20 ACTIVE CYBER MODULES (2024/2025 VERIFIED)
+// ==============================
 const educationContent = [
+  // 🟢 OSINT & Investigation
   {
-    id: 1,
-    title: 'Complete Cybersecurity Course 2025',
-    category: 'Cybersecurity',
-    difficulty: 'Beginner to Advanced',
-    duration: '11:34:35',
-    totalMinutes: 694,
-    content: 'Master cybersecurity fundamentals covering threats, defense strategies, ethical hacking, and incident response. Complete hands-on course with real-world examples.',
-    progress: 0,
-    tags: ['cybersecurity', 'ethical-hacking', 'network-security', 'risk-management'],
-    completedBy: 85420,
-    rating: 4.9,
-    thumbnail: 'https://img.youtube.com/vi/MvrgFOwEgdA/hqdefault.jpg',
-    videoId: 'MvrgFOwEgdA',
-    creator: "Edureka",
-    resourceLinks: [
-      { title: 'NIST Cybersecurity Framework', url: 'https://www.nist.gov/cyberframework' },
-      { title: 'SANS Security Training', url: 'https://www.sans.org/' }
-    ],
+    id: 1, title: 'Website OSINT Full Tutorial', category: 'OSINT', duration: '32m', creator: 'John Hammond', videoId: 'G0vUbO5QU2M',
+    content: 'Learn how to gather hidden data, track footprints, and perform professional Open Source Intelligence on any website.',
     quiz: [
-      {
-        question: 'What are the three pillars of information security (CIA Triad)?',
-        options: [
-          'Confidentiality, Integrity, Availability',
-          'Control, Implementation, Assessment',
-          'Classification, Investigation, Authorization',
-          'Cryptography, Identity, Authentication'
-        ],
-        correct: 0,
-        explanation: 'The CIA Triad consists of Confidentiality, Integrity, and Availability.'
-      },
-      {
-        question: 'Which type of attack uses social engineering to trick users?',
-        options: [
-          'DDoS Attack',
-          'SQL Injection',
-          'Phishing',
-          'Buffer Overflow'
-        ],
-        correct: 2,
-        explanation: 'Phishing attacks use social engineering techniques.'
-      }
+      { question: 'What is the primary goal of OSINT?', options: ['To hack databases directly', 'To gather actionable intelligence from publicly available data', 'To install malware', 'To bypass firewalls'], correct: 1 },
+      { question: 'Why do investigators analyze website certificates (SSL/TLS)?', options: ['To speed up the connection', 'To find hidden subdomains and historical registration data', 'To block ads', 'To change the website color'], correct: 1 },
+      { question: 'What is a "Sock Puppet" account?', options: ['A hacked bank account', 'A fake profile used for investigations to stay anonymous', 'A dark web forum', 'A type of malware'], correct: 1 }
     ]
   },
   {
-    id: 2,
-    title: 'Cybersecurity Awareness Training',
-    category: 'Security Awareness',
-    difficulty: 'Beginner',
-    duration: '45:00',
-    totalMinutes: 45,
-    content: 'Essential awareness training for protecting networks, devices, and personal data from cyber threats in the modern digital landscape.',
-    progress: 0,
-    tags: ['awareness', 'phishing', 'passwords', 'social-engineering'],
-    completedBy: 156830,
-    rating: 4.7,
-    thumbnail: 'https://img.youtube.com/vi/CT5gmh9cxpk/hqdefault.jpg',
-    videoId: 'CT5gmh9cxpk',
-    creator: "Security Training Institute",
-    resourceLinks: [
-      { title: 'CISA Security Tips', url: 'https://www.cisa.gov/secure-our-world' },
-      { title: 'FTC Identity Theft Guide', url: 'https://www.identitytheft.gov/' }
-    ],
+    id: 2, title: 'The State of Hacking in 2025', category: 'OSINT', duration: '45m', creator: 'David Bombal & John Hammond', videoId: 'VPugJa5FYHc',
+    content: 'A deep-dive into how classic ransomware meets AI-assisted malware and how social engineering patterns have evolved.',
     quiz: [
-      {
-        question: 'What should you do if you receive a suspicious email?',
-        options: [
-          'Click the link to verify if it\'s real',
-          'Reply asking for verification',
-          'Delete it and report to IT security',
-          'Forward it to colleagues for their opinion'
-        ],
-        correct: 2,
-        explanation: 'Never click suspicious links; delete and report to IT.'
-      }
+      { question: 'How is AI currently changing malware?', options: ['It makes malware obsolete', 'It helps write polymorphic code and highly convincing phishing text', 'It physically destroys servers', 'It stops all viruses'], correct: 1 },
+      { question: 'What is a "ClickFix" or "FileFix" attack?', options: ['A tool to repair hard drives', 'A social engineering trick forcing users to copy/paste malicious commands to "fix" an error', 'A type of antivirus', 'A Wi-Fi hack'], correct: 1 },
+      { question: 'What is the best defense against evolving social engineering?', options: ['Deleting the browser', 'Zero-Trust architecture and continuous employee awareness training', 'Using older software', 'Turning off the router'], correct: 1 }
     ]
   },
   {
-    id: 3,
-    title: 'Digital Literacy & Online Safety',
-    category: 'Digital Literacy',
-    difficulty: 'Beginner',
-    duration: '25:00',
-    totalMinutes: 25,
-    content: 'Learn essential digital skills including safe browsing, password management, and recognizing online threats.',
-    progress: 0,
-    tags: ['digital-literacy', 'online-safety', 'browsing', 'privacy'],
-    completedBy: 203945,
-    rating: 4.6,
-    thumbnail: 'https://img.youtube.com/vi/oU1X3QpX-90/hqdefault.jpg',
-    videoId: 'oU1X3QpX-90',
-    creator: "Digital Citizenship Institute",
-    resourceLinks: [
-      { title: 'Common Sense Media', url: 'https://www.commonsensemedia.org/digital-citizenship' },
-      { title: 'Be Internet Awesome', url: 'https://beinternetawesome.withgoogle.com/' }
-    ],
+    id: 3, title: 'Level Up Your OSINT Skills', category: 'OSINT', duration: '1h 14m', creator: 'John Hammond', videoId: 'avNmw4Kr2yk',
+    content: 'Advanced open-source intelligence tactics, including reverse image searching and dark web tracking.',
     quiz: [
-      {
-        question: 'What is the most important rule for creating strong passwords?',
-        options: [
-          'Use the same password for all accounts',
-          'Include personal information',
-          'Use unique, complex passwords for each account',
-          'Share passwords with trusted friends'
-        ],
-        correct: 2,
-        explanation: 'Always use unique, complex passwords.'
-      }
+      { question: 'What is Reverse Image Searching used for?', options: ['To increase image resolution', 'To find where an image originated or if it has been manipulated', 'To compress files', 'To create deepfakes'], correct: 1 },
+      { question: 'What does EXIF data reveal?', options: ['The camera model, date, and GPS coordinates of a photo', 'The user\'s bank password', 'The website\'s HTML', 'The size of the monitor'], correct: 0 },
+      { question: 'Can OSINT be used defensively?', options: ['No', 'Yes, to find what data you are accidentally leaking to attackers', 'Only by the military', 'Only on mobile'], correct: 1 }
+    ]
+  },
+
+  // 🔴 Social Engineering & Scams
+  {
+    id: 4, title: 'Disrupting a Scammer for a WHOLE WEEK', category: 'Social Engineering', duration: '24m', creator: 'Jim Browning', videoId: 'txUmwD4IcMw',
+    content: 'Watch the legendary scam-baiter intercept a bank impersonation scammer and protect victims in real-time.',
+    quiz: [
+      { question: 'How do tech support scammers typically gain access to a victim\'s PC?', options: ['Brute forcing the Wi-Fi', 'Tricking the victim into installing Remote Desktop software (AnyDesk, TeamViewer)', 'Mailing a USB drive', 'Through the power grid'], correct: 1 },
+      { question: 'Why do scammers often ask victims to buy gift cards?', options: ['To buy software', 'Because gift cards are untraceable and cannot be easily refunded', 'To give as gifts', 'To test the internet speed'], correct: 1 },
+      { question: 'What is the "Inspect Element" scam?', options: ['Stealing a monitor', 'Editing a bank page locally to make it look like they accidentally refunded too much money', 'A browser virus', 'A network attack'], correct: 1 }
     ]
   },
   {
-    id: 4,
-    title: 'Fact-Checking & Misinformation',
-    category: 'Misinformation',
-    difficulty: 'Intermediate',
-    duration: '18:00',
-    totalMinutes: 18,
-    content: 'Master techniques to identify fake news, verify information sources, and combat misinformation spread.',
-    progress: 0,
-    tags: ['fact-checking', 'misinformation', 'verification', 'media-literacy'],
-    completedBy: 78322,
-    rating: 4.8,
-    thumbnail: 'https://img.youtube.com/vi/u8Pg-cD0ytg/hqdefault.jpg',
-    videoId: 'u8Pg-cD0ytg',
-    creator: "Fact Check Global",
-    resourceLinks: [
-      { title: 'Snopes Fact Checking', url: 'https://www.snopes.com/' },
-      { title: 'Reuters Fact Check', url: 'https://www.reuters.com/fact-check/' }
-    ],
+    id: 5, title: 'We Shutdown a Scam Call Centre AGAIN!', category: 'Social Engineering', duration: '15m', creator: 'Karl Rock & Jim Browning', videoId: 'r1Q_P__aqAk',
+    content: 'Undercover footage of an active scam call center raid led by cybercrime police and independent researchers.',
     quiz: [
-      {
-        question: 'What is the first step in verifying information online?',
-        options: [
-          'Check social media comments',
-          'Verify the source and publication date',
-          'Count how many times it\'s been shared',
-          'Look for emotional language'
-        ],
-        correct: 1,
-        explanation: 'Check the credibility of the source.'
-      }
+      { question: 'Why is international cooperation necessary to stop scam centers?', options: ['To save money', 'Because the scammers and their victims are usually in different countries/jurisdictions', 'To share internet', 'To translate languages'], correct: 1 },
+      { question: 'What is a "Money Mule"?', options: ['An animal', 'A person who receives and transfers illicit funds on behalf of scammers', 'A type of cryptocurrency', 'A secure bank'], correct: 1 },
+      { question: 'How do scammers spoof Caller ID?', options: ['By stealing phones', 'Using VoIP (Voice over IP) software to mask their real origin', 'By asking the phone company', 'Using a VPN'], correct: 1 }
     ]
   },
   {
-    id: 5,
-    title: 'Social Media Safety & Privacy',
-    category: 'Social Media',
-    difficulty: 'Beginner',
-    duration: '22:00',
-    totalMinutes: 22,
-    content: 'Learn to protect your privacy on social platforms, recognize scams, and maintain digital wellness.',
-    progress: 0,
-    tags: ['social-media', 'privacy', 'scams', 'digital-wellness'],
-    completedBy: 134567,
-    rating: 4.5,
-    thumbnail: 'https://img.youtube.com/vi/nzVgHIRx7mI/hqdefault.jpg',
-    videoId: 'nzVgHIRx7mI',
-    creator: "Digital Safety Foundation",
-    resourceLinks: [
-      { title: 'Privacy Settings Guide', url: 'https://privacy.net/social-media-privacy-settings/' },
-      { title: 'Social Media Safety Tips', url: 'http://swgfl.org.uk/topics/social-media/' }
-    ],
+    id: 6, title: 'Interview with Jim Browning - Live Scam Audio', category: 'Social Engineering', duration: '1h 46m', creator: 'Jim Browning', videoId: 'wmPDGu66q14',
+    content: 'An illuminating glimpse into the shadowy world of scam call centers and the psychology used against vulnerable victims.',
     quiz: [
-      {
-        question: 'Which privacy setting is most important on social media?',
-        options: [
-          'Making all posts public',
-          'Limiting who can see your posts and personal info',
-          'Adding as many friends as possible',
-          'Using your real name everywhere'
-        ],
-        correct: 1,
-        explanation: 'Limit post visibility to people you know and trust.'
-      }
+      { question: 'Which emotion do social engineers rely on most to rush victims?', options: ['Joy', 'Boredom', 'Urgency, panic, and fear', 'Sadness'], correct: 2 },
+      { question: 'What is "Vishing"?', options: ['Phishing via Voice/Phone calls', 'A type of computer virus', 'Stealing credit cards', 'Visual hacking'], correct: 0 },
+      { question: 'Why do scammers isolate victims (e.g., telling them not to talk to bank tellers)?', options: ['To save time', 'To prevent third parties from recognizing the scam and stopping the transfer', 'Because banks are closed', 'To protect privacy'], correct: 1 }
+    ]
+  },
+
+  // 🟣 Deepfakes, AI & Misinformation
+  {
+    id: 7, title: 'How to Recognize Deepfakes and AI Generated Videos', category: 'Deepfakes', duration: '12m', creator: 'Tech Analysis', videoId: '-kDtt0QBNRU',
+    content: 'A rapid breakdown of the visual artifacts, lighting errors, and audio desyncs that expose synthetic media.',
+    quiz: [
+      { question: 'Which is a common visual flaw in early deepfakes?', options: ['Perfect lighting', 'Unnatural blinking, strange hair physics, or mismatched teeth', 'High resolution', 'Slow movement'], correct: 1 },
+      { question: 'What technology is primarily used to create deepfakes?', options: ['Blockchain', 'Generative Adversarial Networks (GANs)', 'SQL Databases', 'HTML5'], correct: 1 },
+      { question: 'Which of the following makes a deepfake harder to detect?', options: ['Low resolution and heavy compression', 'Bright lighting', 'Complex backgrounds', 'High audio quality'], correct: 0 }
+    ]
+  },
+  {
+    id: 8, title: 'Expert Shows How to Spot an AI Deepfake', category: 'Deepfakes', duration: '6m', creator: 'News Analysis', videoId: 'yiXzKN7M2f0',
+    content: 'Security experts explain how threat actors create a sense of urgency using AI-generated likenesses.',
+    quiz: [
+      { question: 'What is the "Urgency Red Flag"?', options: ['A fast internet connection', 'A psychological tactic where an AI voice/video demands immediate action or money', 'A slow computer', 'A network error'], correct: 1 },
+      { question: 'Why do deepfakes often struggle with hands?', options: ['Cameras can\'t see hands', 'AI models lack structural understanding of complex, overlapping geometry', 'Hands move too fast', 'Hands are too small'], correct: 1 },
+      { question: 'What should you do if a family member calls asking for emergency funds?', options: ['Send the money instantly', 'Hang up and call them back on their known number, or ask a pre-agreed "safe word"', 'Email them', 'Ignore it'], correct: 1 }
+    ]
+  },
+  {
+    id: 9, title: 'THE END OF TRUST — Deepfake Expert Dr. Hany Farid', category: 'Deepfakes', duration: '20m', creator: 'Cyber Security Podcast', videoId: 'u_jZxo-VfpY',
+    content: 'Understanding how Large Language Models and AI video generation are eroding our shared sense of reality.',
+    quiz: [
+      { question: 'What is the "Liar\'s Dividend"?', options: ['When a liar gets paid', 'The phenomenon where the existence of deepfakes allows guilty people to claim real evidence is fake', 'A stock market term', 'A fake news website'], correct: 1 },
+      { question: 'How can digital watermarking help?', options: ['It makes images look better', 'It mathematically embeds invisible proof of origin and alteration history into media files', 'It deletes fake news', 'It stops hackers from downloading files'], correct: 1 },
+      { question: 'What is a "hallucination" in AI?', options: ['A virus', 'A highly confident but factually incorrect output', 'A sleep mode', 'Hardware failure'], correct: 1 }
+    ]
+  },
+
+  // 🔵 Core Cybersecurity Concepts
+  {
+    id: 10, title: 'Injection Attacks 101: SQL & XSS', category: 'Cybersecurity', duration: '11m', creator: 'Aikido Security', videoId: 'wu6FAsiFhv0',
+    content: 'A fast-paced dive into the world of injection attacks, how they work, and real-world database breaches.',
+    quiz: [
+      { question: 'What is the primary target of an SQL Injection?', options: ['The frontend CSS', 'The backend database', 'The network router', 'The user\'s monitor'], correct: 1 },
+      { question: 'What does XSS stand for?', options: ['Cross-Site Scripting', 'XML Secure Sockets', 'Xtreme Server Security', 'Cross-System Storage'], correct: 0 },
+      { question: 'How are injection attacks best prevented?', options: ['Turning off the firewall', 'Using input validation and parameterized queries', 'Using a VPN', 'Hiding the database IP'], correct: 1 }
+    ]
+  },
+  {
+    id: 11, title: 'How Ransomware Works in 2024', category: 'Cybersecurity', duration: '13m', creator: 'Panda Security', videoId: 'BbLCXpAON2c',
+    content: 'Learn how modern ransomware infects networks, encrypts data, and how to defend against double extortion.',
+    quiz: [
+      { question: 'What does modern ransomware primarily do to victim data?', options: ['Deletes it permanently', 'Encrypts it and demands payment for the key', 'Publishes it immediately', 'Copies it to a USB'], correct: 1 },
+      { question: 'What is "Double Extortion"?', options: ['Asking for money twice', 'Encrypting data AND threatening to leak sensitive files publicly', 'Infecting two computers', 'Using two viruses'], correct: 1 },
+      { question: 'What is the best defense against ransomware?', options: ['Paying the ransom', 'Regularly updated, isolated offline backups', 'Using a weaker password', 'Ignoring the warning'], correct: 1 }
+    ]
+  },
+  {
+    id: 12, title: 'Understanding Zero-Day Vulnerabilities', category: 'Cybersecurity', duration: '8m', creator: 'Security Brief', videoId: '293BbYGs0ro',
+    content: 'A breakdown of active zero-day exploits in the wild and how threat actors leverage race conditions.',
+    quiz: [
+      { question: 'Why is it called a "Zero-Day"?', options: ['It takes zero days to fix', 'Developers have had zero days to prepare a patch because the flaw is unknown', 'It deletes data in zero days', 'It costs zero dollars'], correct: 1 },
+      { question: 'Who typically discovers Zero-Day vulnerabilities?', options: ['The software CEO', 'Security researchers or malicious hackers', 'The marketing team', 'The end user'], correct: 1 },
+      { question: 'What is a "Bug Bounty"?', options: ['A computer virus', 'A program where companies pay hackers to ethically report vulnerabilities', 'A fake website', 'A firewall feature'], correct: 1 }
+    ]
+  },
+  {
+    id: 13, title: 'Constructing a SQL Injection', category: 'Cybersecurity', duration: '15m', creator: 'Professor Messer', videoId: 'yAt4DO8dUNM',
+    content: 'A live demonstration of how untrusted inputs grant attackers complete access to backend databases.',
+    quiz: [
+      { question: 'What language is manipulated in a SQL Injection?', options: ['HTML', 'Structured Query Language', 'Python', 'C++'], correct: 1 },
+      { question: 'Which character is often used to test if an input field is vulnerable to SQLi?', options: ['An asterisk (*)', 'A single quote (\')', 'A hashtag (#)', 'An ampersand (&)'], correct: 1 },
+      { question: 'What is a "Blind SQL Injection"?', options: ['An attack with the monitor off', 'An attack where the database does not return data to the screen, but behaves differently based on true/false queries', 'A Wi-Fi attack', 'A DDoS method'], correct: 1 }
+    ]
+  },
+  {
+    id: 14, title: 'Ransomware Threat Intelligence', category: 'Cybersecurity', duration: '10m', creator: 'Recorded Future', videoId: '5B6E0q0YGIo',
+    content: 'Monitoring the ransomware kill chain and identifying pre-attack signals before systems are locked.',
+    quiz: [
+      { question: 'What is the "Kill Chain"?', options: ['A type of sword', 'The sequence of stages an attack goes through from reconnaissance to exfiltration', 'A firewall brand', 'A server rack'], correct: 1 },
+      { question: 'What is RaaS?', options: ['Routers as a Service', 'Ransomware as a Service (a business model for cybercriminals)', 'RAM as a Service', 'Remote Access auto-System'], correct: 1 },
+      { question: 'Why is Threat Intelligence important?', options: ['It speeds up the internet', 'It helps organizations detect indicators of compromise (IoCs) before the payload drops', 'It writes code', 'It lowers electricity costs'], correct: 1 }
+    ]
+  },
+
+  // 🟡 Privacy, Anonymity & Infrastructure
+  {
+    id: 15, title: 'Why Your VPN Can\'t Stop Tracking', category: 'Privacy', duration: '9m', creator: 'RTINGS', videoId: 'pJOpHSPkWMo',
+    content: 'A deep dive into browser fingerprinting, how it bypasses VPNs, and how to protect your identity.',
+    quiz: [
+      { question: 'Does a VPN stop browser fingerprinting?', options: ['Yes', 'No, a VPN only changes your IP, not your browser\'s unique characteristics', 'Only on mobile', 'Only if it is expensive'], correct: 1 },
+      { question: 'What data does your browser freely hand over to websites?', options: ['Your exact home address', 'Screen resolution, installed fonts, and OS version', 'Your social security number', 'Your bank password'], correct: 1 },
+      { question: 'Why do companies use fingerprinting?', options: ['To speed up downloads', 'To uniquely identify and track users across the web even if cookies are blocked', 'To hack webcams', 'To block ads'], correct: 1 }
+    ]
+  },
+  {
+    id: 16, title: 'End-to-End Encryption Explained', category: 'Privacy', duration: '11m', creator: 'Ask Leo', videoId: 'Rx39XYgsrQQ',
+    content: 'Understanding cryptography and why true E2EE ensures only the sender and receiver can read messages.',
+    quiz: [
+      { question: 'In End-to-End Encryption, who holds the decryption keys?', options: ['The government', 'The app developer', 'Only the communicating users (sender and recipient)', 'The internet provider'], correct: 2 },
+      { question: 'What happens if a messaging company is subpoenaed for E2EE chats?', options: ['They hand over the plain text', 'They hand over encrypted gibberish because they don\'t possess the private keys', 'They delete the app', 'They arrest the user'], correct: 1 },
+      { question: 'Is SMS text messaging E2E encrypted?', options: ['Yes, always', 'No, SMS is sent in plain text and can be intercepted', 'Only on Android', 'Only on iPhones'], correct: 1 }
+    ]
+  },
+  {
+    id: 17, title: 'Don\'t Trust End-to-End Encryption', category: 'Privacy', duration: '21m', creator: 'Tech Analysis', videoId: 'oaQT1e6SBM8',
+    content: 'How zero-click exploits, government malware, and metadata harvesting bypass E2EE entirely.',
+    quiz: [
+      { question: 'How can a hacker read an E2EE message?', options: ['By guessing the password', 'By compromising one of the endpoint devices (e.g., screen recording malware on the phone)', 'By calling the ISP', 'By turning off Wi-Fi'], correct: 1 },
+      { question: 'What is a "Zero-Click" exploit?', options: ['A broken mouse', 'Malware that infects a device without the user ever clicking a link or taking action', 'A fast website', 'A server crash'], correct: 1 },
+      { question: 'What is "Metadata"?', options: ['Fake data', 'Data about data (who you talked to, when, and for how long, even if the message itself is encrypted)', 'A Facebook product', 'A database error'], correct: 1 }
+    ]
+  },
+  {
+    id: 18, title: 'Tracking Without Cookies', category: 'Privacy', duration: '15m', creator: 'Shopify Devs', videoId: 'NsFOYs0VAvA',
+    content: 'How modern ad-tech utilizes canvas tracking and APIs to profile users who block third-party cookies.',
+    quiz: [
+      { question: 'What is Canvas Fingerprinting?', options: ['Painting a picture', 'Instructing the browser to draw a hidden image; differences in graphics hardware render it uniquely', 'A type of cookie', 'A VPN protocol'], correct: 1 },
+      { question: 'Why are third-party cookies dying?', options: ['They cost too much', 'Browsers like Safari and Firefox are blocking them by default for privacy', 'They slow down the PC', 'They take up hard drive space'], correct: 1 },
+      { question: 'What does the GDPR regulate?', options: ['Hardware manufacturing', 'Data protection and privacy for individuals in the EU', 'Internet speeds', 'Browser updates'], correct: 1 }
+    ]
+  },
+  {
+    id: 19, title: 'Fighting Browser Fingerprinting', category: 'Privacy', duration: '17m', creator: 'Privacy Guides', videoId: 'v_50cBtSjyQ',
+    content: 'An interview with privacy experts uncovering the tracking arms race and the specific tools used to fight back.',
+    quiz: [
+      { question: 'Which browser is designed specifically to resist fingerprinting by blending in?', options: ['Google Chrome', 'The Tor Browser / Mullvad Browser', 'Microsoft Edge', 'Internet Explorer'], correct: 1 },
+      { question: 'What is the "Anti-Fingerprinting" strategy?', options: ['Having a totally unique setup', 'Making your browser metrics look exactly like millions of other users so you hide in the crowd', 'Turning off the monitor', 'Using a different keyboard'], correct: 1 },
+      { question: 'Does installing dozens of privacy extensions make you safer from fingerprinting?', options: ['Yes', 'No, the unique combination of extensions actually makes your fingerprint MORE unique and trackable', 'Only on a Mac', 'Always'], correct: 1 }
+    ]
+  },
+  {
+    id: 20, title: 'Cybersecurity Standards 2024', category: 'Cybersecurity', duration: '14m', creator: 'SANS Institute', videoId: '5Vc_zcNmTZI',
+    content: 'The state of cybersecurity risk management and the frameworks used by organizations to stay secure.',
+    quiz: [
+      { question: 'What is a cybersecurity framework?', options: ['A metal box for servers', 'A set of guidelines and best practices to manage cyber risk (e.g., NIST)', 'A programming language', 'A type of firewall'], correct: 1 },
+      { question: 'What is the principle of "Least Privilege"?', options: ['Paying employees less', 'Giving users only the bare minimum access rights necessary to perform their jobs', 'Using weak passwords', 'Ignoring security alerts'], correct: 1 },
+      { question: 'What does Incident Response cover?', options: ['Buying new computers', 'The structured approach to handling and managing a security breach or cyberattack', 'Updating a website', 'Writing code'], correct: 1 }
     ]
   }
 ];
 
-const EducationSection = ({ user, userStats }) => {
-  const { screenSize } = useResponsive();
+const EducationSection = ({ theme: globalTheme = 'dark' }) => {
+  const isDark = globalTheme === 'dark';
+  const theme = THEMES[isDark ? 'dark' : 'light'];
+  const typingTitle = useTypewriter("Intelligence Academy", 80, 200);
+
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [currentQuiz, setCurrentQuiz] = useState(null);
   const [quizAnswers, setQuizAnswers] = useState({});
-  const [activeVideo, setActiveVideo] = useState(null);
 
-  const categories = [
-    'all',
-    'Cybersecurity',
-    'Security Awareness',
-    'Digital Literacy',
-    'Misinformation',
-    'Social Media'
-  ];
-  const filteredContent =
-    selectedCategory === 'all'
-      ? educationContent
-      : educationContent.filter(item => item.category === selectedCategory);
+  const categories = ['all', 'OSINT', 'Deepfakes', 'Social Engineering', 'Cybersecurity', 'Privacy'];
+  const filteredContent = selectedCategory === 'all' ? educationContent : educationContent.filter(item => item.category === selectedCategory);
 
   const startQuiz = (courseId) => {
     const course = educationContent.find(c => c.id === courseId);
     if (course.quiz) {
-      setCurrentQuiz({
-        courseId,
-        questions: course.quiz,
-        currentQuestion: 0,
-        score: 0,
-        courseTitle: course.title
-      });
+      setCurrentQuiz({ courseId, questions: course.quiz, currentQuestion: 0, score: 0, courseTitle: course.title });
       setQuizAnswers({});
     }
   };
 
   const submitQuizAnswer = (questionIndex, answerIndex) => {
-    setQuizAnswers(prev => ({
-      ...prev,
-      [questionIndex]: answerIndex
-    }));
+    setQuizAnswers(prev => ({ ...prev, [questionIndex]: answerIndex }));
   };
 
   const completeQuiz = () => {
     const { questions } = currentQuiz;
     let score = 0;
-    questions.forEach((question, index) => {
-      if (quizAnswers[index] === question.correct) score++;
-    });
-    setCurrentQuiz(null);
-    setQuizAnswers({});
-    showNotification(`Quiz completed! Score: ${score}/${questions.length}`, 'success');
+    questions.forEach((question, index) => { if (quizAnswers[index] === question.correct) score++; });
+    setCurrentQuiz(null); setQuizAnswers({});
+    showNotification(`Protocol Completed! Score: ${score}/${questions.length}`, 'success');
   };
 
-  // UI render enhanced for thumbnails and professional look
+  // Staggered Layout Animations
+  const containerVariants = { hidden: { opacity: 0 }, visible: { opacity: 1, transition: { staggerChildren: 0.1 } } };
+  const itemVariants = { hidden: { y: 20, opacity: 0 }, visible: { y: 0, opacity: 1, transition: { type: 'spring', stiffness: 100 } } };
+
   return (
-    <div className={`max-w-5xl mx-auto space-y-6 ${screenSize.isMobile ? 'px-4' : 'px-6'}`}>
-      <div className="text-center">
-        <BookOpenIcon className="w-16 h-16 mx-auto mb-4 text-purple-600" />
-        <h1 className="text-2xl md:text-4xl font-bold mb-4 text-gray-900 dark:text-white">
-          Digital Safety Education Center
-        </h1>
-        <p className="text-lg md:text-xl text-gray-600 dark:text-gray-300 max-w-3xl mx-auto">
-          Master cybersecurity, digital literacy, and fact-checking through curated YouTube courses with quizzes.
-        </p>
-      </div>
-      <div className="flex gap-2 flex-wrap justify-center mb-6">
-        {categories.map(category => (
-          <button
-            key={category}
-            onClick={() => setSelectedCategory(category)}
-            className={`px-4 py-2 rounded-lg text-sm font-medium transition duration-200 ${
-              selectedCategory === category
-                ? 'bg-purple-600 text-white shadow'
-                : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600'
-            }`}
-          >
-            {category === 'all' ? 'All' : category}
-          </button>
-        ))}
-      </div>
-      <div className={`grid gap-6 ${screenSize.isMobile ? 'grid-cols-1' : 'md:grid-cols-2 lg:grid-cols-3'}`}>
-        {filteredContent.map(course => (
-          <Card key={course.id} className="overflow-hidden hover:shadow-lg transition">
-            <div className="p-0">
-              {/* YouTube Thumbnail */}
-              <img
-                src={course.thumbnail}
-                alt={`Thumbnail: ${course.title}`}
-                className="w-full h-48 object-cover mb-2 rounded-t-xl"
-              />
-              <div className="px-4 py-2">
-                <h3 className="font-bold text-lg text-gray-900 dark:text-white mb-1">{course.title}</h3>
-                <p className="text-sm mb-2 text-gray-700 dark:text-gray-300 line-clamp-3">
-                  {course.content}
-                </p>
-                <div className="text-xs text-gray-500 flex items-center justify-between mb-2">
-                  <span>{course.creator}</span>
-                  <span>{course.duration}</span>
+    <motion.div initial="hidden" animate="visible" variants={containerVariants}
+                className={`w-full min-h-screen p-8 transition-colors duration-500 ${theme.background} ${theme.textPrimary} relative overflow-x-hidden`}
+                style={{ marginLeft: '280px', marginTop: '64px', fontFamily: 'Inter, system-ui, sans-serif' }}>
+      
+      {/* 🚨 ADAPTIVE GRID BACKGROUND (NO LAGGY BLURS) */}
+      <div className={`absolute inset-0 pointer-events-none opacity-[0.03] ${isDark ? '' : 'invert'}`} 
+           style={{ backgroundImage: 'linear-gradient(to right, #ffffff 1px, transparent 1px), linear-gradient(to bottom, #ffffff 1px, transparent 1px)', backgroundSize: '40px 40px' }}></div>
+
+      <div className="max-w-7xl mx-auto relative z-10">
+        
+        {/* HEADER */}
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-10">
+          <div>
+            <h1 className={`text-4xl font-black flex items-center gap-3 ${isDark ? 'text-white' : 'text-slate-900'}`}>
+              <AcademicCapIcon className="w-10 h-10 text-indigo-500" /> 
+              <span>{typingTitle}</span>
+              <motion.span animate={{ opacity: [0, 1, 0] }} transition={{ repeat: Infinity, duration: 0.8 }} className="w-1.5 h-8 bg-indigo-500 inline-block ml-1" />
+            </h1>
+            <p className={`${theme.muted} text-sm font-bold uppercase tracking-widest mt-2`}>Cognitive Firewall Training & Security Modules</p>
+          </div>
+        </div>
+
+        {/* Categories Toggle */}
+        <div className="flex gap-2 flex-wrap mb-10">
+          {categories.map(category => (
+            <button key={category} onClick={() => setSelectedCategory(category)}
+              className={`px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all border ${
+                selectedCategory === category 
+                ? 'bg-indigo-600 text-white border-indigo-500 shadow-[0_0_15px_rgba(79,70,229,0.4)]' 
+                : `${theme.inner} ${theme.textSecondary} hover:text-indigo-400 hover:border-indigo-500/30`
+              }`}>
+              {category}
+            </button>
+          ))}
+        </div>
+
+        {/* 🚨 TACTICAL "CORNICE" GRID */}
+        <div className="grid gap-8 grid-cols-1 md:grid-cols-2 xl:grid-cols-3">
+          {filteredContent.map(course => (
+            <motion.div variants={itemVariants} key={course.id} 
+                        className={`${theme.card} p-1.5 overflow-hidden group hover:border-indigo-500/50 transition-all flex flex-col relative
+                                   rounded-tl-3xl rounded-br-3xl rounded-tr-lg rounded-bl-lg`}> 
+              
+              {/* Tactical Corner Brackets */}
+              <div className="absolute top-0 left-0 w-6 h-6 border-t-2 border-l-2 border-indigo-500/30 rounded-tl-3xl z-20 pointer-events-none"></div>
+              <div className="absolute bottom-0 right-0 w-6 h-6 border-b-2 border-r-2 border-indigo-500/30 rounded-br-3xl z-20 pointer-events-none"></div>
+
+              {/* 🚨 DIRECT YOUTUBE LINK: Opens in new tab, avoids Iframe blocking */}
+              <div className="relative aspect-video cursor-pointer overflow-hidden rounded-tl-[1.3rem] rounded-tr-md rounded-bl-md rounded-br-md" 
+                   onClick={() => window.open(`https://www.youtube.com/watch?v=${course.videoId}`, '_blank')}>
+                <img 
+                  src={`https://img.youtube.com/vi/${course.videoId}/hqdefault.jpg`} 
+                  onError={(e) => { e.target.onerror = null; e.target.src = `https://img.youtube.com/vi/${course.videoId}/0.jpg`; }}
+                  alt={course.title} 
+                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" 
+                />
+                <div className="absolute inset-0 bg-slate-900/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity backdrop-blur-sm">
+                  <div className="w-16 h-16 rounded-full bg-indigo-600 shadow-[0_0_20px_rgba(79,70,229,0.8)] flex items-center justify-center">
+                    <ArrowTopRightOnSquareIcon className="w-8 h-8 text-white ml-1" />
+                  </div>
                 </div>
-                <div className="flex gap-2 flex-wrap mb-2">
-                  {course.tags.map(t => (
-                    <span key={t} className="px-2 py-1 bg-gray-100 dark:bg-gray-700 text-xs rounded-full">{t}</span>
-                  ))}
-                </div>
-                <div className="flex gap-2">
-                  <button
-                    className="flex-1 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white py-2 rounded-lg font-medium flex items-center justify-center gap-2"
-                    onClick={() => setActiveVideo(course.videoId)}
-                  >
-                    <PlayIcon className="w-5 h-5" />
-                    Watch Video
-                  </button>
-                  {course.quiz && (
-                    <button
-                      onClick={() => startQuiz(course.id)}
-                      className="border-2 border-purple-600 text-purple-600 rounded-lg px-4 py-2 font-medium hover:bg-purple-50 dark:hover:bg-purple-900/20"
-                      title="Take Quiz"
-                    >
-                      <QuestionMarkCircleIcon className="w-5 h-5" />
-                    </button>
-                  )}
+                <div className="absolute top-3 left-3 bg-slate-950/80 backdrop-blur-md text-indigo-400 text-[9px] font-black uppercase tracking-widest px-2.5 py-1 rounded border border-indigo-500/30">
+                  {course.category}
                 </div>
               </div>
-            </div>
-          </Card>
-        ))}
-      </div>
-      {/* Modal for Embedded Video */}
-      <AnimatePresence>
-        {activeVideo && (
-          <motion.div
-            className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-          >
-            <motion.div
-              className="bg-white dark:bg-gray-900 rounded-xl shadow-2xl max-w-2xl w-full overflow-hidden"
-              initial={{ scale: 0.95 }}
-              animate={{ scale: 1 }}
-              exit={{ scale: 0.95 }}
-            >
-              <div className="p-0 flex flex-col items-end">
-                <button onClick={() => setActiveVideo(null)} className="p-2 m-2 text-gray-400 hover:text-gray-800 dark:hover:text-white">
-                  <XMarkIcon className="w-6 h-6" />
-                </button>
-                <div className="aspect-w-16 aspect-h-9 w-full">
-                  <iframe
-                    title="YouTube Video"
-                    src={`https://www.youtube.com/embed/${activeVideo}`}
-                    frameBorder="0"
-                    allowFullScreen
-                    className="w-full h-96"
-                  />
+
+              {/* Data Area */}
+              <div className="p-6 flex flex-col flex-grow">
+                <h3 className={`font-black text-lg mb-2 leading-tight ${theme.textPrimary} group-hover:text-indigo-400 transition-colors`}>{course.title}</h3>
+                <p className={`text-xs leading-relaxed mb-6 line-clamp-3 ${theme.textSecondary}`}>{course.content}</p>
+                
+                <div className="mt-auto pt-4 border-t border-slate-800/30 grid grid-cols-2 gap-3 items-center">
+                  <div className="flex flex-col gap-1">
+                     <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest flex items-center gap-1"><ClockIcon className="w-3 h-3"/> {course.duration}</span>
+                     <span className={`text-[10px] font-bold ${theme.textPrimary}`}>{course.creator}</span>
+                  </div>
+                  <div className="flex justify-end gap-2">
+                    <button onClick={() => window.open(`https://www.youtube.com/watch?v=${course.videoId}`, '_blank')} className="px-4 h-8 rounded-lg bg-indigo-500/10 text-indigo-500 hover:bg-indigo-600 hover:text-white flex items-center justify-center gap-1 transition-all border border-indigo-500/20 text-[10px] font-black uppercase tracking-widest">
+                      <PlayIcon className="w-3 h-3" /> Watch
+                    </button>
+                    {course.quiz && (
+                      <button onClick={() => startQuiz(course.id)} className={`px-4 h-8 rounded-lg flex items-center justify-center gap-1 transition-all border text-[10px] font-black uppercase tracking-widest ${isDark ? 'bg-slate-800 text-slate-300 border-slate-700 hover:bg-slate-700' : 'bg-slate-100 text-slate-700 border-slate-200 hover:bg-slate-200'}`}>
+                        <QuestionMarkCircleIcon className="w-3 h-3" /> Quiz
+                      </button>
+                    )}
+                  </div>
                 </div>
               </div>
             </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-      {/* Quiz Modal */}
+          ))}
+        </div>
+
+        {/* ENDLESS SCROLL FIX */}
+        <div className="pb-24"></div>
+
+      </div>
+
+      {/* 🚨 QUIZ MODAL: Fixed Z-Index & Sidebar Offset */}
       <AnimatePresence>
         {currentQuiz && (
-          <motion.div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50"
-            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-            <motion.div className="bg-white dark:bg-gray-800 rounded-2xl p-8 max-w-2xl w-full max-h-[80vh] overflow-y-auto"
-              initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }}>
-              <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">Course Quiz</h2>
-              <p className="text-gray-600 dark:text-gray-400 mb-6">{currentQuiz.courseTitle}</p>
-              <div className="space-y-6">
-                <div className="flex items-center justify-between text-sm text-gray-600 dark:text-gray-400">
-                  <span>Question {currentQuiz.currentQuestion + 1} of {currentQuiz.questions.length}</span>
-                  <span>Score: {currentQuiz.score}/{currentQuiz.questions.length}</span>
+          <div className="fixed inset-0 z-[9999] flex items-center justify-center" style={{ paddingLeft: window.innerWidth > 768 ? '280px' : '0px' }}>
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setCurrentQuiz(null)} className="absolute inset-0 bg-slate-950/90 backdrop-blur-xl" />
+            <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }} onClick={(e) => e.stopPropagation()} 
+                        className={`${theme.card} rounded-2xl p-8 max-w-2xl w-[90%] max-h-[85vh] overflow-y-auto relative z-10 custom-scrollbar border-t-4 border-t-indigo-500 mx-4`}>
+              <div className="flex justify-between items-center mb-8 border-b border-slate-800/50 pb-4">
+                <div>
+                  <h2 className="text-xl font-black uppercase tracking-tight text-indigo-500 flex items-center gap-2"><CpuChipIcon className="w-5 h-5"/> Protocol Evaluation</h2>
+                  <p className={`text-xs mt-1 font-mono uppercase tracking-widest ${theme.textSecondary}`}>{currentQuiz.courseTitle}</p>
                 </div>
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                <button onClick={() => setCurrentQuiz(null)} className="p-2 hover:bg-rose-500/20 text-slate-500 hover:text-rose-500 rounded-lg transition-colors"><XMarkIcon className="w-5 h-5" /></button>
+              </div>
+              
+              <div className="space-y-6">
+                <div className={`flex items-center justify-between text-[10px] font-black uppercase tracking-widest ${theme.textSecondary}`}>
+                  <span className="bg-slate-800/50 px-3 py-1.5 rounded border border-slate-700/50">Node {currentQuiz.currentQuestion + 1} // {currentQuiz.questions.length}</span>
+                  <span className="text-indigo-400">Score: {currentQuiz.score}</span>
+                </div>
+                
+                <h3 className={`text-lg font-bold leading-relaxed ${theme.textPrimary}`}>
                   {currentQuiz.questions[currentQuiz.currentQuestion]?.question}
                 </h3>
+                
                 <div className="space-y-3">
                   {currentQuiz.questions[currentQuiz.currentQuestion]?.options.map((option, index) => (
-                    <motion.button
-                      key={index}
-                      onClick={() => submitQuizAnswer(currentQuiz.currentQuestion, index)}
-                      className={`w-full text-left p-4 rounded-lg border-2 transition-all ${
+                    <motion.button key={index} onClick={() => submitQuizAnswer(currentQuiz.currentQuestion, index)} whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.99 }}
+                      className={`w-full text-left p-4 rounded-xl border-2 transition-all font-medium text-sm ${
                         quizAnswers[currentQuiz.currentQuestion] === index
-                          ? 'border-purple-500 bg-purple-50 dark:bg-purple-900/20'
-                          : 'border-gray-200 dark:border-gray-600 hover:border-gray-300'
-                      }`}
-                      whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-                      <span className="text-gray-900 dark:text-white">{option}</span>
+                          ? 'border-indigo-500 bg-indigo-500/10 text-indigo-400 shadow-[0_0_15px_rgba(79,70,229,0.1)]'
+                          : `${theme.inner} ${theme.textPrimary} hover:border-indigo-500/30`
+                      }`}>
+                      {option}
                     </motion.button>
                   ))}
                 </div>
-                <div className="flex items-center justify-between">
-                  <motion.button
-                    onClick={() => {
-                      if (currentQuiz.currentQuestion > 0) {
-                        setCurrentQuiz(prev => ({
-                          ...prev,
-                          currentQuestion: prev.currentQuestion - 1
-                        }));
-                      }
-                    }}
-                    disabled={currentQuiz.currentQuestion === 0}
-                    className="flex items-center space-x-2 px-4 py-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white disabled:opacity-50 disabled:cursor-not-allowed"
-                    whileHover={{ scale: currentQuiz.currentQuestion === 0 ? 1 : 1.05 }}>
-                    <ArrowLeftIcon className="w-4 h-4" />
-                    <span>Previous</span>
-                  </motion.button>
-                  <motion.button
-                    onClick={() => {
-                      if (currentQuiz.currentQuestion < currentQuiz.questions.length - 1) {
-                        setCurrentQuiz(prev => ({
-                          ...prev,
-                          currentQuestion: prev.currentQuestion + 1
-                        }));
-                      } else {
-                        completeQuiz();
-                      }
-                    }}
-                    disabled={quizAnswers[currentQuiz.currentQuestion] === undefined}
-                    className="flex items-center space-x-2 bg-gradient-to-r from-purple-600 to-blue-600 text-white px-6 py-2 rounded-lg font-medium hover:from-purple-700 hover:to-blue-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                    whileHover={{ scale: quizAnswers[currentQuiz.currentQuestion] === undefined ? 1 : 1.05 }}
-                    whileTap={{ scale: quizAnswers[currentQuiz.currentQuestion] === undefined ? 1 : 0.95 }}>
-                    <span>
-                      {currentQuiz.currentQuestion === currentQuiz.questions.length - 1 ? 'Complete Quiz' : 'Next'}
-                    </span>
-                    <ArrowRightIcon className="w-4 h-4" />
-                  </motion.button>
+
+                <div className="flex items-center justify-between pt-6 border-t border-slate-800/50">
+                  <button onClick={() => setCurrentQuiz(prev => ({ ...prev, currentQuestion: prev.currentQuestion - 1 }))} disabled={currentQuiz.currentQuestion === 0} className={`flex items-center gap-2 px-5 py-2.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${currentQuiz.currentQuestion === 0 ? 'opacity-50 cursor-not-allowed text-slate-500' : 'bg-slate-800 text-slate-300 hover:bg-slate-700'}`}>
+                    <ArrowLeftIcon className="w-4 h-4" /> Previous
+                  </button>
+                  <button onClick={() => { if (currentQuiz.currentQuestion < currentQuiz.questions.length - 1) { setCurrentQuiz(prev => ({ ...prev, currentQuestion: prev.currentQuestion + 1 })); } else { completeQuiz(); } }} disabled={quizAnswers[currentQuiz.currentQuestion] === undefined} className={`flex items-center gap-2 px-6 py-2.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${quizAnswers[currentQuiz.currentQuestion] === undefined ? 'opacity-50 cursor-not-allowed bg-slate-800 text-slate-500' : 'bg-indigo-600 text-white hover:bg-indigo-500 shadow-lg shadow-indigo-500/20'}`}>
+                    {currentQuiz.currentQuestion === currentQuiz.questions.length - 1 ? 'Finish' : 'Next'} <ArrowRightIcon className="w-4 h-4" />
+                  </button>
                 </div>
               </div>
             </motion.div>
-          </motion.div>
+          </div>
         )}
       </AnimatePresence>
-    </div>
+
+    </motion.div>
   );
 };
 

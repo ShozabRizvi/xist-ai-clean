@@ -1,11 +1,17 @@
 import { initializeApp } from 'firebase/app';
-import { getAuth, GoogleAuthProvider } from 'firebase/auth';
+import { 
+  getAuth, 
+  GoogleAuthProvider, 
+  setPersistence, 
+  browserLocalPersistence 
+} from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
 import { getStorage } from 'firebase/storage';
 import { getAnalytics } from 'firebase/analytics';
 
 // Your web app's Firebase configuration
 const firebaseConfig = {
+  // ✅ Using the correct verified key as the fallback
   apiKey: process.env.REACT_APP_FIREBASE_API_KEY || "AIzaSyCODoezYbGNyxlh06uWRn0wK_IF7kzokZY",
   authDomain: process.env.REACT_APP_FIREBASE_AUTH_DOMAIN || "xistai.firebaseapp.com",
   projectId: process.env.REACT_APP_FIREBASE_PROJECT_ID || "xistai",
@@ -24,9 +30,14 @@ if (typeof window !== 'undefined' && process.env.REACT_APP_ENVIRONMENT === 'prod
   analytics = getAnalytics(app);
 }
 
+// Initialize core services
 export const auth = getAuth(app);
 export const db = getFirestore(app);
 export const storage = getStorage(app);
+
+// ✅ Force the browser to remember the session after the redirect handshake
+setPersistence(auth, browserLocalPersistence)
+  .catch((error) => console.error("Persistence Error:", error));
 
 export const googleProvider = new GoogleAuthProvider();
 googleProvider.setCustomParameters({

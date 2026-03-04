@@ -1,56 +1,88 @@
-// VerifySection.jsx - Complete Xist AI Forensic Intelligence Hub
-// Light/Dark mode compatible + Full AI integration + Supabase ready
-import React, { useEffect, useMemo, useRef, useState, useCallback } from 'react';
+// VerifySection.jsx - Complete Xist AI Forensic Intelligence Hub (Modular Matrix Design)
+import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast, Toaster } from 'react-hot-toast';
 import {
-  ShieldCheckIcon,
-  DocumentTextIcon,
-  LinkIcon,
-  PhotoIcon,
-  VideoCameraIcon,
-  ArrowPathIcon,
-  ExclamationTriangleIcon,
-  CheckBadgeIcon,
-  ClockIcon,
-  TrashIcon,
-  ShareIcon,
-  SparklesIcon,
-  Cog6ToothIcon,
-  SunIcon,
-  MoonIcon
+  ShieldCheckIcon, DocumentTextIcon, LinkIcon, PhotoIcon, VideoCameraIcon,
+  MicrophoneIcon, TrashIcon, ShareIcon, SparklesIcon, SunIcon, MoonIcon,
+  CheckCircleIcon, ArrowUpTrayIcon, ClipboardDocumentCheckIcon, 
+  DocumentMagnifyingGlassIcon, MagnifyingGlassCircleIcon
 } from '@heroicons/react/24/outline';
 import { supabase } from '../../lib/supabase';
-// Add after imports (line 20)
-const USE_REAL_APIS = process.env.REACT_APP_USE_REAL_APIS === 'true';
 
 // ==============================
-// THEME & CONSTANTS (Light/Dark)
+// UTILITY FUNCTIONS
+// ==============================
+const timeAgo = (utcDateStr) => {
+  if (!utcDateStr) return 'Just now';
+  const safeStr = utcDateStr.endsWith('Z') || utcDateStr.includes('+') ? utcDateStr : `${utcDateStr}Z`;
+  const date = new Date(safeStr);
+  const now = new Date();
+  const seconds = Math.round((now - date) / 1000);
+  const minutes = Math.round(seconds / 60);
+  const hours = Math.round(minutes / 60);
+  const days = Math.round(hours / 24);
+  
+  if (seconds < 60) return 'Just now';
+  if (minutes < 60) return `${minutes}m ago`;
+  if (hours < 24) return `${hours}h ago`;
+  if (days === 1) return 'Yesterday';
+  return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+};
+
+const clamp = (v, a = 0, b = 100) => Math.max(a, Math.min(b, v));
+const formatPercent = (v) => Math.round(clamp(v));
+
+const verdictLabel = (level) => {
+  if (level === 'CRITICAL') return 'Psychological Deception';
+  if (level === 'QUESTIONABLE' || level === 'SUSPICIOUS') return 'Narrative Manipulation';
+  return 'Authentic & Verified';
+};
+
+// ✅ TYPING EFFECT HOOK
+const useTypewriter = (text, speed = 80, delay = 200) => {
+  const [displayedText, setDisplayedText] = useState("");
+  const [started, setStarted] = useState(false);
+
+  useEffect(() => {
+    const timeout = setTimeout(() => setStarted(true), delay);
+    return () => clearTimeout(timeout);
+  }, [delay]);
+
+  useEffect(() => {
+    if (!started) return;
+    if (displayedText.length < text.length) {
+      const timeout = setTimeout(() => {
+        setDisplayedText(text.slice(0, displayedText.length + 1));
+      }, speed);
+      return () => clearTimeout(timeout);
+    }
+  }, [displayedText, text, speed, started]);
+
+  return displayedText;
+};
+
+// ==============================
+// THEMES & CONSTANTS
 // ==============================
 const THEMES = {
   dark: {
-    background: 'bg-gradient-to-br from-slate-900 via-purple-900/20 to-slate-900',
-    card: 'bg-slate-800/80 backdrop-blur-xl',
-    accentPrimary: 'from-purple-500 to-indigo-500',
-    accentSecondary: 'from-indigo-500 to-blue-500',
-    safe: 'from-emerald-400 to-emerald-500',
-    danger: 'from-rose-500 to-rose-600',
-    textPrimary: 'text-white',
-    textSecondary: 'text-slate-300',
-    muted: 'text-slate-400',
-    glassOpacity: 'rgba(255,255,255,0.03)'
+    background: 'bg-[#020617]', 
+    card: 'bg-slate-900 border border-slate-800 shadow-2xl',
+    inner: 'bg-slate-950 border-slate-800',
+    accentPrimary: 'from-indigo-600 to-blue-600',
+    textPrimary: 'text-slate-100',
+    textSecondary: 'text-slate-400',
+    muted: 'text-slate-500'
   },
   light: {
-    background: 'bg-gradient-to-br from-slate-50 via-blue-50/30 to-slate-50',
-    card: 'bg-white/80 backdrop-blur-xl',
-    accentPrimary: 'from-purple-500 to-indigo-500',
-    accentSecondary: 'from-indigo-400 to-blue-400',
-    safe: 'from-emerald-500 to-emerald-600',
-    danger: 'from-rose-500 to-rose-600',
+    background: 'bg-slate-50',
+    card: 'bg-white border border-slate-200 shadow-xl',
+    inner: 'bg-slate-100 border-slate-200',
+    accentPrimary: 'from-indigo-500 to-blue-500',
     textPrimary: 'text-slate-900',
-    textSecondary: 'text-slate-700',
-    muted: 'text-slate-500',
-    glassOpacity: 'rgba(0,0,0,0.03)'
+    textSecondary: 'text-slate-600',
+    muted: 'text-slate-400'
   }
 };
 
@@ -59,71 +91,85 @@ const MODES = [
   { id: 'url', label: 'URL', icon: LinkIcon },
   { id: 'image', label: 'Image', icon: PhotoIcon },
   { id: 'video', label: 'Video', icon: VideoCameraIcon },
-  { id: 'voice', label: 'Voice', icon: VideoCameraIcon }
+  { id: 'voice', label: 'Voice', icon: MicrophoneIcon },
+  { id: 'document', label: 'Document', icon: ClipboardDocumentCheckIcon } 
 ];
 
-const DEFAULT_METRICS = {
-  cognitiveload: 0,
-  narrativedistance: 0,
-  emotionalvelocity: 0,
-  authenticityscore: 0
-};
-
-const VERDICT_LEVELS = {
-  SAFE: 'SAFE',
-  SUSPICIOUS: 'SUSPICIOUS',
-  CRITICAL: 'CRITICAL'
-};
-
-// ==============================
-// UTILITY FUNCTIONS
-// ==============================
-const clamp = (v, a = 0, b = 100) => Math.max(a, Math.min(b, v));
-const formatPercent = (v) => Math.round(clamp(v));
-const verdictFromScore = (score) => {
-  if (score >= 80) return VERDICT_LEVELS.CRITICAL;
-  if (score >= 50) return VERDICT_LEVELS.SUSPICIOUS;
-  return VERDICT_LEVELS.SAFE;
-};
-
-const verdictLabel = (level) => {
-  switch (level) {
-    case VERDICT_LEVELS.CRITICAL: return 'Psychological Deception';
-    case VERDICT_LEVELS.SUSPICIOUS: return 'Narrative Manipulation';
-    default: return 'Authentic';
-  }
-};
-
-const verdictColor = (level, theme) => {
-  switch (level) {
-    case VERDICT_LEVELS.CRITICAL: return theme.danger;
-    case VERDICT_LEVELS.SUSPICIOUS: return theme.accentSecondary;
-    default: return theme.safe;
-  }
-};
+const DEFAULT_METRICS = { emotional_intensity: 0, bias_indicator_score: 0, sensationalism_score: 0, logical_consistency_score: 0 };
 
 // ==============================
 // SUB-COMPONENTS
 // ==============================
+const ForensicScanner = ({ theme }) => {
+  const [progress, setProgress] = useState(0);
+  const [activeStage, setActiveStage] = useState(0);
+  
+  const stages = [
+    { id: 0, text: "Initializing Omni-Engine..." },
+    { id: 1, text: "Extracting structural metadata & hidden payloads..." },
+    { id: 2, text: "Running adversarial pattern recognition..." },
+    { id: 3, text: "Cross-referencing Global Threat Matrix..." },
+    { id: 4, text: "Synthesizing forensic dossier..." }
+  ];
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setProgress(p => {
+        const nextP = p + (Math.random() * 8);
+        return nextP > 94 ? 94 : nextP;
+      });
+    }, 400);
+    return () => clearInterval(timer);
+  }, []);
+
+  useEffect(() => { setActiveStage(Math.floor(progress / 20)); }, [progress]);
+
+  return (
+    <div className={`${theme.card} rounded-3xl p-8 border border-indigo-500/30 shadow-[0_0_40px_rgba(99,102,241,0.1)] flex flex-col justify-center h-full min-h-[500px]`}>
+      <div className="mb-10 flex justify-center">
+        <div className="relative">
+          <div className="w-24 h-24 border-4 border-slate-700/50 border-t-indigo-500 rounded-full animate-spin shadow-[0_0_15px_rgba(99,102,241,0.3)]"></div>
+          <div className="absolute inset-0 flex items-center justify-center"><ShieldCheckIcon className="w-10 h-10 text-indigo-400 animate-pulse" /></div>
+        </div>
+      </div>
+      <h3 className="text-2xl font-black text-center mb-8 text-indigo-400 tracking-widest uppercase font-mono">Scanning...</h3>
+      <div className="w-full bg-slate-950 rounded-full h-2 mb-10 overflow-hidden border border-slate-800">
+        <motion.div className="bg-gradient-to-r from-indigo-600 via-blue-500 to-indigo-400 h-full shadow-[0_0_10px_rgba(99,102,241,0.8)]" animate={{ width: `${progress}%` }} transition={{ ease: "linear", duration: 0.4 }} />
+      </div>
+      <div className="space-y-5 px-4 font-mono text-sm">
+        {stages.map((stage) => {
+          const isCompleted = activeStage > stage.id;
+          const isActive = activeStage === stage.id;
+          const isPending = activeStage < stage.id;
+          return (
+            <div key={stage.id} className={`flex items-center gap-4 transition-all duration-500 ${isPending ? 'opacity-30' : 'opacity-100'} ${isActive ? 'translate-x-2' : ''}`}>
+              <div className={`w-6 h-6 rounded-sm flex items-center justify-center shrink-0 ${
+                isCompleted ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 
+                isActive ? 'bg-indigo-500/20 text-indigo-400 animate-pulse border border-indigo-500/50' : 'bg-slate-800/50 text-slate-500 border border-slate-700/50'}`}>
+                {isCompleted ? <CheckCircleIcon className="w-4 h-4" /> : isActive ? <div className="w-1.5 h-1.5 bg-indigo-400 rounded-full" /> : <div className="w-1 h-1 bg-slate-500 rounded-full" />}
+              </div>
+              <span className={`tracking-tight ${isActive ? 'text-indigo-200' : 'text-slate-500'}`}>{stage.text}</span>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+};
+
 const ModeSelector = ({ mode, setMode, theme }) => (
   <div className="w-full flex justify-center mt-6">
-    <div className={`inline-flex items-center rounded-full p-3 ${theme.card} shadow-xl ring-1 ring-white/10`}>
+    <div className={`inline-flex items-center rounded-xl p-1.5 ${theme.card} overflow-x-auto custom-scrollbar`}>
       {MODES.map((m) => {
         const Icon = m.icon;
         const active = m.id === mode;
         return (
-          <button
-            key={m.id}
-            onClick={() => setMode(m.id)}
-            className={`flex items-center gap-2 px-4 py-2 rounded-full transition-all duration-200 focus:outline-none ${
-              active
-                ? `bg-gradient-to-r ${theme.accentPrimary} text-white shadow-lg shadow-purple-500/25`
-                : 'text-slate-400 hover:text-white hover:bg-white/10'
-            }`}
-            style={{ fontFamily: 'Inter, system-ui, -apple-system', fontSize: '0.75rem', fontWeight: 600, letterSpacing: '0.05em' }}
-          >
+          <button key={m.id} onClick={() => setMode(m.id)}
+            className={`flex items-center gap-2 px-5 py-2 rounded-lg transition-all duration-200 focus:outline-none whitespace-nowrap ${
+              active ? `bg-slate-800 text-indigo-400 shadow-md border border-slate-700` : 'text-slate-500 hover:text-slate-300 hover:bg-slate-800/50 border border-transparent'
+            }`}>
             <Icon className="w-4 h-4" />
-            <span className="hidden sm:inline">{m.label}</span>
+            <span className="hidden sm:inline text-sm font-semibold tracking-wide">{m.label}</span>
           </button>
         );
       })}
@@ -131,255 +177,85 @@ const ModeSelector = ({ mode, setMode, theme }) => (
   </div>
 );
 
-const TerminalOutput = ({ running, logs, onClear, theme }) => {
-  const containerRef = useRef(null);
-  
+const TypewriterTerminalText = ({ text }) => {
+  const [displayedText, setDisplayedText] = useState("");
   useEffect(() => {
-    if (containerRef.current) {
-      containerRef.current.scrollTop = containerRef.current.scrollHeight;
-    }
-  }, [logs]);
+    setDisplayedText("");
+    let i = 0;
+    const interval = setInterval(() => {
+      setDisplayedText(text.slice(0, i));
+      i++;
+      if (i > text.length) clearInterval(interval);
+    }, 15);
+    return () => clearInterval(interval);
+  }, [text]);
 
-  return (
-    <div className="mt-4">
-      <div className={`${theme.card} p-4 text-xs font-mono border border-white/10 rounded-xl min-h-[120px] max-h-[240px] overflow-y-auto`} ref={containerRef}>
-        {logs.length === 0 ? (
-          <div className={`${theme.muted} text-center py-8`}>Diagnostic terminal idle</div>
-        ) : (
-          logs.map((l, i) => (
-            <div key={i} className="flex items-start gap-2 mb-2 last:mb-0">
-              <div className={`w-2 h-2 rounded-full mt-1 flex-shrink-0 ${
-                l.level === 'info' ? 'bg-indigo-400' :
-                l.level === 'warn' ? 'bg-yellow-400' :
-                'bg-rose-400'
-              }`} />
-              <div className="flex-1 min-w-0">
-                <div className={`${theme.muted} text-xs`}>{l.time}</div>
-                <div className={`${theme.textSecondary} truncate`}>{l.message}</div>
-              </div>
-            </div>
-          ))
+  return <span>{displayedText}<span className="animate-pulse text-indigo-400">_</span></span>;
+};
+
+const PrivateLedger = ({ entries, theme, onDelete, onDeleteAll, onLoad }) => (
+  <div className="mt-8">
+    <div className={`${theme.muted} text-xs uppercase tracking-widest mb-4 font-bold flex items-center justify-between`}>
+      <span>Secure Event Log</span>
+      <div className="flex items-center gap-3">
+        <span className="bg-slate-800 border border-slate-700 px-3 py-1 rounded-md text-slate-300 font-mono text-[10px] uppercase">
+          {entries.length} Recent Scans
+        </span>
+        {entries.length > 0 && (
+          <button onClick={onDeleteAll} className="text-rose-400 hover:text-rose-300 flex items-center gap-1 bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/20 px-3 py-1.5 rounded-md transition-colors cursor-pointer">
+            <TrashIcon className="w-3.5 h-3.5" /> Purge Logs
+          </button>
         )}
       </div>
-      <div className="flex items-center justify-between mt-3">
-        <div className={`${theme.muted} text-xs`}>
-          {running ? '🔄 Analyzing...' : '⚡ Idle'}
-        </div>
-        <button
-          onClick={onClear}
-          className={`${theme.textSecondary} px-3 py-1 rounded-md hover:bg-white/10 text-xs transition-colors`}
-        >
-          Clear
-        </button>
-      </div>
     </div>
-  );
-};
-
-const MetricBar = ({ label, value, color, description, theme }) => {
-  const pct = clamp(value, 0, 100);
-  return (
-    <div className="mb-4">
-      <div className="flex justify-between items-baseline">
-        <div className={`${theme.muted} text-xs uppercase tracking-widest`}>{label}</div>
-        <div className={`${theme.textPrimary} text-sm font-semibold`}>{formatPercent(pct)}%</div>
-      </div>
-      <div className="w-full h-3 rounded-full mt-2 bg-white/10 border border-white/20">
-        <motion.div
-          initial={{ width: 0 }}
-          animate={{ width: `${pct}%` }}
-          transition={{ duration: 0.9, ease: 'easeOut' }}
-          className="h-full rounded-full shadow-lg"
-          style={{
-            background: `linear-gradient(90deg, ${color}, var(--accent-secondary, #6366f1))`,
-            boxShadow: `0 4px 18px ${color}33`
-          }}
-        />
-      </div>
-      <div className={`${theme.muted} text-xs mt-1`}>{description}</div>
-    </div>
-  );
-};
-
-const EvidenceLog = ({ items, theme }) => (
-  <div className="mt-6">
-    <div className={`${theme.muted} text-xs uppercase tracking-widest mb-3 font-medium`}>Evidence Log</div>
-    {items.length === 0 ? (
-      <div className={`${theme.textSecondary} text-sm py-6 text-center border-2 border-dashed border-white/20 rounded-xl`}>
-        No anomalies detected
-      </div>
-    ) : (
-      <div className="space-y-3">
-        {items.map((item, idx) => (
-          <motion.div
-            key={idx}
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: idx * 0.03 }}
-            className={`${theme.card} p-4 rounded-xl border border-white/10 flex items-start gap-3 hover:shadow-2xl transition-all`}
-          >
-            <ExclamationTriangleIcon className="w-6 h-6 text-rose-400 flex-shrink-0 mt-0.5" />
-            <div className="flex-1 min-w-0">
-              <div className={`${theme.textPrimary} text-sm font-semibold mb-1 truncate`}>{item.title}</div>
-              <div className={`${theme.textSecondary} text-xs leading-relaxed`}>{item.detail}</div>
-            </div>
-          </motion.div>
-        ))}
-      </div>
-    )}
-  </div>
-);
-
-const VerdictCard = ({ score, level, summary, theme }) => {
-  const color = verdictColor(level, theme);
-  const label = verdictLabel(level);
-  
-  return (
-    <motion.div
-      initial={{ scale: 0.95, opacity: 0 }}
-      animate={{ scale: 1, opacity: 1 }}
-      className={`${theme.card} rounded-2xl p-8 border border-white/10 shadow-2xl`}
-    >
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <div className={`${theme.muted} text-xs uppercase tracking-widest mb-2 font-medium`}>Verdict Confidence</div>
-          <div className="flex items-end gap-4">
-            <div className="text-6xl font-black" style={{ color: color.split('from-')[1]?.replace('-500', '-400') }}>
-              {formatPercent(score)}%
-            </div>
-            <div className={`${theme.textPrimary} text-2xl font-bold tracking-tight`}>{label}</div>
-          </div>
-        </div>
-        <ShieldCheckIcon className="w-20 h-20 text-white/40 hidden md:block" />
-      </div>
-      {summary && (
-        <div className={`${theme.textSecondary} text-sm leading-relaxed bg-white/5 p-4 rounded-xl`}>
-          {summary}
-        </div>
-      )}
-    </motion.div>
-  );
-};
-
-const CriticalOverlay = ({ open, onCancel, onComplete, theme }) => {
-  const [count, setCount] = useState(10);
-  const timerRef = useRef(null);
-
-  useEffect(() => {
-    if (!open) {
-      setCount(10);
-      if (timerRef.current) {
-        clearInterval(timerRef.current);
-        timerRef.current = null;
-      }
-      return;
-    }
-
-    timerRef.current = setInterval(() => {
-      setCount((c) => {
-        if (c <= 1) {
-          clearInterval(timerRef.current);
-          timerRef.current = null;
-          onComplete();
-          return 0;
-        }
-        return c - 1;
-      });
-    }, 1000);
-
-    return () => {
-      if (timerRef.current) clearInterval(timerRef.current);
-    };
-  }, [open, onComplete]);
-
-  return (
-    <AnimatePresence>
-      {open && (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          className="fixed inset-0 z-[9999] flex items-center justify-center p-4"
-          style={{
-            background: 'linear-gradient(180deg, rgba(2,6,23,0.95), rgba(15,23,42,0.98))',
-            backdropFilter: 'blur(12px)'
-          }}
-        >
-          <motion.div
-            initial={{ scale: 0.9, y: 20 }}
-            animate={{ scale: 1, y: 0 }}
-            className={`${theme.card} max-w-2xl w-full p-8 rounded-2xl border border-white/20 shadow-2xl`}
-          >
-            <div className="flex items-center justify-between mb-6">
-              <div className="text-rose-400 text-xs uppercase tracking-widest font-bold flex items-center gap-2">
-                <ExclamationTriangleIcon className="w-5 h-5" />
-                Critical Threat Protocol
-              </div>
-              <button onClick={onCancel} className="text-white/60 hover:text-white p-1 -m-1 rounded-full hover:bg-white/10">
-                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-            </div>
-            
-            <div className="text-center mb-8">
-              <div className={`${theme.textPrimary} text-3xl font-bold mb-3`}>
-                Global Intelligence Sync Imminent
-              </div>
-              <div className={`${theme.textSecondary} text-sm mb-6 max-w-md mx-auto`}>
-                This scan detected critical deception indicators. Anonymized intelligence will be shared with the Xist AI community unless cancelled.
-              </div>
-              <div className="space-y-2">
-                <div className={`${theme.muted} text-xs uppercase tracking-widest`}>Auto-Sync in</div>
-                <div className={`text-5xl font-black ${theme.danger.split(' ')[0]}`}>
-                  {count || 'SYNC'}
-                </div>
-                <div className={`${theme.muted} text-xs uppercase tracking-widest`}>seconds</div>
-              </div>
-            </div>
-            
-            <div className="flex justify-end">
-              <button
-                onClick={onCancel}
-                className="px-6 py-2.5 rounded-xl font-semibold text-sm bg-white/20 hover:bg-white/30 backdrop-blur-sm border border-white/30 transition-all"
-              >
-                Cancel Global Sync
-              </button>
-            </div>
-          </motion.div>
-        </motion.div>
-      )}
-    </AnimatePresence>
-  );
-};
-
-const PrivateLedger = ({ entries, theme }) => (
-  <div className="mt-8">
-    <div className={`${theme.muted} text-xs uppercase tracking-widest mb-4 font-medium`}>Private Ledger</div>
-    <div className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 ${theme.card} p-6 rounded-xl border border-white/10`}>
+    
+    <div className="space-y-3">
       {entries.length === 0 ? (
-        <div className={`${theme.textSecondary} col-span-full text-center py-12`}>
-          No recent scans. Run your first analysis above.
+        <div className={`${theme.textSecondary} text-center py-12 bg-slate-900/50 rounded-xl border border-slate-800 font-mono text-sm`}>
+          No history found. Awaiting payload injection.
         </div>
       ) : (
-        entries.map((e) => (
-          <motion.div
-            key={e.id}
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="p-4 rounded-xl border border-white/10 hover:shadow-xl transition-all hover:-translate-y-1 group"
-          >
-            <div className="flex items-center justify-between mb-2">
-              <div className={`${theme.textPrimary} text-sm font-semibold`}>
-                {e.mode?.toUpperCase() || 'TEXT'}
-              </div>
-              <div className={`${theme.muted} text-xs`}>
-                {new Date(e.created_at).toLocaleString()}
-              </div>
+        entries.map((e, i) => (
+          <motion.div key={e.id} initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.1 }}
+                      className={`${theme.card} flex flex-col sm:flex-row sm:items-center gap-4 p-5 rounded-xl border border-slate-800 hover:border-indigo-500/50 transition-all group bg-slate-900`}>
+            <div className="flex-shrink-0">
+              <div className={`w-14 h-14 rounded-full flex items-center justify-center font-black text-lg shadow-lg ${
+                e.verdict === 'CRITICAL' ? 'bg-rose-500/10 text-rose-500 border border-rose-500/30' :
+                e.verdict === 'QUESTIONABLE' || e.verdict === 'SUSPICIOUS' ? 'bg-yellow-500/10 text-yellow-500 border border-yellow-500/30' :
+                'bg-emerald-500/10 text-emerald-400 border border-emerald-500/30'
+              }`}>{Math.round(e.score)}%</div>
             </div>
-            <div className={`${theme.muted} text-xs mb-2`}>{e.verdict}</div>
-            <div className={`${theme.textSecondary} text-sm line-clamp-2 group-hover:line-clamp-none`}>
-              {e.summary || e.input?.slice(0, 120)}
+            
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-3 mb-2">
+                <span className={`${theme.textPrimary} font-bold text-sm tracking-wide uppercase`}>{e.verdict}</span>
+                <span className="px-2 py-0.5 rounded bg-slate-800 border border-slate-700 text-[9px] font-bold uppercase text-slate-400 flex items-center gap-1">
+                   {e.mode === 'image' && <PhotoIcon className="w-3 h-3"/>}
+                   {e.mode === 'url' && <LinkIcon className="w-3 h-3"/>}
+                   {e.mode === 'text' && <DocumentTextIcon className="w-3 h-3"/>}
+                   {e.mode === 'video' && <VideoCameraIcon className="w-3 h-3"/>}
+                   {e.mode === 'voice' && <MicrophoneIcon className="w-3 h-3"/>}
+                   {e.mode === 'document' && <ClipboardDocumentCheckIcon className="w-3 h-3"/>}
+                   {e.mode}
+                </span>
+                <span className={`${theme.muted} text-[10px] font-medium ml-auto tracking-widest uppercase`}>{timeAgo(e.created_at)}</span>
+              </div>
+              <div className={`${theme.textPrimary} text-sm font-medium mb-1 truncate`}>
+                <span className="opacity-50 mr-2 text-[10px] uppercase tracking-widest font-mono">Payload:</span> 
+                {e.input || 'No input recorded'}
+              </div>
+              <div className={`${theme.textSecondary} text-xs line-clamp-1 group-hover:line-clamp-2 transition-all duration-300 mb-3`}>
+                <span className="opacity-50 mr-2 text-[10px] uppercase tracking-widest font-mono">Summary:</span> 
+                {e.summary}
+              </div>
+              <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                <button onClick={() => onLoad(e)} className="flex items-center gap-1 text-[10px] uppercase tracking-widest bg-indigo-500/10 text-indigo-400 hover:bg-indigo-500/20 border border-indigo-500/20 px-3 py-1.5 rounded transition-colors font-bold">
+                  <ArrowUpTrayIcon className="w-3.5 h-3.5" /> Load Payload
+                </button>
+                <button onClick={() => onDelete(e.id)} className="flex items-center gap-1 text-[10px] uppercase tracking-widest bg-rose-500/10 text-rose-400 hover:bg-rose-500/20 border border-rose-500/20 px-3 py-1.5 rounded transition-colors font-bold">
+                  <TrashIcon className="w-3.5 h-3.5" /> Redact
+                </button>
+              </div>
             </div>
           </motion.div>
         ))
@@ -391,688 +267,347 @@ const PrivateLedger = ({ entries, theme }) => (
 // ==============================
 // MAIN COMPONENT
 // ==============================
-export default function VerifySection({ user }) { 
-  // Theme state
-  const [themeMode, setThemeMode] = useState('dark');
-  const theme = THEMES[themeMode];
+export default function VerifySection({ user, theme: globalTheme }) { 
+  const [localThemeMode, setLocalThemeMode] = useState('dark');
+  const themeMode = THEMES[globalTheme] ? globalTheme : localThemeMode;
+const theme = THEMES[themeMode];
+  const typingTitle = useTypewriter("Xist Threat Parser", 80, 200);
 
-  // Core analysis state
   const [mode, setMode] = useState('text');
   const [inputValue, setInputValue] = useState('');
   const [file, setFile] = useState(null);
-  const [running, setRunning] = useState(false);
-  const [logs, setLogs] = useState([]);
-  const [metrics, setMetrics] = useState(DEFAULT_METRICS);
-  const [evidence, setEvidence] = useState([]);
-  const [score, setScore] = useState(0);
-  const [verdictLevel, setVerdictLevel] = useState(VERDICT_LEVELS.SAFE);
-  const [detailedAnalysis, setDetailedAnalysis] = useState(null);
-  const [summary, setSummary] = useState('');
-  const [ledger, setLedger] = useState([]);
-  const [loadingLedger, setLoadingLedger] = useState(true);
-  const [analysisStage, setAnalysisStage] = useState("");
-
-  // Overlays & flags
-  const [criticalOpen, setCriticalOpen] = useState(false);
-  const [autoSyncPending, setAutoSyncPending] = useState(null);
-  const [sharing, setSharing] = useState(false);
-  const [error, setError] = useState(null);
   
-  // Analysis controller
-  const analysisAbortRef = useRef({ aborted: false });
-  const userIdRef = useRef(null);
+  const [isRecording, setIsRecording] = useState(false);
+  const [audioBlob, setAudioBlob] = useState(null);
+  const mediaRecorderRef = useRef(null);
+  const audioChunksRef = useRef([]);
 
-  // ==============================
-  // SUPABASE INTEGRATION
-  // ==============================
-  const pushLog = useCallback((message, level = 'info') => {
-    const entry = { time: new Date().toLocaleTimeString(), message, level };
-    setLogs(prev => [...prev, entry].slice(-200));
-  }, []);
+  const [running, setRunning] = useState(false);
+  const [metrics, setMetrics] = useState(DEFAULT_METRICS);
+  const [score, setScore] = useState(0);
+  const [verdictLevel, setVerdictLevel] = useState('SAFE');
+  const [summary, setSummary] = useState('');
+  const [sources, setSources] = useState([]); 
+  const [ledger, setLedger] = useState([]);
+  const [sharing, setSharing] = useState(false);
+  const [currentMediaUrl, setCurrentMediaUrl] = useState(null);
 
-  const fetchLedger = useCallback(async () => {
-    setLoadingLedger(true);
+  useEffect(() => { fetchLedger(); }, []);
+
+  const fetchLedger = async () => {
     try {
-      const { data, error } = await supabase
-        .from('user_history')
-        .select('*')
-        .order('created_at', { ascending: false })
-        .limit(6);
-
-      if (error) {
-        console.error('Supabase fetch ledger error:', error);
-        toast.error('Failed to load private ledger.');
-      } else {
-        setLedger(data || []);
-      }
-    } catch (err) {
-      console.error('Ledger fetch exception:', err);
-      toast.error('Unexpected error loading ledger.');
-    } finally {
-      setLoadingLedger(false);
-    }
-  }, []);
-
-  // FIXED persistHistory - Works with your Supabase
-const persistHistory = async (record) => {
-    try {
-      console.log('💾 Saving to ledger:', record);
-      
-      const { data, error } = await supabase
-        .from('user_history')  // ✅ Your existing table
-        .upsert({
-          user_id: user?.id || 'anonymous',
-          verdict: record.verdict,
-          score: record.score,
-          level: record.level,
-          summary: record.summary || 'Analysis complete',
-          input: record.input?.substring(0, 500),
-          mode: record.mode,
-          metadata: record.metrics,
-          created_at: new Date().toISOString()
-        });
-
-      if (error) {
-        console.error('Ledger error:', error);
-        toast.error('Ledger save failed');
-      } else {
-        console.log('✅ Ledger saved:', data);
-        toast.success('✅ Saved to Private Ledger');
-        fetchLedger();  // Refresh ledger
-      }
-    } catch (error) {
-      console.error('Ledger exception:', error);
-    }
+      const { data, error } = await supabase.from('user_history').select('*').order('created_at', { ascending: false }).limit(5);
+      if (!error && data) setLedger(data);
+    } catch (err) { console.error('Ledger fetch error:', err); }
   };
 
+  const persistHistory = async (record) => {
+    try {
+      const payload = {
+        verdict: record.verdict, score: record.score, level: record.level,
+        summary: record.summary || 'Analysis complete', input: record.input?.substring(0, 500),
+        mode: record.mode, metadata: record.metrics, media_url: record.media_url
+      };
+      const currentUserId = user?.id || user?.uid;
+      if (currentUserId) payload.user_id = currentUserId;
+      const { error } = await supabase.from('user_history').insert(payload); 
+      if (!error) { toast.success('💾 Saved to Secure Event Log'); fetchLedger(); }
+    } catch (error) { console.error('Save error:', error); }
+  };
 
+  const handleDeleteEntry = async (id) => {
+    try {
+      const { error } = await supabase.from('user_history').delete().eq('id', id);
+      if (error) throw error;
+      setLedger(prev => prev.filter(item => item.id !== id));
+      toast.success('History redacted.');
+    } catch (err) { toast.error('Failed to redact entry.'); }
+  };
+
+  const handleDeleteAll = async () => {
+    const currentUserId = user?.id || user?.uid;
+    if (!currentUserId) return toast.error('Authentication required.');
+    if (!window.confirm('Are you sure you want to purge all secure logs?')) return;
+    try {
+      const { error } = await supabase.from('user_history').delete().eq('user_id', currentUserId);
+      if (error) throw error;
+      setLedger([]);
+      toast.success('Logs purged.');
+    } catch (err) { toast.error('Failed to purge logs.'); }
+  };
+
+  const handleLoadEntry = (entry) => {
+    setMode(entry.mode || 'text');
+    setInputValue(entry.input || '');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    if (['image', 'video', 'voice', 'document'].includes(entry.mode)) {
+       toast('Media mode selected. Please re-inject payload.', { icon: '📁' });
+    } else { toast.success('Payload loaded.'); }
+  };
+  
   const shareToCommunity = async (record) => {
     setSharing(true);
     try {
-      const postData = {
-        title: `${record.verdict} Threat (${record.mode.toUpperCase()})`,
-        body: `${record.summary}\n\nScore: ${record.score}%\nEvidence: ${record.evidence.length}\nMetrics: ${JSON.stringify(record.metrics)}`,  // ✅ FULL DETAILS
-        metadata: record,
-        evidence_count: record.evidence.length,
-        is_automated: true,
-        mode: record.mode,
-        user_id: user?.id  // ✅ Links to profile
-      };
-
-      console.log('📤 Sharing to community:', postData);
-
-      const { data, error } = await supabase
-        .from('communityposts')
-        .insert(postData)
-        .select();
-
-      if (error) throw error;
+      const currentUserId = user?.id || user?.uid;
       
-      toast.success('🚀 Shared to Community - Full details included!');
-      setSharing(false);
-    } catch (error) {
-      console.error('Share error:', error);
-      toast.error('Share failed');
-      setSharing(false);
+      // ✅ THE NEW MULTI-MODAL ROUTER
+      // Maps the input method to the correct Community Feed category
+      let mappedCategory = 'misinfo'; // Default fallback
+      
+      if (record.mode === 'url') {
+        mappedCategory = 'scam'; // Malicious links go to Social Engineering
+      } else if (record.mode === 'document') {
+        mappedCategory = 'malware'; // Suspicious files go to Malware
+      } else if (['image', 'video', 'voice'].includes(record.mode)) {
+        mappedCategory = 'deepfake'; // Media goes to Deepfake Media
+      } else if (record.mode === 'text') {
+        // Text can be misinfo or a scam, we default to misinfo unless it's a critical threat
+        mappedCategory = record.score < 40 ? 'cyber_attack' : 'misinfo'; 
+      }
+
+      const postData = {
+        title: `[${Math.round(record.score)}% Score] AI Detected ${record.verdict} Content`,
+        description: `FORENSIC SUMMARY:\n${record.summary}\n\nSCANNED CONTENT:\n"${record.input.substring(0, 150)}..."`,
+        threat_type: mappedCategory, // 🎯 Now dynamically assigned!
+        location: 'Global AI Network', 
+        is_verified: false, 
+        user_id: currentUserId || null, 
+        media_url: record.media_url || null
+      };
+      
+      const { error } = await supabase.from('community_threats').insert(postData);
+      if (error) throw error;
+      toast.success('🌍 Broadcasted to Threat Matrix!');
+    } catch (error) { 
+      toast.error('Broadcast failed.'); 
+      console.error(error);
+    } finally { 
+      setSharing(false); 
     }
   };
 
-  // Load ledger on mount
-  useEffect(() => {
-    fetchLedger();
-  }, [fetchLedger]);
+  const startRecording = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const mediaRecorder = new MediaRecorder(stream);
+      mediaRecorderRef.current = mediaRecorder; audioChunksRef.current = [];
+      mediaRecorder.ondataavailable = (e) => { if (e.data.size > 0) audioChunksRef.current.push(e.data); };
+      mediaRecorder.onstop = () => { const blob = new Blob(audioChunksRef.current, { type: 'audio/webm' }); setAudioBlob(blob); };
+      mediaRecorder.start(); setIsRecording(true);
+    } catch (err) { toast.error('Microphone access denied.'); }
+  };
+
+  const stopRecording = () => { if (mediaRecorderRef.current) { mediaRecorderRef.current.stop(); setIsRecording(false); } };
 
   const runAnalysis = async (autoShare = false) => {
-  if (running) return toast('Analysis already running.', { icon: '⚠️' });
-  if (!inputValue && !file) return toast.error('Please provide content to analyze.');
+    if (running) return toast('System locked. Parse in progress.', { icon: '⚠️' });
+    if (mode === 'voice' && !audioBlob) return toast.error('Initiate audio capture first.');
+    if (['image', 'video', 'document'].includes(mode) && !file) return toast.error(`Please provide a ${mode} payload.`);
+    if (['text', 'url'].includes(mode) && !inputValue.trim()) return toast.error('Provide text/URL payload first.');
 
-  setRunning(true);
-  analysisAbortRef.current.aborted = false;
-  setError(null);
-  setLogs([]);
-  
-  pushLog('🚀 Initializing Xist AI Forensic Engine...', 'info');
-  pushLog('🔗 DeepSeek-R1-0528 (Postman CONFIRMED)...', 'info');
-  
-  try {
-    // ✅ YOUR WORKING OPENROUTER + DEEPSEEK-R1
-    const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${process.env.REACT_APP_OPENROUTER_API_KEY?.trim()}`,
-        'Content-Type': 'application/json',
-        'HTTP-Referer': window.location.origin,
-        'X-Title': 'Xist AI',
-      },
-      body: JSON.stringify({
-        model: 'openai/gpt-oss-120b:free',
-        messages: [{
-  role: 'user',
-  content: `
-You are Xist AI — an advanced misinformation forensic analysis engine.
+    setRunning(true); setScore(0); setCurrentMediaUrl(null);
+    try {
+      const BACKEND_URL = process.env.NODE_ENV === 'development' ? 'http://localhost:5000' : 'https://your-flask-backend.onrender.com';
+      const formData = new FormData();
+      formData.append('mode', mode);
+      if (['text', 'url'].includes(mode)) formData.append('text', inputValue);
+      else if (mode === 'voice' && audioBlob) formData.append('file', audioBlob, 'voice_note.webm');
+      else if (file) formData.append('file', file);
 
-Return ONLY valid JSON.
+      const response = await fetch(`${BACKEND_URL}/api/analyze`, { method: 'POST', body: formData });
+      if (!response.ok) throw new Error('Engine offline');
+      const analysis = await response.json();
 
-STRICT FORMAT:
+      let finalMediaUrl = null;
+      if (file || audioBlob) {
+        const fileToUpload = file || audioBlob;
+        const fileExt = file ? file.name.split('.').pop() : 'webm';
+        const fileName = `${user?.id || 'anon'}_${Date.now()}.${fileExt}`;
+        const { error: uploadError } = await supabase.storage.from('threat_media').upload(fileName, fileToUpload);
+        if (!uploadError) {
+          const { data: publicUrlData } = supabase.storage.from('threat_media').getPublicUrl(fileName);
+          finalMediaUrl = publicUrlData.publicUrl; setCurrentMediaUrl(finalMediaUrl);
+        }
+      }
 
-{
-  "overall_verdict": "SAFE | QUESTIONABLE | MISLEADING | FALSE | MANIPULATIVE",
-  "credibility_score": number (0-100),
+      setScore(analysis.credibility_score); setVerdictLevel(analysis.overall_verdict);
+      setMetrics(analysis.linguistic_patterns || DEFAULT_METRICS);
+      setSummary(analysis.final_explanation_for_user); setSources(analysis.validation_sources || []); 
+      toast.success(`Forensic Scan Complete`);
 
-  "content_overview": {
-    "content_type": "news | opinion | social_post | political_statement | advertisement | unknown",
-    "primary_theme": string,
-    "intent_assessment": "informative | persuasive | emotional_manipulation | propaganda | unclear"
-  },
-
-  "claim_analysis": [
-    {
-      "claim_text": string,
-      "claim_type": "factual | opinion | prediction | emotional_trigger",
-      "confidence_level": number (0-100),
-      "risk_level": "low | medium | high",
-      "verification_status": "verified | unverified | disputed | false | opinion_based",
-      "explanation": string
-    }
-  ],
-
-  "extracted_quotes": [
-    {
-      "quote": string,
-      "tone": "neutral | emotional | aggressive | fear_based | persuasive",
-      "manipulation_risk": number (0-100)
-    }
-  ],
-
-  "linguistic_patterns": {
-    "emotional_intensity": number (0-100),
-    "bias_indicator_score": number (0-100),
-    "sensationalism_score": number (0-100),
-    "logical_consistency_score": number (0-100)
-  },
-
-  "contextual_risk_assessment": {
-    "misinformation_probability": number (0-100),
-    "propaganda_likelihood": number (0-100),
-    "virality_risk": number (0-100)
-  },
-
-  "recommended_sources_for_verification": [
-    {
-      "source_name": string,
-      "source_type": "fact_check | news | government | academic | data_repository",
-      "why_relevant": string
-    }
-  ],
-
-  "final_explanation_for_user": string
-}
-
-Analyze this content:
-
-"${inputValue || file?.name || 'No content'}"
-`
-}],
-        temperature: 0.05,
-        max_tokens: 3000
-      })
-    });
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(`API ${response.status}: ${errorText}`);
-    }
-
-    const data = await response.json();
-    const content = data.choices?.[0]?.message?.content || '{}';
-    
-    // Parse forensic JSON
-    let analysis;
-
-try {
-  const cleaned = content.replace(/```json\s*|\s*```/g, '').trim();
-  analysis = JSON.parse(cleaned);
-} catch {
-  analysis = {
-    overall_verdict: 'QUESTIONABLE',
-    credibility_score: 50,
-    content_overview: {},
-    claim_analysis: [],
-    extracted_quotes: [],
-    linguistic_patterns: {},
-    contextual_risk_assessment: {},
-    recommended_sources_for_verification: [],
-    final_explanation_for_user: 'AI response malformed. Neutral assessment applied.'
-  };
-}
-
-    // ✅ SET ANALYSIS RESULTS
-    setScore(analysis.credibility_score || 50);
-setVerdictLevel(analysis.overall_verdict || 'QUESTIONABLE');
-
-setMetrics(analysis.linguistic_patterns || DEFAULT_METRICS);
-setEvidence(analysis.claim_analysis || []);
-setSummary(analysis.final_explanation_for_user || 'Forensic analysis complete');
-
-setDetailedAnalysis({
-  overview: analysis.content_overview || {},
-  claims: analysis.claim_analysis || [],
-  quotes: analysis.extracted_quotes || [],
-  contextual: analysis.contextual_risk_assessment || {},
-  sources: analysis.recommended_sources_for_verification || []
-});
-
-    pushLog(`✅ DeepSeek-R1: ${analysis.verdict} (${analysis.score}%)`, 'success');
-    toast.success(`🎯 ${analysis.verdict} (${analysis.score}%) - R1 Analysis!`);
-
-    // 🔥 FIXED: CREATE COMPLETE RECORD
-    const record = {
-      mode,
-      input: inputValue || file?.name || 'Unknown',
-      verdict: analysis.verdict || 'SUSPICIOUS',
-      score: analysis.score || 50,
-      level: analysis.level || 'SUSPICIOUS',
-      evidence: analysis.evidence || [],
-      metrics: analysis.metrics || DEFAULT_METRICS,
-      summary: analysis.summary || 'Analysis complete'
-    };
-
-    // ✅ 1. SAVE TO LEDGER (Your user_history table)
-    await persistHistory(record);
-
-    // ✅ 2. AUTO-SHARE CRITICAL THREATS TO COMMUNITY
-    if (analysis.score > 75 || autoShare) {
-      pushLog('🚨 Critical threat detected - Auto-sharing to community...', 'warn');
-      setTimeout(() => shareToCommunity(record), 1000);
-    }
-
-  } catch (err) {
-    pushLog(`❌ ${err.message}`, 'error');
-    toast.error(err.message);
-  } finally {
-    setRunning(false);
-  }
-};
-
-
-
-  const cancelAnalysis = () => {
-    analysisAbortRef.current.aborted = true;
-    setRunning(false);
-    pushLog('👤 User requested cancellation.', 'warn');
+      const record = {
+        mode, input: mode === 'voice' ? 'Voice Recording' : (inputValue || file?.name),
+        verdict: analysis.overall_verdict, score: analysis.credibility_score,
+        level: analysis.overall_verdict, metrics: analysis.linguistic_patterns,
+        summary: analysis.final_explanation_for_user, media_url: finalMediaUrl
+      };
+      await persistHistory(record);
+      if (autoShare) await shareToCommunity(record);
+    } catch (err) { toast.error("Forensic Engine offline."); } finally { setRunning(false); }
   };
 
-  const onCriticalComplete = async () => {
-    setCriticalOpen(false);
-    if (autoSyncPending) {
-      await shareToCommunity(autoSyncPending, true);
-      setAutoSyncPending(null);
-    }
-  };
-
-  const onCriticalCancel = () => {
-    setCriticalOpen(false);
-    setAutoSyncPending(null);
-    toast('Global sync cancelled.', { icon: '❌' });
-  };
-
-  const handleShareClick = async () => {
-    if (running) {
-      toast('Wait for analysis to finish.', { icon: '⏳' });
-      return;
-    }
-
-    const record = {
-      mode,
-      input: mode === 'text' ? inputValue : file?.name || inputValue,
-      verdict: verdictLabel(verdictLevel),
-      verdict_level: verdictLevel,
-      score,
-      metrics,
-      evidence,
-      summary
-    };
-
-    await shareToCommunity(record, false);
-  };
-
-  const handleFileChange = (e) => {
-    const f = e.target.files?.[0];
-    if (f) {
-      setFile(f);
-      setInputValue(f.name);
-      pushLog(`📁 File selected: ${f.name}`, 'info');
-    }
+  const handleManualShareClick = async () => {
+    if (!summary || score === 0) return toast.error('Run analysis first.');
+    const record = { mode, input: inputValue || file?.name, verdict: verdictLevel, score, metrics, summary, media_url: currentMediaUrl };
+    await shareToCommunity(record);
   };
 
   const clearAll = () => {
-    setInputValue('');
-    setFile(null);
-    setLogs([]);
-    setEvidence([]);
-    setMetrics(DEFAULT_METRICS);
-    setScore(0);
-    setSummary('');
-    setVerdictLevel(VERDICT_LEVELS.SAFE);
-    toast('Cleared input and state.', { icon: '🔄' });
+    setInputValue(''); setFile(null); setAudioBlob(null); setMetrics(DEFAULT_METRICS);
+    setScore(0); setSummary(''); setSources([]); setVerdictLevel('SAFE'); setCurrentMediaUrl(null);
   };
 
-  // Quick samples
-  const loadSample = () => {
-    const sample = `🚨 BREAKING: New study shows shocking correlation between 5G towers and cognitive decline. Experts warn this could fundamentally alter human evolution. Read the exclusive report: https://example.com/5g-study`;
-    setInputValue(sample);
-    toast('Sample critical content loaded.', { icon: '📄' });
+  // Animation Variants
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: { opacity: 1, transition: { staggerChildren: 0.1, delayChildren: 0.2 } }
+  };
+  const itemVariants = {
+    hidden: { y: 20, opacity: 0 },
+    visible: { y: 0, opacity: 1, transition: { type: 'spring', stiffness: 100 } }
   };
 
   return (
-    <div className={`w-full min-h-screen p-8 ${theme.background} ${theme.textPrimary} overflow-x-hidden`}
-         style={{ 
-           fontFamily: 'Inter, system-ui, -apple-system, Segoe UI, Roboto, sans-serif',
-           marginLeft: '280px',
-           marginTop: '64px'
-         }}>
+    <motion.div initial="hidden" animate="visible" variants={containerVariants}
+                className={`w-full min-h-screen p-8 relative transition-colors duration-500 ${theme.background} ${theme.textPrimary} overflow-x-hidden`}
+                style={{ fontFamily: 'Inter, system-ui, sans-serif', marginLeft: '280px', marginTop: '64px' }}>
       
-      {/* Theme Toggle */}
+      {/* Dynamic Grid Background Overlay */}
+      <div className={`absolute inset-0 pointer-events-none opacity-[0.03] ${themeMode === 'dark' ? '' : 'invert'}`} 
+           style={{ backgroundImage: 'linear-gradient(to right, #ffffff 1px, transparent 1px), linear-gradient(to bottom, #ffffff 1px, transparent 1px)', backgroundSize: '40px 40px' }}></div>
+
       <div className="fixed top-4 right-4 z-40">
-        <button
-          onClick={() => setThemeMode(themeMode === 'dark' ? 'light' : 'dark')}
-          className={`${theme.card} p-2 rounded-xl border border-white/20 shadow-lg hover:shadow-xl transition-all`}
-        >
-          {themeMode === 'dark' ? (
-            <SunIcon className="w-5 h-5 text-yellow-400" />
-          ) : (
-            <MoonIcon className="w-5 h-5 text-slate-600" />
-          )}
+        <button onClick={() => setLocalThemeMode(themeMode === 'dark' ? 'light' : 'dark')} className={`${theme.card} p-2.5 rounded-lg transition-all`}>
+          {themeMode === 'dark' ? <SunIcon className="w-5 h-5 text-slate-400" /> : <MoonIcon className="w-5 h-5 text-slate-600" />}
         </button>
       </div>
 
       <Toaster position="top-right" containerStyle={{ top: 80 }} />
 
-      {/* Header */}
-      <div className="max-w-6xl mx-auto text-center mb-12">
-        <div className="flex flex-col items-center">
-          <motion.div
-            initial={{ scale: 0.8, rotate: -5 }}
-            animate={{ scale: 1, rotate: 0 }}
-            className={`${theme.card} rounded-2xl p-6 mb-6 shadow-2xl border border-white/20 backdrop-blur-xl`}
-            style={{ 
-              background: `linear-gradient(180deg, ${theme.card}, ${theme.glassOpacity})`,
-              boxShadow: '0 20px 40px rgba(139, 92, 246, 0.15)'
-            }}
-          >
-            <ShieldCheckIcon className="w-20 h-20 text-white mx-auto mb-4" style={{ opacity: 0.9 }} />
-          </motion.div>
-          <motion.h1 
-            initial={{ y: 20, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            className="text-7xl md:text-8xl font-black bg-gradient-to-r from-purple-400 via-pink-400 to-indigo-400 bg-clip-text text-transparent mb-6 leading-tight"
-          >
-            Xist AI
-          </motion.h1>
-          <motion.p 
-            initial={{ y: 10, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            transition={{ delay: 0.2 }}
-            className={`${theme.textSecondary} text-xl md:text-2xl max-w-2xl mx-auto leading-relaxed`}
-          >
-            Forensic Intelligence Hub - Real-time deception detection and psychological signature analysis
-          </motion.p>
-        </div>
+      <div className="max-w-5xl mx-auto text-center mb-10 relative z-10">
+        <ShieldCheckIcon className="w-16 h-16 text-indigo-500 mx-auto mb-4 opacity-80" />
+        <h1 className="text-4xl md:text-5xl font-black tracking-tight mb-3">
+            <span>{typingTitle}</span>
+            <motion.span animate={{ opacity: [0, 1, 0] }} transition={{ repeat: Infinity, duration: 0.8 }} className="w-1.5 h-8 bg-indigo-500 inline-block ml-1" />
+        </h1>
+        <p className={`${theme.muted} text-sm font-mono tracking-widest uppercase`}>Multi-Modal Intelligence Analysis</p>
+        <ModeSelector mode={mode} setMode={setMode} theme={theme} />
       </div>
 
-      {/* Mode Selector */}
-      <ModeSelector mode={mode} setMode={setMode} theme={theme} />
-
-      {/* Main Content Grid */}
-      <div className="max-w-6xl mx-auto mt-12 grid grid-cols-1 lg:grid-cols-12 gap-8">
-        
-        {/* Left Column - Input Lab */}
-        <div className="lg:col-span-7 space-y-8">
-          
-          {/* Input Lab Card */}
-          <div className={`${theme.card} rounded-2xl p-8 border border-white/10 shadow-2xl`}>
-            <div className="flex items-start justify-between gap-4 mb-6">
-              <div>
-                <div className={`${theme.muted} text-xs uppercase tracking-widest mb-2 font-medium`}>Input Lab</div>
-                <div className={`${theme.textSecondary} text-sm`}>Provide content for forensic analysis</div>
-              </div>
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={clearAll}
-                  className={`${theme.textSecondary} px-4 py-2 rounded-xl text-xs font-medium hover:bg-white/10 transition-colors`}
-                >
-                  <TrashIcon className="w-4 h-4 inline mr-1" /> Reset
-                </button>
-                <button
-                  onClick={loadSample}
-                  className={`${theme.textSecondary} px-4 py-2 rounded-xl text-xs font-medium hover:bg-white/10 transition-colors`}
-                >
-                  Sample Data
-                </button>
-              </div>
+      <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-8 relative z-10">
+        {/* LEFT COLUMN - Tactical Input */}
+        <motion.div variants={itemVariants} className="lg:col-span-5 space-y-6">
+          <div className={`${theme.card} rounded-2xl p-6 flex flex-col h-full relative overflow-hidden group`}>
+            <div className="flex items-center justify-between mb-4 border-b border-slate-800 pb-4 relative z-10">
+              <h2 className="text-sm font-bold uppercase tracking-widest text-indigo-400 flex items-center gap-2">
+                <ShieldCheckIcon className="w-4 h-4" /> Target Payload
+              </h2>
+              <button onClick={clearAll} disabled={running} className="text-slate-500 hover:text-rose-400 flex items-center gap-1 text-xs font-bold transition-colors">
+                <TrashIcon className="w-3.5 h-3.5" /> Purge
+              </button>
             </div>
 
-            {/* Input Area */}
-            <div className="space-y-4">
-              {mode === 'text' && (
-                <textarea
-                  value={inputValue}
-                  onChange={(e) => setInputValue(e.target.value)}
-                  placeholder="Paste text, articles, or content to analyze for deception patterns..."
-                  className={`w-full min-h-[200px] p-6 rounded-xl text-lg ${theme.textPrimary} placeholder:${theme.muted} bg-white/5 border border-white/20 focus:border-purple-400/50 focus:ring-2 focus:ring-purple-500/30 focus:outline-none resize-vertical transition-all`}
-                  style={{ fontFamily: 'Inter, ui-monospace, monospace' }}
-                />
-              )}
-              
-              {mode === 'url' && (
-                <div className="flex gap-3">
-                  <input
-                    type="url"
-                    value={inputValue}
-                    onChange={(e) => setInputValue(e.target.value)}
-                    placeholder="https://example.com/article"
-                    className={`flex-1 p-4 rounded-xl text-lg ${theme.textPrimary} placeholder:${theme.muted} bg-white/5 border border-white/20 focus:border-purple-400/50 focus:ring-2 focus:ring-purple-500/30 focus:outline-none transition-all`}
-                  />
-                  <button
-                    onClick={() => {
-                      if (!inputValue) {
-                        toast.error('Enter a URL first.');
-                        return;
-                      }
-                      toast.success('URL queued for analysis (simulated fetch)');
-                    }}
-                    className={`px-6 py-4 rounded-xl bg-gradient-to-r ${theme.accentPrimary} text-white font-semibold shadow-lg hover:shadow-xl transition-all`}
-                  >
-                    Fetch
-                  </button>
-                </div>
-              )}
+            {mode === 'text' && (
+              <textarea value={inputValue} onChange={(e) => setInputValue(e.target.value)} disabled={running} placeholder="Inject raw text payload here..." 
+                        className={`w-full flex-grow min-h-[250px] p-4 rounded-lg text-sm border focus:border-indigo-500 outline-none font-mono resize-none transition-all relative z-10 shadow-inner custom-scrollbar ${theme.inner} ${theme.textPrimary}`} />
+            )}
+            
+            {mode === 'url' && (
+              <input type="url" value={inputValue} onChange={(e) => setInputValue(e.target.value)} disabled={running} placeholder="Enter Target URL..." 
+                     className={`w-full p-4 rounded-lg text-sm border focus:border-indigo-500 outline-none font-mono transition-all relative z-10 shadow-inner ${theme.inner} ${theme.textPrimary}`} />
+            )}
 
-              {['image', 'video', 'voice'].includes(mode) && (
-                <div className={`border-2 border-dashed ${theme.muted} border-opacity-50 rounded-2xl p-12 flex flex-col items-center justify-center text-center hover:border-opacity-100 transition-all`}>
-                  <div className={`${mode === 'image' ? 'text-blue-400' : 'text-purple-400'} mb-4`}>
-                    <PhotoIcon className="w-16 h-16 mx-auto" />
+            {['image', 'video', 'document'].includes(mode) && (
+              <div className={`border-2 border-dashed ${themeMode === 'dark' ? 'border-slate-800' : 'border-slate-200'} ${theme.inner} rounded-xl p-2 relative flex-grow min-h-[250px] flex flex-col items-center justify-center transition-all ${running ? 'opacity-80 pointer-events-none' : ''}`}>
+                {running && file && <motion.div initial={{ top: '0%' }} animate={{ top: ['0%', '95%', '0%'] }} transition={{ duration: 2.5, repeat: Infinity, ease: "linear" }} className="absolute left-0 right-0 h-1 bg-indigo-500 shadow-[0_0_20px_rgba(99,102,241,1)] z-50 pointer-events-none" />}
+                {file ? (
+                  <div className="w-full h-full relative flex flex-col items-center justify-center p-4">
+                    {mode === 'image' && <img src={URL.createObjectURL(file)} alt="Preview" className="max-h-56 rounded border border-slate-700" />}
+                    {mode === 'video' && <video src={URL.createObjectURL(file)} controls className="max-h-56 rounded border border-slate-700" />}
+                    {mode === 'document' && <div className="text-center w-full max-w-xs bg-slate-900 border border-slate-700 p-4 rounded-lg"><DocumentMagnifyingGlassIcon className="w-12 h-12 text-indigo-400 mx-auto mb-3"/><p className="text-indigo-300 font-mono text-xs truncate">{file.name}</p></div>}
+                    {!running && <button onClick={() => { setFile(null); setInputValue(''); }} className="mt-6 text-[10px] uppercase tracking-widest text-rose-400 font-bold border border-rose-500/30 px-4 py-2 rounded">Remove</button>}
                   </div>
-                  <div className={`${theme.textSecondary} text-lg mb-4`}>Upload a {mode}</div>
-                  <input
-                    type="file"
-                    accept={mode === 'image' ? 'image/*' : mode === 'video' ? 'video/*' : 'audio/*'}
-                    onChange={handleFileChange}
-                    className="file:mr-4 file:py-3 file:px-6 file:rounded-xl file:border-0 file:text-sm file:font-semibold file:bg-purple-500 file:text-white hover:file:bg-purple-600 file:transition-colors file:cursor-pointer w-full cursor-pointer"
-                  />
-                  {file && (
-                    <div className={`${theme.textSecondary} mt-4 text-sm truncate max-w-full`}>
-                      📁 {file.name}
+                ) : (
+                  <div className="cursor-pointer group flex flex-col items-center justify-center w-full h-full p-8" onClick={() => document.getElementById('file-upload').click()}>
+                    <div className="w-16 h-16 rounded-full bg-slate-900 border border-slate-800 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform"><PhotoIcon className="w-8 h-8 text-slate-500" /></div>
+                    <p className={`text-sm font-bold uppercase tracking-widest ${theme.textSecondary}`}>Inject {mode}</p>
+                    <input id="file-upload" type="file" className="hidden" onChange={(e) => { setFile(e.target.files?.[0]); setInputValue(e.target.files?.[0]?.name); }} />
+                  </div>
+                )}
+              </div>
+            )}
+
+            {mode === 'voice' && (
+              <div className={`border border-slate-800 rounded-xl p-8 text-center flex flex-col items-center flex-grow min-h-[250px] justify-center transition-all ${theme.inner} ${running ? 'opacity-50 pointer-events-none' : ''}`}>
+                {audioBlob ? <div className="w-full flex flex-col items-center gap-4"><audio src={URL.createObjectURL(audioBlob)} controls className="w-full max-w-xs" /><button onClick={() => setAudioBlob(null)} className="text-rose-400 text-xs font-bold">Rerecord</button></div> : 
+                <button onClick={isRecording ? stopRecording : startRecording} className={`px-6 py-2.5 rounded-lg text-sm font-bold border transition-all ${isRecording ? 'bg-rose-500/10 text-rose-500 border-rose-500/30' : 'bg-slate-800 text-slate-300 border-slate-700'}`}>{isRecording ? 'End Capture' : 'Initiate Audio Capture'}</button>}
+              </div>
+            )}
+            
+            <div className="grid grid-cols-2 gap-3 mt-6 relative z-10">
+              <button onClick={() => runAnalysis(false)} disabled={running} className="py-3 rounded-lg text-sm font-bold tracking-wider uppercase bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg">Execute Parse</button>
+              <button onClick={() => runAnalysis(true)} disabled={running} className={`py-3 rounded-lg text-sm font-bold tracking-wider uppercase border border-indigo-500/30 bg-indigo-500/10 text-indigo-300`}>Parse + Share</button>
+            </div>
+          </div>
+        </motion.div>
+
+        {/* RIGHT COLUMN - Threat Matrix */}
+        <motion.div variants={itemVariants} className="lg:col-span-7 space-y-4">
+          {running ? (
+             <ForensicScanner theme={theme} />
+          ) : score > 0 ? (
+            <div className="flex flex-col gap-4 h-full">
+              <div className={`${theme.card} p-4 rounded-2xl flex items-center justify-between`}>
+                 <h2 className={`text-sm font-bold uppercase tracking-widest ${theme.textSecondary}`}>Forensic Dossier</h2>
+                 <button onClick={handleManualShareClick} className="text-[10px] font-black uppercase text-indigo-400 bg-indigo-500/10 px-3 py-1.5 rounded-lg border border-indigo-500/20 flex items-center gap-2"><ShareIcon className="w-3.5 h-3.5" /> Export Matrix</button>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
+                <div className={`md:col-span-4 ${theme.card} p-6 rounded-2xl flex flex-col items-center justify-center`}>
+                   <div className="relative w-28 h-28 flex items-center justify-center shrink-0 mb-4">
+                      <svg className="w-full h-full transform -rotate-90" viewBox="0 0 36 36">
+                         <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke={themeMode === 'dark' ? "#1e293b" : "#e2e8f0"} strokeWidth="2.5" />
+                         <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke={score < 40 ? "#ef4444" : score < 70 ? "#eab308" : "#10b981"} strokeWidth="2.5" strokeDasharray={`${score}, 100`} />
+                      </svg>
+                      <div className="absolute font-black text-3xl">{formatPercent(score)}</div>
+                   </div>
+                   <div className={`text-sm font-black uppercase ${score < 40 ? "text-rose-500" : score < 70 ? "text-yellow-500" : "text-emerald-500"}`}>{verdictLevel}</div>
+                   <div className="text-[9px] text-slate-500 font-mono mt-2 pt-2 border-t border-slate-800 w-full text-center">{verdictLabel(verdictLevel)}</div>
+                </div>
+
+                <div className={`md:col-span-8 ${theme.inner} p-5 rounded-2xl shadow-inner flex flex-col h-48 md:h-auto`}>
+                   <div className="flex items-center gap-2 mb-3 opacity-50"><SparklesIcon className="w-3.5 h-3.5 text-indigo-400" /><span className="text-[10px] font-mono font-bold tracking-widest uppercase">AI_DIAGNOSTICS_LEDGER</span></div>
+                   <div className="text-xs font-mono leading-relaxed overflow-y-auto custom-scrollbar flex-grow"><TypewriterTerminalText text={summary} /></div>
+                </div>
+              </div>
+
+              {Object.values(metrics).some(v => v > 0) && (
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                  {Object.entries(metrics).map(([key, val]) => (
+                    <div key={key} className={`${theme.card} p-4 rounded-2xl relative overflow-hidden transition-colors`}>
+                       <div className={`absolute top-0 right-0 w-8 h-8 ${val > 60 ? 'bg-rose-500/10' : 'bg-emerald-500/10'} rounded-bl-full`}></div>
+                       <div className="text-[8px] text-slate-500 uppercase tracking-widest font-bold mb-2 truncate">{key.replace(/_/g, ' ')}</div>
+                       <div className="text-xl font-black">{formatPercent(val)}%</div>
+                       <div className="w-full h-1 bg-slate-950 mt-2 rounded-full overflow-hidden"><div className={`h-full ${val > 60 ? 'bg-rose-500' : 'bg-indigo-500'}`} style={{ width: `${val}%` }}/></div>
                     </div>
-                  )}
+                  ))}
                 </div>
               )}
             </div>
-          </div>
-
-          {/* Diagnostic Terminal */}
-          <div className={`${theme.card} rounded-2xl p-8 border border-white/10 shadow-2xl`}>
-            <div className="flex items-center justify-between mb-6">
-              <div>
-                <div className={`${theme.muted} text-xs uppercase tracking-widest mb-2 font-medium`}>Diagnostic Terminal</div>
-                <div className={`${theme.muted} text-xs`}>
-                  {running ? '🔄 Live analysis stream' : '⚡ Ready for analysis'}
-                </div>
-              </div>
-            </div>
-            <TerminalOutput running={running} logs={logs} onClear={() => setLogs([])} theme={theme} />
-          </div>
-
-          {/* Controls */}
-          <div className="flex flex-wrap items-center gap-4 p-2">
-            <button
-              onClick={() => runAnalysis(false)}
-              disabled={running}
-              className={`px-8 py-4 rounded-xl text-lg font-bold flex-1 min-w-[200px] transition-all ${
-                running
-                  ? 'bg-white/10 text-slate-400 cursor-not-allowed'
-                  : `bg-gradient-to-r ${theme.accentPrimary} text-white shadow-2xl hover:shadow-3xl hover:-translate-y-1 active:translate-y-0`
-              }`}
-            >
-              {running ? (
-                <>
-                  <ArrowPathIcon className="w-5 h-5 animate-spin mr-2" />
-                  Analyzing...
-                </>
-              ) : (
-                '🚀 Run Forensic Audit'
-              )}
-            </button>
-            
-            <button
-              onClick={() => runAnalysis(true)}
-              disabled={running}
-              className={`px-8 py-4 rounded-xl text-lg font-bold flex-1 min-w-[200px] transition-all bg-white/20 hover:bg-white/30 border border-white/30 backdrop-blur-sm ${
-                running ? 'opacity-50 cursor-not-allowed' : ''
-              }`}
-            >
-              {running ? '⏳ Queued' : '🤝 Run + Auto-Share'}
-            </button>
-            
-            <button
-              onClick={cancelAnalysis}
-              disabled={!running}
-              className={`px-6 py-4 rounded-xl font-semibold text-sm transition-all ${
-                running
-                  ? 'bg-rose-500/80 text-white hover:bg-rose-500 shadow-lg hover:shadow-xl'
-                  : 'bg-white/10 text-slate-400 hover:text-white hover:bg-white/20'
-              }`}
-            >
-              ⏹️ Cancel
-            </button>
-          </div>
-        </div>
-
-        {/* Right Column - Intelligence Bento */}
-        <div className="lg:col-span-5 space-y-8">
-          
-          {/* Intelligence Summary */}
-          <div className={`${theme.card} rounded-2xl p-8 border border-white/10 shadow-2xl`}>
-            <div className="flex items-center justify-between mb-6">
-              <div>
-                <div className={`${theme.muted} text-xs uppercase tracking-widest mb-2 font-medium`}>Intelligence Bento</div>
-                <div className={`${theme.textSecondary} text-sm`}>Analysis snapshot & psychological signals</div>
-              </div>
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => {
-                    setEvidence([]);
-                    setMetrics(DEFAULT_METRICS);
-                    setScore(0);
-                    setSummary('');
-                    toast('Intelligence cleared.', { icon: '🔄' });
-                  }}
-                  className={`${theme.textSecondary} px-3 py-2 rounded-lg text-xs hover:bg-white/10 transition-colors`}
-                >
-                  Clear
-                </button>
-                <button
-                  onClick={handleShareClick}
-                  disabled={sharing || running}
-                  className={`p-3 rounded-xl ${sharing || running ? 'bg-white/10 text-slate-400' : `bg-gradient-to-r ${theme.accentPrimary} text-white shadow-lg hover:shadow-xl transition-all`}`}
-                >
-                  <ShareIcon className="w-5 h-5" />
-                </button>
-              </div>
-            </div>
-
-            {/* Verdict Card */}
-            {score > 0 && (
-              <VerdictCard score={score} level={verdictLevel} summary={summary} theme={theme} />
-            )}
-
-            {/* Psychological DNA */}
-            {Object.values(metrics).some(v => v > 0) && (
-              <div>
-                <div className={`${theme.muted} text-xs uppercase tracking-widest mb-4 font-medium`}>Psychological DNA</div>
-                <MetricBar
-                  label="Cognitive Load"
-                  value={metrics.cognitiveload}
-                  color="#8b5cf6"
-                  description="Complexity and cognitive strain indicators"
-                  theme={theme}
-                />
-                <MetricBar
-                  label="Narrative Distance"
-                  value={metrics.narrativedistance}
-                  color="#6366f1"
-                  description="Deviation from expected contextual patterns"
-                  theme={theme}
-                />
-                <MetricBar
-                  label="Emotional Velocity"
-                  value={metrics.emotionalvelocity}
-                  color="#ef4444"
-                  description="Rate of emotional escalation in language"
-                  theme={theme}
-                />
-              </div>
-            )}
-
-            {/* Evidence Log */}
-            {evidence.length > 0 && <EvidenceLog items={evidence} theme={theme} />}
-          </div>
-
-          {/* Private Ledger */}
-          <div>
-            <div className="flex items-center justify-between mb-6">
-              <div>
-                <div className={`${theme.muted} text-xs uppercase tracking-widest mb-2 font-medium`}>Private Ledger</div>
-                <div className={`${theme.textSecondary} text-sm`}>Your recent scans (last 6)</div>
-              </div>
-              <div className={`${theme.muted} text-xs`}>
-                {loadingLedger ? 'Loading...' : `${ledger.length} entries`}
-              </div>
-            </div>
-            <PrivateLedger entries={ledger} theme={theme} />
-          </div>
-        </div>
+          ) : (
+             <div className={`${theme.card} rounded-2xl p-16 border flex flex-col items-center justify-center text-center h-full min-h-[500px]`}>
+                <ShieldCheckIcon className={`w-16 h-16 mb-4 ${themeMode === 'dark' ? 'text-slate-800' : 'text-slate-200'}`} />
+                <h3 className={`text-base font-bold uppercase tracking-widest ${theme.muted}`}>System Standby</h3>
+                <p className={`text-sm mt-2 max-w-xs ${theme.muted}`}>Awaiting payload injection for forensic analysis.</p>
+             </div>
+          )}
+        </motion.div>
       </div>
 
-      {/* Critical Overlay */}
-      <CriticalOverlay
-        open={criticalOpen}
-        onCancel={onCriticalCancel}
-        onComplete={onCriticalComplete}
-        theme={theme}
-      />
-
-      {/* Footer spacing */}
+      <motion.div variants={itemVariants} className="max-w-7xl mx-auto mt-8 relative z-10">
+         <PrivateLedger entries={ledger} theme={theme} onDelete={handleDeleteEntry} onDeleteAll={handleDeleteAll} onLoad={handleLoadEntry} />
+      </motion.div>
       <div className="h-24" />
-      
-      {/* Bottom utilities */}
-      <div className="max-w-6xl mx-auto mt-12 space-y-4">
-        <div className={`${theme.card} p-6 rounded-2xl border border-white/10 flex items-center justify-between`}>
-          <div className={`${theme.muted} text-xs uppercase tracking-widest font-medium`}>System Health</div>
-          <div className={`${theme.textSecondary} text-sm font-medium`}>All systems nominal</div>
-          <div className={`${theme.muted} text-xs`}>v2.1.0</div>
-        </div>
-      </div>
-    </div>
+    </motion.div>
   );
 }

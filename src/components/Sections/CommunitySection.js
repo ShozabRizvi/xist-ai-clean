@@ -1,487 +1,428 @@
-// src/components/Sections/CommunitySection.js - NEW SUPABASE READY VERSION
 import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'react-hot-toast';
 import {
-  ChatBubbleLeftRightIcon, ExclamationTriangleIcon, CheckCircleIcon, ClockIcon,
-  MagnifyingGlassIcon, ShareIcon, HeartIcon, UserGroupIcon, ShieldCheckIcon,
-  XCircleIcon, ArrowPathIcon, EyeIcon
-} from '@heroicons/react/24/outline';
-import { HeartIcon as HeartSolid } from '@heroicons/react/24/solid';
+  ChatBubbleLeftRightIcon, CheckCircleIcon, ShareIcon, 
+  HeartIcon, ShieldCheckIcon, ArrowPathIcon, TrashIcon, 
+  UserCircleIcon, ChartBarIcon, FunnelIcon, MicrophoneIcon,
+  VideoCameraIcon, PhotoIcon, SpeakerWaveIcon, SunIcon, MoonIcon,
+  PaperAirplaneIcon, PlusCircleIcon, DocumentPlusIcon
+} from '@heroicons/react/24/outline'; 
 import { supabase } from '../../lib/supabase';
 
-const CommunitySection = ({ user }) => {
+// ==============================
+// UTILITY FUNCTIONS
+// ==============================
+const timeAgo = (utcDateStr) => {
+  if (!utcDateStr) return 'Just now';
+  const safeStr = utcDateStr.endsWith('Z') || utcDateStr.includes('+') ? utcDateStr : `${utcDateStr}Z`;
+  const date = new Date(safeStr);
+  const now = new Date();
+  const seconds = Math.max(0, Math.round((now - date) / 1000));
+  const minutes = Math.round(seconds / 60);
+  const hours = Math.round(minutes / 60);
+  if (seconds < 60) return 'Just now';
+  if (minutes < 60) return `${minutes}m ago`;
+  if (hours < 24) return `${hours}h ago`;
+  return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+};
+
+const useTypewriter = (text, speed = 80, delay = 200) => {
+  const [displayedText, setDisplayedText] = useState("");
+  const [started, setStarted] = useState(false);
+  useEffect(() => {
+    const timeout = setTimeout(() => setStarted(true), delay);
+    return () => clearTimeout(timeout);
+  }, [delay]);
+  useEffect(() => {
+    if (!started) return;
+    if (displayedText.length < text.length) {
+      const timeout = setTimeout(() => {
+        setDisplayedText(text.slice(0, displayedText.length + 1));
+      }, speed);
+      return () => clearTimeout(timeout);
+    }
+  }, [displayedText, text, speed, started]);
+  return displayedText;
+};
+
+// ==============================
+// THEMES
+// ==============================
+const THEMES = {
+  dark: {
+    background: 'bg-slate-950',
+    headerBg: 'bg-[#020617]',
+    card: 'bg-slate-900 border-slate-800 shadow-2xl',
+    inner: 'bg-slate-950 border-slate-800',
+    textPrimary: 'text-slate-100',
+    textSecondary: 'text-slate-400',
+    muted: 'text-slate-500',
+    input: 'bg-slate-950 border-slate-800 text-white placeholder-slate-600 focus:border-indigo-500 shadow-[0_0_10px_rgba(99,102,241,0.05)]'
+  },
+  light: {
+    background: 'bg-slate-50',
+    headerBg: 'bg-white/90 backdrop-blur-md',
+    card: 'bg-white border-slate-200 shadow-xl',
+    inner: 'bg-slate-100 border-slate-200',
+    textPrimary: 'text-slate-900',
+    textSecondary: 'text-slate-600',
+    muted: 'text-slate-400',
+    input: 'bg-white border-slate-200 text-slate-900 placeholder-slate-400 focus:border-indigo-500 shadow-sm'
+  }
+};
+
+const CommunitySection = ({ user, theme: globalTheme }) => {
+  const isDark = globalTheme === 'dark';
+  const theme = THEMES[isDark ? 'dark' : 'light'];
+  const typingTitle = useTypewriter("Global Threat Matrix", 80, 200);
+
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [isPublishing, setIsPublishing] = useState(false);
   const [newPost, setNewPost] = useState({ title: '', description: '', threat_type: 'deepfake' });
   const [filter, setFilter] = useState('all');
-  const [search, setSearch] = useState('');
-  const [isAuthority, setIsAuthority] = useState(false);
-  const [authorityDept, setAuthorityDept] = useState('');
-  const [showAuthorityModal, setShowAuthorityModal] = useState(false);
+  const [selectedThreat, setSelectedThreat] = useState(null); 
+  const [profileData, setProfileData] = useState(null); 
 
-  // BETTER: Replace entire loadPosts with this:
-const loadPosts = useCallback(async () => {
-  setLoading(true);
-  try {
-    const { data: threatsData, error } = await supabase
-      .from('community_threats')
-      .select(`
-        *,
-        threat_likes!inner(likes_count:*),
-        threat_shares!inner(shares_count:*),
-        profiles(name)
-      `)
-      .order('created_at', { ascending: false })
-      .limit(50);
+  // ✅ Tactical Authorization Check
+  const currentUserId = user?.id || user?.uid;
+  const isDeveloperNode = user?.email === 'shozabrizvi16@gmail.com';
 
-    if (error) throw error;
-    
-    console.log('📋 Loaded threats:', threatsData);
-    setPosts(threatsData || []);
-  } catch (error) {
-    console.error('Posts error:', error);
-    toast.error('Failed to load threats');
-  } finally {
-    setLoading(false);
-  }
-}, [user?.id]);
-
-
-
-
-  // ✅ NEW: Real database likes
-  const handleLike = async (threatId) => {
-  if (!user?.id) {
-    toast.error('Please login to like threats');
-    return;
-  }
-
-  const { data: existing } = await supabase
-    .from('threat_likes')
-    .select('*')
-    .eq('threat_id', threatId)
-    .eq('user_id', user.id)  // ✅ Fixed: user.id not user.data.user.id
-    .single();
-
-  if (existing) {
-    await supabase.from('threat_likes').delete()
-      .eq('threat_id', threatId)
-      .eq('user_id', user.id);  // ✅ Fixed
-  } else {
-    await supabase.from('threat_likes').insert({
-      threat_id: threatId,
-      user_id: user.id  // ✅ Fixed
-    });
-  }
-  loadPosts();
-  toast.success(existing ? 'Unliked' : 'Liked');
-};
-
-
-  // ✅ NEW: Real database shares
-  const handleShare = async (threatId) => {
-  if (!user?.id) {
-    toast.error('Please login to share');
-    return;
-  }
-
-  await supabase.from('threat_shares').insert({
-    threat_id: threatId,
-    user_id: user.id,  // ✅ Fixed
-    shared_to_platform: 'twitter'
-  });
-  loadPosts();
-  toast.success('Threat shared! 📤');
-};
-
-// ✅ ADD THIS FUNCTION
-const handleDelete = async (threatId) => {
-  if (!user?.id) {
-    toast.error('Please login to delete');
-    return;
-  }
-
-  if (!window.confirm('Delete this threat permanently?')) return;
-
-  try {
-    const { error } = await supabase
-      .from('community_threats')
-      .delete()
-      .eq('id', threatId)
-      .eq('user_id', user.id); // Only poster can delete
-
-    if (error) throw error;
-    
-    toast.success('Threat deleted!');
-    loadPosts();
-  } catch (error) {
-    toast.error('Delete failed');
-  }
-};
-
-  // ✅ UPDATED: Post to new table structure
-  const handlePost = async () => {
-    if (!newPost.title.trim() || !newPost.description.trim()) {
-      toast.error('Title and description required');
-      return;
-    }
-
+  const loadPosts = useCallback(async () => {
+    setLoading(true);
     try {
-      const { error } = await supabase.from('community_threats').insert({
-        user_id: user?.id,
-        title: newPost.title,
-        description: newPost.description,
-        threat_type: newPost.threat_type,
-        location: 'India', // Default
-        is_verified: isAuthority
-      });
+      const { data: threatsData, error } = await supabase
+        .from('community_threats')
+        .select(`*, threat_likes(user_id), profiles(username, avatar_url)`)
+        .order('created_at', { ascending: false });
 
       if (error) throw error;
-      
-      setNewPost({ title: '', description: '', threat_type: 'deepfake' });
-      toast.success(isAuthority ? 'Official threat posted!' : 'Threat posted!');
-      loadPosts();
-    } catch (error) {
-      toast.error('Failed to post threat');
-    }
-  };
-
-  // Authority verify - UPDATED for new schema
-  const verifyThreat = async (threatId) => {
-    if (!isAuthority) {
-      setShowAuthorityModal(true);
-      return;
-    }
-
-    try {
-      await supabase
-        .from('community_threats')
-        .update({ 
-          is_verified: true,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', threatId);
-
-      toast.success(`✅ VERIFIED by ${authorityDept}`);
-      loadPosts();
-    } catch (error) {
-      toast.error('Verification failed');
-    }
-  };
-
-  // Rest of your existing functions (unchanged)
-  const handleAuthorityLogin = (dept) => {
-    setIsAuthority(true);
-    setAuthorityDept(dept);
-    setShowAuthorityModal(false);
-    toast.success(`Welcome ${dept} Authority! 👑`);
-  };
+      const formattedData = threatsData.map(threat => ({
+        ...threat,
+        likes_count: threat.threat_likes?.length || 0,
+        user_liked: threat.threat_likes?.some(like => like.user_id === currentUserId) 
+      }));
+      setPosts(formattedData || []);
+    } catch (error) { toast.error('Intelligence sync error'); } finally { setLoading(false); }
+  }, [currentUserId]);
 
   useEffect(() => {
     loadPosts();
-
-    const channel = supabase
-      .channel('community_threats')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'community_threats' }, loadPosts)
-      .subscribe();
-
+    const channel = supabase.channel('community_realtime').on('postgres_changes', { event: '*', schema: 'public', table: 'community_threats' }, loadPosts).subscribe();
     return () => supabase.removeChannel(channel);
   }, [loadPosts]);
 
+  const handlePost = async () => {
+    if (!newPost.title.trim() || !newPost.description.trim()) return toast.error('Dossier incomplete');
+    
+    setIsPublishing(true);
+    try {
+      const { error } = await supabase.from('community_threats').insert({
+        user_id: currentUserId, title: newPost.title, description: newPost.description,
+        threat_type: newPost.threat_type, location: 'Global AI Network'
+      });
+      if (error) throw error;
+      
+      setNewPost({ title: '', description: '', threat_type: 'deepfake' });
+      toast.success('Dossier Broadcasted');
+      loadPosts();
+    } catch (error) { toast.error('Broadcast failed'); } finally { setIsPublishing(false); }
+  };
+
+  // ✅ REDACTION PROTOCOL (Delete logic)
+  const handleDeletePost = async (threatId, e) => {
+    if (e) e.stopPropagation();
+    if (!window.confirm("Are you sure you want to permanently redact this dossier?")) return;
+
+    try {
+      const { error } = await supabase.from('community_threats').delete().eq('id', threatId);
+      if (error) throw error;
+      
+      toast.success('Dossier Redacted');
+      if (selectedThreat?.id === threatId) setSelectedThreat(null);
+      loadPosts();
+    } catch (error) {
+      toast.error('Failed to redact dossier.');
+    }
+  };
+
+  const openUserProfile = async (targetUserId, targetProfile, e) => {
+    if (e) e.stopPropagation(); 
+    setProfileData({ userId: targetUserId, loading: true });
+    try {
+      const { data: userPosts } = await supabase.from('community_threats').select('*, threat_likes(user_id)').eq('user_id', targetUserId);
+      const totalLikes = userPosts.reduce((sum, post) => sum + (post.threat_likes?.length || 0), 0);
+      setProfileData({
+        userId: targetUserId, username: targetProfile?.username || `Agent-${targetUserId?.substring(0,4).toUpperCase()}`,
+        avatarUrl: targetProfile?.avatar_url, totalLikes, postCount: userPosts.length, loading: false
+      });
+    } catch (err) { setProfileData(null); }
+  };
+
+  const handleLike = async (threatId, e) => {
+    if (e) e.stopPropagation();
+    if (!currentUserId) return toast.error('Authentication required');
+    const { data: existing } = await supabase.from('threat_likes').select('*').eq('threat_id', threatId).eq('user_id', currentUserId).maybeSingle(); 
+    if (existing) {
+      await supabase.from('threat_likes').delete().eq('threat_id', threatId).eq('user_id', currentUserId);
+    } else {
+      await supabase.from('threat_likes').insert({ threat_id: threatId, user_id: currentUserId });
+    }
+    loadPosts();
+  };
+
+  const RenderForensicMedia = ({ url, className = "" }) => {
+    if (!url) return null;
+    const isImage = url.match(/\.(jpeg|jpg|gif|png|webp)$/i);
+    const isVideo = url.match(/\.(mp4|webm|ogg|mov)$/i);
+    if (isImage) return <img src={url} className={`w-full object-contain ${className}`} alt="Evidence" />;
+    if (isVideo) return <video src={url} className={`w-full ${className}`} controls autoPlay muted loop />;
+    return (
+      <div className="w-full p-8 flex flex-col items-center justify-center bg-slate-950/50 rounded-xl border border-white/5">
+        <MicrophoneIcon className="w-12 h-12 text-indigo-400 mb-4 animate-pulse" />
+        <audio src={url} controls className="w-full max-w-xs" />
+      </div>
+    );
+  };
+
+  const containerVariants = { hidden: { opacity: 0 }, visible: { opacity: 1, transition: { staggerChildren: 0.1 } } };
+  const itemVariants = { hidden: { y: 20, opacity: 0 }, visible: { y: 0, opacity: 1, transition: { type: 'spring', stiffness: 100 } } };
+
   const filteredPosts = posts.filter(post => {
     if (filter === 'all') return true;
-    if (filter === 'authority') return post.is_verified;
-    if (filter === 'deepfake') return post.threat_type === 'deepfake';
-    if (filter === 'scam') return post.threat_type === 'scam';
+    if (filter === 'verified') return post.is_verified === true;
     return post.threat_type === filter;
   });
 
   return (
-    <div className="w-full min-h-screen p-8 bg-gradient-to-br from-slate-900 via-purple-900/20 to-slate-900 text-white" 
-         style={{ marginLeft: '280px', marginTop: '64px', fontFamily: 'Inter, sans-serif' }}>
+    <motion.div initial="hidden" animate="visible" variants={containerVariants}
+                className={`w-full min-h-screen transition-colors duration-500 ${theme.background} ${theme.textPrimary} relative overflow-x-hidden`}
+                style={{ marginLeft: '280px', marginTop: '64px', fontFamily: 'Inter, system-ui, sans-serif' }}>
       
-      {/* Header - UNCHANGED */}
-      <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} className="max-w-7xl mx-auto mb-16 text-center">
-        <div className="inline-flex items-center gap-4 bg-slate-800/50 backdrop-blur-xl rounded-3xl p-8 mb-8 border border-white/10 shadow-2xl">
-          <UserGroupIcon className="w-14 h-14 text-indigo-400" />
+      {/* ADAPTIVE GRID BACKGROUND */}
+      <div className={`absolute inset-0 pointer-events-none opacity-[0.03] ${isDark ? '' : 'invert'}`} 
+           style={{ backgroundImage: 'linear-gradient(to right, #ffffff 1px, transparent 1px), linear-gradient(to bottom, #ffffff 1px, transparent 1px)', backgroundSize: '40px 40px' }}></div>
+
+      {/* HEADER SECTION */}
+      <div className={`border-b sticky top-0 z-30 px-8 py-6 transition-all ${theme.headerBg} ${isDark ? 'border-slate-800' : 'border-slate-200'}`}>
+        <div className="max-w-7xl mx-auto flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
-            <h1 className="text-6xl font-black bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">
-              Threat Intelligence Network
+            <h1 className="text-2xl font-black tracking-tight flex items-center gap-2">
+              <ShieldCheckIcon className="w-7 h-7 text-indigo-500" /> 
+              <span>{typingTitle}</span>
+              <motion.span animate={{ opacity: [0, 1, 0] }} transition={{ repeat: Infinity, duration: 0.8 }} className="w-1.5 h-7 bg-indigo-500 inline-block ml-1" />
             </h1>
-            <p className="text-slate-400 mt-3 text-xl">Global threat sharing + Authority verification</p>
+            <p className={`${theme.muted} text-xs uppercase tracking-widest font-bold mt-1`}>OSINT Intelligence Feed</p>
+          </div>
+          <div className="flex items-center gap-2 overflow-x-auto hide-scrollbar pb-1">
+            {['all', 'deepfake', 'misinfo', 'scam', 'malware', 'cyber_attack', 'verified'].map(f => (
+                <button key={f} onClick={() => setFilter(f)} 
+                        className={`px-4 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${
+                          filter === f ? 'bg-indigo-600 text-white shadow-lg' : `${theme.inner} ${theme.textSecondary} hover:text-indigo-400`
+                        }`}>
+                  {f.replace('_', ' ')}
+                </button>
+            ))}
           </div>
         </div>
+      </div>
 
-        {isAuthority && (
-          <motion.div initial={{ scale: 0.95 }} animate={{ scale: 1 }} className="inline-flex items-center gap-3 bg-emerald-500/20 backdrop-blur-xl rounded-2xl p-4 border border-emerald-500/30 mb-8">
-            <ShieldCheckIcon className="w-6 h-6 text-emerald-400" />
-            <span className="text-lg font-bold text-emerald-300">VERIFIED AUTHORITY: {authorityDept}</span>
-            <button onClick={() => setIsAuthority(false)} className="ml-auto p-2 hover:bg-white/20 rounded-xl">
-              <XCircleIcon className="w-5 h-5" />
-            </button>
-          </motion.div>
-        )}
-      </motion.div>
-
-      <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-12">
+      <div className="max-w-7xl mx-auto p-8 grid grid-cols-1 lg:grid-cols-12 gap-8 relative z-10">
         
-        {/* Left: Controls - UPDATED form */}
-        <motion.div initial={{ x: -20, opacity: 0 }} animate={{ x: 0, opacity: 1 }} className="lg:col-span-1 space-y-8">
-          
-          {!isAuthority && (
-            <motion.div whileHover={{ scale: 1.02 }} className="bg-gradient-to-r from-emerald-500/10 to-blue-500/10 backdrop-blur-xl rounded-3xl p-8 border border-emerald-500/20 shadow-2xl cursor-pointer"
-                        onClick={() => setShowAuthorityModal(true)}>
-              <div className="flex items-center gap-3 mb-4">
-                <ShieldCheckIcon className="w-8 h-8 text-emerald-400" />
-                <h3 className="text-2xl font-bold">Authority Access</h3>
+        {/* 🚀 UPGRADED BROADCAST FORM (TACTICAL SUBMISSION TERMINAL) */}
+        <motion.div variants={itemVariants} className="lg:col-span-4 space-y-6">
+          <div className={`${theme.card} p-6 rounded-2xl relative overflow-hidden group/form`}>
+            {/* Tactical Corner accents */}
+            <div className="absolute top-0 left-0 w-2 h-2 border-t border-l border-indigo-500/50"></div>
+            <div className="absolute top-0 right-0 w-2 h-2 border-t border-r border-indigo-500/50"></div>
+            
+            <div className="flex items-center justify-between mb-8">
+              <h3 className={`text-[10px] font-black uppercase tracking-[0.3em] flex items-center gap-2 ${theme.textPrimary}`}>
+                <DocumentPlusIcon className="w-4 h-4 text-indigo-500" /> Dossier_Injection
+              </h3>
+              <div className="flex gap-1">
+                <div className="w-1 h-1 rounded-full bg-indigo-500 animate-ping"></div>
+                <div className="w-1 h-1 rounded-full bg-indigo-500/50"></div>
               </div>
-              <p className="text-slate-300 mb-2">FBI • CIA • CISA • DOJ</p>
-              <p className="text-sm text-slate-400">Official verification powers</p>
-            </motion.div>
-          )}
-
-          {/* ✅ UPDATED: New schema post form */}
-          <div className="bg-slate-800/80 backdrop-blur-xl rounded-3xl p-8 border border-white/10 shadow-2xl">
-            <div className="flex items-center gap-3 mb-6">
-              <ShareIcon className="w-6 h-6 text-indigo-400" />
-              <h3 className="text-2xl font-bold">{isAuthority ? 'Official Report' : 'Report Threat'}</h3>
             </div>
-            <input 
-              value={newPost.title} 
-              onChange={(e) => setNewPost({ ...newPost, title: e.target.value })}
-              placeholder="Threat title..." 
-              className="w-full p-4 bg-white/5 border border-white/20 rounded-2xl text-white placeholder-slate-400 focus:border-indigo-500 mb-4 text-lg" 
-            />
-            <textarea 
-              value={newPost.description} 
-              onChange={(e) => setNewPost({ ...newPost, description: e.target.value })}
-              placeholder="Describe threat details..." 
-              rows={4}
-              className="w-full p-4 bg-white/5 border border-white/20 rounded-2xl text-white placeholder-slate-400 focus:border-indigo-500 mb-4 resize-none" 
-            />
-            <select 
-              value={newPost.threat_type}
-              onChange={(e) => setNewPost({ ...newPost, threat_type: e.target.value })}
-              className="w-full p-4 bg-white/5 border border-white/20 rounded-2xl text-white mb-6"
-            >
-              <option value="deepfake">Deepfake</option>
-              <option value="misinfo">Misinformation</option>
-              <option value="scam">Scam</option>
-              <option value="malware">Malware</option>
-            </select>
-            <button onClick={handlePost} 
-                    className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-bold py-4 rounded-2xl shadow-xl hover:shadow-2xl text-lg">
-              {isAuthority ? 'Post Official Report' : 'Post to Network'}
-            </button>
-          </div>
 
-          {/* Filters - UPDATED */}
-          <div className="bg-slate-800/80 backdrop-blur-xl rounded-3xl p-8 border border-white/10 shadow-2xl">
-            <h3 className="text-xl font-bold mb-6 flex items-center gap-2">
-              <MagnifyingGlassIcon className="w-5 h-5" /> Filters
-            </h3>
-            <div className="space-y-3 mb-6">
-              {['all', 'deepfake', 'misinfo', 'scam', 'malware', 'verified'].map(f => (
-                <button key={f} onClick={() => setFilter(f)} 
-                        className={`w-full p-4 rounded-2xl text-left font-semibold transition-all ${
-                          filter === f 
-                            ? 'bg-gradient-to-r from-indigo-500/30 to-purple-500/30 text-indigo-200 border-2 border-indigo-500/50 shadow-lg'
-                            : 'text-slate-400 hover:text-white hover:bg-white/10 border border-white/20'
-                        }`}>
-                  {f.toUpperCase()}
-                </button>
-              ))}
+            <div className="space-y-5">
+              <motion.div initial={{ x: -10, opacity: 0 }} animate={{ x: 0, opacity: 1 }} transition={{ delay: 0.4 }}>
+                <label className="text-[9px] font-bold uppercase text-slate-500 mb-1.5 block ml-1 tracking-widest">Case_Title</label>
+                <input value={newPost.title} onChange={(e) => setNewPost({ ...newPost, title: e.target.value })}
+                  placeholder="System Subject Identifier..." className={`w-full px-4 py-3 rounded-xl text-sm outline-none font-mono transition-all border-2 border-transparent ${theme.input} focus:border-indigo-500/30`} />
+              </motion.div>
+
+              <motion.div initial={{ x: -10, opacity: 0 }} animate={{ x: 0, opacity: 1 }} transition={{ delay: 0.5 }}>
+                <label className="text-[9px] font-bold uppercase text-slate-500 mb-1.5 block ml-1 tracking-widest">Forensic_Body</label>
+                <textarea value={newPost.description} onChange={(e) => setNewPost({ ...newPost, description: e.target.value })}
+                  placeholder="Analyze and describe the threat vector..." rows={5} className={`w-full px-4 py-3 rounded-xl text-sm resize-none outline-none font-medium transition-all border-2 border-transparent ${theme.input} focus:border-indigo-500/30`} />
+              </motion.div>
+
+              <motion.div initial={{ x: -10, opacity: 0 }} animate={{ x: 0, opacity: 1 }} transition={{ delay: 0.6 }}>
+                <label className="text-[9px] font-bold uppercase text-slate-500 mb-1.5 block ml-1 tracking-widest">Threat_Classification</label>
+                <div className="relative">
+                  <select value={newPost.threat_type} onChange={(e) => setNewPost({ ...newPost, threat_type: e.target.value })}
+                    className={`w-full px-4 py-3 rounded-xl text-xs outline-none font-black uppercase tracking-widest appearance-none border-2 border-transparent ${theme.input} focus:border-indigo-500/30 cursor-pointer`}>
+                    <option value="deepfake">Deepfake_Media</option>
+                    <option value="misinfo">Disinformation</option>
+                    <option value="scam">Social_Engineering</option>
+                    <option value="malware">Malware_Package</option>
+                    <option value="cyber_attack">Network_Intrusion</option>
+                  </select>
+                  <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none opacity-50"><FunnelIcon className="w-3 h-3" /></div>
+                </div>
+              </motion.div>
+            </div>
+
+            <button onClick={handlePost} disabled={isPublishing} className="w-full mt-8 group/btn relative overflow-hidden bg-indigo-600 hover:bg-indigo-500 py-4 rounded-xl transition-all shadow-xl shadow-indigo-500/20 active:scale-[0.98]">
+              <AnimatePresence mode="wait">
+                {isPublishing ? (
+                  <motion.div initial={{ y: 10 }} animate={{ y: 0 }} exit={{ y: -10 }} className="flex items-center justify-center gap-2">
+                    <ArrowPathIcon className="w-4 h-4 animate-spin text-white" />
+                    <span className="text-[10px] font-black text-white uppercase tracking-[0.2em]">Uploading...</span>
+                  </motion.div>
+                ) : (
+                  <motion.div initial={{ y: 10 }} animate={{ y: 0 }} exit={{ y: -10 }} className="flex items-center justify-center gap-2">
+                    <PaperAirplaneIcon className="w-4 h-4 text-white group-hover/btn:translate-x-1 group-hover/btn:-translate-y-1 transition-transform" />
+                    <span className="text-[10px] font-black text-white uppercase tracking-[0.2em]">Engage Broadcast</span>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </button>
+            <div className="mt-4 text-center">
+              <span className="text-[8px] font-mono text-slate-600 uppercase tracking-widest">Protocol 7-X // Secure Node Transmission</span>
             </div>
           </div>
         </motion.div>
 
-        {/* Right: Feed - UPDATED threat cards */}
-        <motion.div initial={{ x: 20, opacity: 0 }} animate={{ x: 0, opacity: 1 }} className="lg:col-span-2 space-y-8">
-          <div>
-            <div className="flex items-center justify-between mb-8">
-              <h2 className="text-4xl font-black flex items-center gap-4">
-                <ChatBubbleLeftRightIcon className="w-10 h-10" />
-                Threat Feed
-                <span className="bg-indigo-500/30 text-indigo-200 px-4 py-1 rounded-2xl text-lg font-bold">
-                  {filteredPosts.length}
-                </span>
-              </h2>
-              <div className="text-lg text-slate-400">
-                Live <ArrowPathIcon className="w-6 h-6 inline animate-spin" />
-              </div>
-            </div>
-
-            {loading ? (
-              <div className="flex items-center justify-center py-24">
-                <div className="animate-spin rounded-full h-20 w-20 border-b-2 border-indigo-500"></div>
-              </div>
-            ) : filteredPosts.length === 0 ? (
-              <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }}
-                          className="bg-slate-800/50 backdrop-blur-xl rounded-3xl p-16 border-2 border-dashed border-white/20 text-center">
-                <ChatBubbleLeftRightIcon className="w-24 h-24 text-slate-500 mx-auto mb-8" />
-                <h3 className="text-3xl font-bold text-slate-200 mb-4">No active threats</h3>
-                <p className="text-xl text-slate-500 mb-8">Be first to report threat to network</p>
-                <button onClick={handlePost} className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-bold py-4 px-10 rounded-2xl shadow-xl hover:shadow-2xl">
-                  Report Threat
-                </button>
-              </motion.div>
-            ) : (
-              filteredPosts.map((threat, i) => (
-                <motion.div key={threat.id} initial={{ opacity: 0, y: 40 }} animate={{ opacity: 1, y: 0 }} 
-                            transition={{ delay: i * 0.05 }} whileHover={{ y: -8, scale: 1.02 }}
-                            className="group bg-slate-800/80 backdrop-blur-xl rounded-3xl p-8 border border-white/10 hover:border-indigo-500/50 hover:shadow-2xl hover:shadow-indigo-500/20 transition-all cursor-pointer">
+        {/* RIGHT COLUMN: FEED */}
+        <motion.div variants={itemVariants} className="lg:col-span-8">
+          {loading ? ( <div className="flex justify-center py-24"><ArrowPathIcon className="w-8 h-8 text-indigo-500 animate-spin" /></div> ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {filteredPosts.map((threat) => (
+                <motion.div key={threat.id} layout onClick={() => setSelectedThreat(threat)}
+                     className={`${theme.card} p-6 cursor-pointer group flex flex-col h-72 relative overflow-hidden transition-all hover:border-indigo-500/50 rounded-2xl`}>
                   
-                  <div className="flex items-start justify-between mb-6">
-                    <div className="flex items-center gap-3 flex-wrap">
-                      <div className={`px-4 py-2 rounded-2xl text-sm font-bold shadow-lg ${
-                        threat.threat_type === 'deepfake' ? 'bg-gradient-to-r from-purple-500/30 to-pink-500/30 text-purple-200 border-2 border-purple-500/50' :
-                        threat.threat_type === 'scam' ? 'bg-gradient-to-r from-rose-500/30 to-red-500/30 text-rose-200 border-2 border-rose-500/50' :
-                        'bg-gradient-to-r from-amber-500/30 to-yellow-500/30 text-amber-200 border-2 border-amber-500/50'
-                      }`}>
-                        {threat.threat_type?.toUpperCase()}
+                  {/* DYNAMIC MEDIA PREVIEW ON HOVER */}
+                  {threat.media_url && (
+                    <div className="absolute inset-0 z-0 opacity-0 group-hover:opacity-[0.12] transition-opacity duration-500 pointer-events-none">
+                      <RenderForensicMedia url={threat.media_url} className="h-full object-cover grayscale" />
+                    </div>
+                  )}
+
+                  <div className="flex items-start justify-between mb-4 z-10">
+                    <div onClick={(e) => openUserProfile(threat.user_id, threat.profiles, e)} className="flex items-center gap-2 group-hover:bg-indigo-500/10 p-1.5 -ml-1.5 rounded-xl transition-all">
+                      <div className="w-7 h-7 rounded-full overflow-hidden shrink-0 border border-slate-700 bg-slate-800">
+                        {threat.profiles?.avatar_url ? <img src={threat.profiles.avatar_url} className="w-full h-full object-cover" /> : <UserCircleIcon className="w-5 h-5 text-slate-500" />}
                       </div>
-                      {threat.is_verified && (
-                        <div className="px-3 py-1.5 bg-emerald-500/30 text-emerald-200 text-xs font-bold rounded-xl border border-emerald-500/50">
-                          VERIFIED
-                        </div>
+                      <span className="text-[10px] font-black text-slate-400 group-hover:text-indigo-400 uppercase tracking-tighter">{threat.profiles?.username || 'ANON_AGENT'}</span>
+                    </div>
+                    <span className="text-[10px] text-slate-500 font-mono font-bold tracking-tighter">{timeAgo(threat.created_at)}</span>
+                  </div>
+
+                  <div className="z-10 flex-grow">
+                    <div className="flex items-center gap-2 mb-3">
+                      <span className={`px-2.5 py-1 rounded text-[9px] font-black uppercase tracking-widest border ${
+                        threat.threat_type === 'deepfake' ? 'bg-purple-500/10 text-purple-400 border-purple-500/20' :
+                        threat.threat_type === 'scam' ? 'bg-rose-500/10 text-rose-400 border-rose-500/20' : 
+                        'bg-yellow-500/10 text-yellow-400 border-yellow-500/20'}`}>
+                        {threat.threat_type}
+                      </span>
+                      {threat.is_verified && <span className="flex items-center gap-1 text-emerald-400 text-[9px] font-black uppercase tracking-widest bg-emerald-500/10 px-2 py-1 rounded border border-emerald-500/20"><CheckCircleIcon className="w-3 h-3" /> VERIFIED</span>}
+                    </div>
+                    <h3 className={`text-base font-black mb-2 line-clamp-2 leading-tight ${theme.textPrimary}`}>{threat.title}</h3>
+                    <p className={`text-xs line-clamp-3 leading-relaxed font-medium ${theme.textSecondary}`}>{threat.description}</p>
+                  </div>
+
+                  <div className="flex items-center justify-between pt-4 border-t z-10 border-slate-800/50 mt-2">
+                    <div className="flex items-center gap-4">
+                      <button onClick={(e) => handleLike(threat.id, e)} className={`flex items-center gap-1.5 text-[10px] font-black transition-all ${threat.user_liked ? 'text-rose-500' : 'text-slate-500 hover:text-rose-400'}`}>
+                        <HeartIcon className={`w-4 h-4 ${threat.user_liked ? 'fill-rose-500' : ''}`} /> {threat.likes_count}
+                      </button>
+                      <button onClick={(e) => { e.stopPropagation(); toast.success('Dossier ID Copied'); }} className="text-slate-500 hover:text-indigo-400 transition-colors">
+                        <ShareIcon className="w-4 h-4" />
+                      </button>
+                      
+                      {/* ✅ DELETE BUTTON FOR AUTHOR OR DEVELOPER */}
+                      {(threat.user_id === currentUserId || isDeveloperNode) && (
+                         <button 
+                           onClick={(e) => handleDeletePost(threat.id, e)} 
+                           className="text-slate-500 hover:text-rose-500 transition-colors"
+                           title={isDeveloperNode && threat.user_id !== currentUserId ? "Developer Override" : "Redact Dossier"}
+                         >
+                           <TrashIcon className="w-4 h-4" />
+                         </button>
                       )}
                     </div>
-                    <div className="text-sm text-slate-500">
-  {new Date(threat.created_at).toLocaleString('en-IN', {
-    timeZone: 'Asia/Kolkata',
-    month: 'short', 
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-    hour12: true
-  })}
-</div>
-                  </div>
 
-                  <h3 className="text-2xl font-black mb-4 text-slate-100 group-hover:text-white line-clamp-2">
-                    {threat.title}
-                  </h3>
-
-                  <p className="text-lg text-slate-300 mb-6 line-clamp-2 leading-relaxed">
-                    {threat.description}
-                  </p>
-
-                  <div className="flex items-center gap-6 text-sm text-slate-400 mb-6">
-                    <div className="flex items-center gap-2">
-                      <ExclamationTriangleIcon className="w-4 h-4 text-rose-400" />
-                      <span>📍 {threat.location}</span>
-                    </div>
-                  </div>
-
-                  {/* ✅ NEW: Real like/share buttons */}
-                  <div className="flex items-center justify-between pt-6 border-t border-white/20">
-                    <div className="flex items-center gap-6 text-lg font-bold">
-                      <span className="flex items-center gap-2 text-rose-400">
-                        <HeartIcon className={threat.user_liked?.length > 0 ? "w-6 h-6 fill-rose-400 text-rose-400" : "w-6 h-6 text-rose-400/50"} />
-                        {threat.likes_count || 0}
-                      </span>
-                      <span className="flex items-center gap-2 text-indigo-400">
-                        <ShareIcon className="w-6 h-6" />
-                        {threat.shares_count || 0}
-                      </span>
-                    </div>
-                    
-                    <div className="flex gap-3">
-  {/* Like Button */}
-  <button 
-    onClick={(e) => { e.stopPropagation(); handleLike(threat.id); }} 
-    className={`flex items-center gap-2 px-6 py-3 rounded-2xl font-bold transition-all ${
-      threat.user_liked 
-        ? 'bg-rose-500/20 text-rose-300 border-2 border-rose-500/50 hover:bg-rose-500/30' 
-        : 'bg-white/10 text-slate-300 border border-white/20 hover:bg-white/20'
-    }`}
-  >
-    {threat.user_liked ? '❤️ Unlike' : '🤍 Like'}
-  </button>
-  
-  {/* Share Button */}
-  <button 
-    onClick={(e) => { e.stopPropagation(); handleShare(threat.id); }} 
-    className="flex items-center gap-2 px-6 py-3 bg-indigo-500/20 hover:bg-indigo-500/30 text-indigo-300 border-2 border-indigo-500/50 rounded-2xl font-bold transition-all"
-  >
-    <ShareIcon className="w-5 h-5" />
-    Share
-  </button>
-
-  {/* ✅ NEW: DELETE BUTTON - Only for post owner */}
-  {threat.user_id === user?.id && (
-    <button 
-      onClick={(e) => { e.stopPropagation(); handleDelete(threat.id); }} 
-      className="flex items-center gap-2 px-4 py-3 bg-red-500/20 hover:bg-red-500/40 text-red-300 border-2 border-red-500/50 rounded-xl font-bold transition-all"
-    >
-      <XCircleIcon className="w-5 h-5" />
-      Delete
-    </button>
-  )}
-
-  {/* Authority Verify */}
-  {isAuthority && (
-    <button 
-      onClick={(e) => { e.stopPropagation(); verifyThreat(threat.id); }} 
-      className="bg-emerald-600/90 hover:bg-emerald-500 text-white py-3 px-6 rounded-2xl font-bold text-sm shadow-lg hover:shadow-xl transition-all ml-2"
-    >
-      <CheckCircleIcon className="w-5 h-5 inline mr-1" /> Verify
-    </button>
-  )}
-</div>
-
+                    {threat.media_url && <div className="text-[9px] font-black uppercase text-indigo-500 tracking-widest flex items-center gap-1"><ChartBarIcon className="w-3 h-3" /> EVIDENCE_LOCKED</div>}
                   </div>
                 </motion.div>
-              ))
-            )}
-          </div>
+              ))}
+            </div>
+          )}
         </motion.div>
       </div>
 
-      {/* Authority Modal - UNCHANGED */}
+      {/* DRAWER & MODALS */}
       <AnimatePresence>
-        {showAuthorityModal && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-                      className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-8"
-                      onClick={() => setShowAuthorityModal(false)}>
-            <motion.div initial={{ scale: 0.9 }} animate={{ scale: 1 }} 
-                        className="bg-slate-900/95 backdrop-blur-2xl rounded-3xl p-10 max-w-lg w-full border border-white/20 shadow-2xl max-h-[90vh] overflow-y-auto"
-                        onClick={e => e.stopPropagation()}>
-              <div className="flex items-center justify-between mb-8">
-                <h2 className="text-4xl font-black bg-gradient-to-r from-emerald-400 to-blue-400 bg-clip-text text-transparent">
-                  Authority Login
-                </h2>
-                <button onClick={() => setShowAuthorityModal(false)} className="p-2 hover:bg-white/20 rounded-2xl">
-                  <XCircleIcon className="w-7 h-7" />
-                </button>
+        {selectedThreat && (
+          <div className="fixed inset-0 z-[99999] flex justify-end">
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setSelectedThreat(null)} className="absolute inset-0 bg-slate-950/80 backdrop-blur-sm" />
+            <motion.div initial={{ x: '100%' }} animate={{ x: 0 }} exit={{ x: '100%' }} transition={{ type: 'spring', damping: 25, stiffness: 200 }} 
+                        className={`relative w-full max-w-lg h-full border-l flex flex-col z-10 ${theme.background} ${isDark ? 'border-slate-800' : 'border-slate-200 shadow-2xl'}`}>
+              <div className={`p-6 border-b flex justify-between items-center ${theme.headerBg} ${isDark ? 'border-slate-800' : 'border-slate-200'}`}>
+                 <span className="text-[10px] font-black uppercase tracking-[0.2em] text-indigo-500 flex items-center gap-2"><ShieldCheckIcon className="w-4 h-4"/> Forensic Briefing</span>
+                 <div className="flex items-center gap-4">
+                    {/* ✅ DELETE BUTTON IN MODAL */}
+                    {(selectedThreat.user_id === currentUserId || isDeveloperNode) && (
+                       <button onClick={(e) => handleDeletePost(selectedThreat.id, e)} className="p-2 bg-rose-500/10 text-rose-500 hover:bg-rose-500/20 rounded-lg transition-all" title="Redact">
+                         <TrashIcon className="w-4 h-4" />
+                       </button>
+                    )}
+                    <button onClick={() => setSelectedThreat(null)} className="p-2 hover:bg-slate-800/50 rounded-lg text-slate-500 hover:text-slate-300 transition-all font-bold font-mono text-xs">ESC</button>
+                 </div>
               </div>
-              
-              <div className="grid md:grid-cols-2 gap-4">
-                {[
-                  { id: 'FBI', name: 'Federal Bureau of Investigation', badge: '🕵️' },
-                  { id: 'CIA', name: 'Central Intelligence Agency', badge: '🔒' },
-                  { id: 'CISA', name: 'Cybersecurity Agency', badge: '🛡️' },
-                  { id: 'DOJ', name: 'Department of Justice', badge: '⚖️' }
-                ].map(dept => (
-                  <motion.div key={dept.id} whileHover={{ scale: 1.05 }} 
-                              className="group bg-gradient-to-r from-slate-700/50 to-slate-800/50 backdrop-blur-xl p-6 rounded-2xl border border-white/20 hover:border-indigo-500/50 cursor-pointer hover:shadow-xl transition-all"
-                              onClick={() => handleAuthorityLogin(dept.id)}>
-                    <div className="flex items-center gap-3 mb-3">
-                      <span className="text-2xl">{dept.badge}</span>
-                      <div className="text-sm font-bold uppercase tracking-wider text-indigo-400 group-hover:text-indigo-300">
-                        {dept.id}
-                      </div>
-                    </div>
-                    <p className="text-slate-300 text-sm leading-tight">{dept.name}</p>
-                  </motion.div>
-                ))}
+              <div className="flex-grow overflow-y-auto p-8 custom-scrollbar">
+                <h2 className={`text-2xl font-black mb-6 leading-tight ${theme.textPrimary}`}>{selectedThreat.title}</h2>
+                {selectedThreat.media_url && (
+                  <div className="mb-8 rounded-2xl overflow-hidden border border-slate-800 bg-slate-900 shadow-2xl flex items-center justify-center">
+                    <RenderForensicMedia url={selectedThreat.media_url} className="max-h-[450px]" />
+                  </div>
+                )}
+                <div className={`${theme.inner} p-6 rounded-2xl border mb-8 text-sm leading-relaxed whitespace-pre-wrap font-medium ${theme.textPrimary} shadow-inner`}>
+                  <div className="text-[10px] font-black uppercase text-slate-500 mb-4 tracking-widest border-b border-slate-800/50 pb-2">Analysis_Dump</div>
+                  {selectedThreat.description}
+                </div>
               </div>
             </motion.div>
-          </motion.div>
+          </div>
         )}
       </AnimatePresence>
-    </div>
+
+      {/* OSINT PROFILE MODAL */}
+      <AnimatePresence>
+        {profileData && (
+          <div className="fixed inset-0 z-[999999] flex items-center justify-center p-4">
+             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setProfileData(null)} className="absolute inset-0 bg-slate-950/90 backdrop-blur-md" />
+             <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }}
+                         className={`${theme.card} p-8 max-w-sm w-full text-center relative z-10 rounded-3xl`}>
+              <div className="w-24 h-24 mx-auto rounded-full overflow-hidden border-4 border-indigo-500/30 mb-4 shadow-2xl">
+                {profileData.avatarUrl ? <img src={profileData.avatarUrl} className="w-full h-full object-cover" /> : <UserCircleIcon className="w-full h-full text-slate-600" />}
+              </div>
+              <h2 className={`text-xl font-black ${theme.textPrimary}`}>{profileData.username}</h2>
+              <div className="text-[10px] font-black uppercase tracking-widest text-indigo-500 mb-8 flex items-center justify-center gap-1 mt-1"><ShieldCheckIcon className="w-4 h-4" /> Trusted Operative</div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className={`${theme.inner} p-4 rounded-2xl border shadow-inner`}><div className={`text-2xl font-black ${theme.textPrimary}`}>{profileData.postCount}</div><div className="text-[9px] text-slate-500 font-black uppercase tracking-widest mt-1">Dossiers</div></div>
+                <div className={`${theme.inner} p-4 rounded-2xl border shadow-inner`}><div className={`text-2xl font-black ${theme.textPrimary}`}>{profileData.totalLikes}</div><div className="text-[9px] text-slate-500 font-black uppercase tracking-widest mt-1">Impact</div></div>
+              </div>
+             </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+    </motion.div>
   );
 };
 

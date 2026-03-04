@@ -1,32 +1,85 @@
-import React, { useState, useEffect, useMemo } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { LineChart, Line, AreaChart, Area, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import React, { useState, useEffect } from 'react';
+import { motion } from 'framer-motion';
+import { AreaChart, Area, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { useAuth } from '../../hooks/useAuth';
 import { showNotification } from '../UI/NotificationToast';
+import { supabase } from '../../lib/supabase';
 import {
-  ChartBarIcon, ArrowTrendingUpIcon, ArrowTrendingDownIcon, ShieldCheckIcon,
-  GlobeAltIcon, UserGroupIcon, ClockIcon, ExclamationTriangleIcon,
-  CheckCircleIcon, XCircleIcon, EyeIcon, FireIcon, BoltIcon,
-  ArrowPathIcon, CalendarIcon, FunnelIcon, ShareIcon, ArrowDownTrayIcon,
-  MapIcon, DevicePhoneMobileIcon, ComputerDesktopIcon, ServerIcon,
-  MagnifyingGlassIcon, CpuChipIcon, WifiIcon, SignalIcon,
-  DocumentTextIcon, SparklesIcon, UserIcon, BuildingOfficeIcon,
-  AcademicCapIcon, NewspaperIcon, PhoneIcon, EnvelopeIcon
+  ChartBarIcon, ShieldCheckIcon, DocumentTextIcon, SparklesIcon,
+  ExclamationTriangleIcon, CheckCircleIcon, ArrowDownTrayIcon, CpuChipIcon
 } from '@heroicons/react/24/outline';
 
-const AnalyticsSection = ({ analysisData = [], localAnalysisHistory = [], performanceMetrics = {} }) => {
+// ==============================
+// THEMES & UTILITIES
+// ==============================
+const THEMES = {
+  dark: {
+    background: 'bg-[#020617]',
+    card: 'bg-slate-900/80 border-slate-800 shadow-2xl backdrop-blur-xl',
+    inner: 'bg-slate-950 border-slate-800',
+    textPrimary: 'text-slate-100',
+    textSecondary: 'text-slate-400',
+    muted: 'text-slate-500',
+  },
+  light: {
+    background: 'bg-slate-50',
+    card: 'bg-white border-slate-200 shadow-xl backdrop-blur-xl',
+    inner: 'bg-slate-100 border-slate-200',
+    textPrimary: 'text-slate-900',
+    textSecondary: 'text-slate-600',
+    muted: 'text-slate-400',
+  }
+};
+
+const useTypewriter = (text, speed = 80, delay = 200) => {
+  const [displayedText, setDisplayedText] = useState("");
+  const [started, setStarted] = useState(false);
+  useEffect(() => {
+    const timeout = setTimeout(() => setStarted(true), delay);
+    return () => clearTimeout(timeout);
+  }, [delay]);
+  useEffect(() => {
+    if (!started) return;
+    if (displayedText.length < text.length) {
+      const timeout = setTimeout(() => {
+        setDisplayedText(text.slice(0, displayedText.length + 1));
+      }, speed);
+      return () => clearTimeout(timeout);
+    }
+  }, [displayedText, text, speed, started]);
+  return displayedText;
+};
+
+const timeAgo = (utcDateStr) => {
+  if (!utcDateStr) return 'Just now';
+  const safeStr = utcDateStr.endsWith('Z') || utcDateStr.includes('+') ? utcDateStr : `${utcDateStr}Z`;
+  const date = new Date(safeStr);
+  const now = new Date();
+  const seconds = Math.max(0, Math.round((now - date) / 1000));
+  const minutes = Math.round(seconds / 60);
+  const hours = Math.round(minutes / 60);
+  if (seconds < 60) return 'Just now';
+  if (minutes < 60) return `${minutes}m ago`;
+  if (hours < 24) return `${hours}h ago`;
+  return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+};
+
+// ==============================
+// MAIN COMPONENT
+// ==============================
+const AnalyticsSection = ({ theme: globalTheme }) => {
   const { user } = useAuth();
+  const isDark = globalTheme === 'dark';
+  const themeMode = isDark ? 'dark' : 'light';
+  const theme = THEMES[themeMode];
+  const typingTitle = useTypewriter("Intelligence Telemetry", 80, 200);
   
-  // State management
   const [selectedTimeRange, setSelectedTimeRange] = useState('24hours');
-  const [selectedView, setSelectedView] = useState('personal'); // Focus on personal analytics
-  const [selectedMetric, setSelectedMetric] = useState('all');
   const [isRealTimeEnabled, setIsRealTimeEnabled] = useState(true);
   const [analyticsData, setAnalyticsData] = useState({});
   const [isLoading, setIsLoading] = useState(true);
-  const [lastUpdated, setLastUpdated] = useState(new Date());
+  const [cloudData, setCloudData] = useState([]);
 
-  // Time range options
   const TIME_RANGES = {
     '1hour': { label: '1 Hour', hours: 1 },
     '6hours': { label: '6 Hours', hours: 6 },
@@ -35,632 +88,298 @@ const AnalyticsSection = ({ analysisData = [], localAnalysisHistory = [], perfor
     '30days': { label: '30 Days', hours: 720 }
   };
 
-  // View modes (simplified to focus on real data)
-  const VIEW_MODES = {
-    'personal': { label: 'Your Analytics', icon: UserIcon, color: 'green' },
-    'summary': { label: 'Summary View', icon: ChartBarIcon, color: 'blue' }
+  // 🎨 Sleek, glowing forensic color palette
+  const CHART_COLORS = ['#6366f1', '#10b981', '#f43f5e', '#f59e0b', '#8b5cf6', '#06b6d4'];
+
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: { opacity: 1, transition: { staggerChildren: 0.1, delayChildren: 0.2 } }
+  };
+  const itemVariants = {
+    hidden: { y: 20, opacity: 0 },
+    visible: { y: 0, opacity: 1, transition: { type: 'spring', stiffness: 100 } }
   };
 
-  // Process user's real analysis data from Verify section
-  const processPersonalAnalytics = () => {
+  useEffect(() => {
+    const currentUserId = user?.id || user?.uid;
+    const fetchCloudHistory = async () => {
+      if (!currentUserId) { setIsLoading(false); return; }
+      setIsLoading(true);
+      const { data, error } = await supabase.from('user_history').select('*').eq('user_id', currentUserId).order('created_at', { ascending: false });
+      if (data && !error) setCloudData(data);
+      setIsLoading(false);
+    };
+    fetchCloudHistory();
+
+    if (!currentUserId) return;
+    const subscription = supabase.channel('analytics_realtime').on('postgres_changes', { 
+        event: 'INSERT', schema: 'public', table: 'user_history', filter: `user_id=eq.${currentUserId}`
+      }, payload => {
+        if (isRealTimeEnabled) setCloudData(prev => [payload.new, ...prev]);
+      }).subscribe();
+    return () => supabase.removeChannel(subscription);
+  }, [user, isRealTimeEnabled]);
+
+  useEffect(() => {
+    if (cloudData.length === 0) { setAnalyticsData({}); return; }
     const now = new Date();
     const timeRange = TIME_RANGES[selectedTimeRange];
     const cutoffTime = new Date(now.getTime() - timeRange.hours * 60 * 60 * 1000);
-
-    // Get all analysis data from both current session and stored history
-    const allPersonalData = [
-      ...analysisData,
-      ...(localAnalysisHistory || [])
-    ].filter(analysis => {
-      return analysis && 
-             analysis.timestamp && 
-             new Date(analysis.timestamp) > cutoffTime;
+    const filteredData = cloudData.filter(record => {
+      const dbTimeStr = record.created_at.endsWith('Z') || record.created_at.includes('+') ? record.created_at : `${record.created_at}Z`;
+      return new Date(dbTimeStr).getTime() > cutoffTime.getTime();
     });
-
-    // Create time buckets for visualization
-    const bucketCount = selectedTimeRange === '1hour' ? 12 : 
-                       selectedTimeRange === '6hours' ? 12 : 
-                       selectedTimeRange === '24hours' ? 24 : 
-                       selectedTimeRange === '7days' ? 7 : 30;
-    
-    const bucketSize = timeRange.hours * 60 * 60 * 1000 / bucketCount;
-    
+    const bucketCount = selectedTimeRange.includes('hour') ? 12 : selectedTimeRange === '7days' ? 7 : 30;
+    const bucketSize = (timeRange.hours * 60 * 60 * 1000) / bucketCount;
     const timeBuckets = Array.from({ length: bucketCount }, (_, i) => {
       const bucketTime = new Date(now.getTime() - (bucketCount - 1 - i) * bucketSize);
-      return {
-        time: formatTimeLabel(bucketTime, selectedTimeRange),
-        timestamp: bucketTime,
-        analyses: 0,
-        threats: 0,
-        safe: 0,
-        blocked: 0,
-        accuracy: 0,
-        accuracyCount: 0,
-        phishing: 0,
-        scams: 0,
-        misinformation: 0,
-        legitimate: 0,
-        suspicious: 0
-      };
+      return { time: bucketTime.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }), analyses: 0, threats: 0, safe: 0 };
     });
 
-    // Process real analysis data into time buckets
-    allPersonalData.forEach(analysis => {
-      const analysisTime = new Date(analysis.timestamp);
+    let threatsDetected = 0; let safeContent = 0; let totalScore = 0;
+    filteredData.forEach(record => {
+      const dbTimeStr = record.created_at.endsWith('Z') || record.created_at.includes('+') ? record.created_at : `${record.created_at}Z`;
+      const analysisTime = new Date(dbTimeStr);
       const bucketIndex = Math.floor((now.getTime() - analysisTime.getTime()) / bucketSize);
-      const targetBucket = timeBuckets[bucketCount - 1 - bucketIndex];
-      
-      if (targetBucket && bucketIndex >= 0 && bucketIndex < bucketCount) {
+      if (bucketIndex >= 0 && bucketIndex < bucketCount) {
+        const targetBucket = timeBuckets[bucketCount - 1 - bucketIndex];
         targetBucket.analyses++;
-
-        // Categorize based on actual risk levels from Verify section
-        const riskLevel = analysis.overallRiskLevel || analysis.riskLevel || 'UNKNOWN';
-        
-        if (riskLevel === 'HIGH' || riskLevel === 'CRITICAL') {
-          targetBucket.threats++;
-        } else if (riskLevel === 'MEDIUM' || riskLevel === 'SUSPICIOUS') {
-          targetBucket.suspicious++;
-        } else if (riskLevel === 'LOW' || riskLevel === 'SAFE') {
-          targetBucket.safe++;
-        }
-
-        // Track blocked/flagged content
-        if (analysis.recommendation === 'block' || 
-            analysis.action === 'block' || 
-            riskLevel === 'HIGH' || 
-            riskLevel === 'CRITICAL') {
-          targetBucket.blocked++;
-        }
-
-        // Add confidence/accuracy tracking
-        const confidence = analysis.confidence || analysis.overallConfidence;
-        if (confidence) {
-          targetBucket.accuracy += typeof confidence === 'number' ? confidence : parseFloat(confidence) || 0.8;
-          targetBucket.accuracyCount++;
-        }
-
-        // Categorize by actual analysis results
-        const category = (analysis.category || analysis.type || '').toLowerCase();
-        const summary = (analysis.summary || '').toLowerCase();
-        const content = (analysis.inputText || analysis.content || '').toLowerCase();
-
-        if (category.includes('phishing') || summary.includes('phishing') || content.includes('phishing')) {
-          targetBucket.phishing++;
-        } else if (category.includes('scam') || category.includes('fraud') || 
-                   summary.includes('scam') || summary.includes('fraud')) {
-          targetBucket.scams++;
-        } else if (category.includes('misinformation') || category.includes('fake') ||
-                   summary.includes('misinformation') || summary.includes('fake')) {
-          targetBucket.misinformation++;
-        } else if (riskLevel === 'LOW' || riskLevel === 'SAFE') {
-          targetBucket.legitimate++;
-        }
+        if (record.verdict === 'CRITICAL') { targetBucket.threats++; threatsDetected++; }
+        else if (record.verdict === 'SAFE') { targetBucket.safe++; safeContent++; }
       }
+      totalScore += record.score || 0;
     });
 
-    // Calculate averages
-    timeBuckets.forEach(bucket => {
-      bucket.accuracy = bucket.accuracyCount > 0 ? 
-        Math.round((bucket.accuracy / bucket.accuracyCount) * 100) : 0;
-      delete bucket.accuracyCount;
-      delete bucket.timestamp;
-    });
-
-    // Calculate summary statistics
-    const totalAnalyses = allPersonalData.length;
-    const threatsDetected = allPersonalData.filter(a => 
-      (a.overallRiskLevel === 'HIGH' || a.overallRiskLevel === 'CRITICAL') ||
-      (a.riskLevel === 'HIGH' || a.riskLevel === 'CRITICAL')
-    ).length;
-
-    const threatsBlocked = allPersonalData.filter(a => 
-      a.recommendation === 'block' || 
-      a.action === 'block' ||
-      a.overallRiskLevel === 'HIGH' ||
-      a.overallRiskLevel === 'CRITICAL'
-    ).length;
-
-    const safeContent = allPersonalData.filter(a =>
-      (a.overallRiskLevel === 'LOW' || a.overallRiskLevel === 'SAFE') ||
-      (a.riskLevel === 'LOW' || a.riskLevel === 'SAFE')
-    ).length;
-
-    const averageAccuracy = totalAnalyses > 0 ? 
-      Math.round(allPersonalData.reduce((sum, a) => {
-        const confidence = a.confidence || a.overallConfidence || 0.8;
-        return sum + (typeof confidence === 'number' ? confidence * 100 : parseFloat(confidence) * 100 || 80);
-      }, 0) / totalAnalyses) : 0;
-
-    return {
-      totalAnalyses,
-      threatsDetected,
-      threatsBlocked,
-      safeContent,
-      suspiciousContent: totalAnalyses - threatsDetected - safeContent,
-      averageAccuracy,
-      timeSeriesData: timeBuckets,
-      categoryData: getCategoryBreakdown(allPersonalData),
-      performanceData: performanceMetrics,
-      recentAnalyses: allPersonalData.slice(0, 10).map(analysis => ({
-        id: analysis.id || Date.now(),
-        timestamp: analysis.timestamp,
-        type: analysis.category || analysis.type || 'Content Analysis',
-        content: analysis.inputText || analysis.content || 'Analysis performed',
-        riskLevel: analysis.overallRiskLevel || analysis.riskLevel || 'UNKNOWN',
-        confidence: analysis.confidence || analysis.overallConfidence || 0.8,
-        summary: analysis.summary || `Risk: ${analysis.overallRiskLevel || analysis.riskLevel || 'Unknown'}`,
-        recommendation: analysis.recommendation || analysis.action
-      }))
-    };
-  };
-
-  // Helper functions
-  const formatTimeLabel = (date, timeRange) => {
-    if (timeRange === '1hour' || timeRange === '6hours') {
-      return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
-    } else if (timeRange === '24hours') {
-      return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
-    } else if (timeRange === '7days') {
-      return date.toLocaleDateString('en-US', { weekday: 'short' });
-    } else {
-      return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-    }
-  };
-
-  const getCategoryBreakdown = (data) => {
     const categories = {};
-    
-    data.forEach(analysis => {
-      const riskLevel = analysis.overallRiskLevel || analysis.riskLevel || 'Unknown';
-      const category = analysis.category || analysis.type || 'General Analysis';
-      
-      const key = `${category} (${riskLevel})`;
+    filteredData.forEach(record => {
+      const key = `${record.mode.toUpperCase()} (${record.verdict})`;
       categories[key] = (categories[key] || 0) + 1;
     });
 
-    return Object.entries(categories)
-      .map(([name, count]) => ({ name, count, value: count }))
-      .sort((a, b) => b.count - a.count)
-      .slice(0, 8); // Show top 8 categories
-  };
-
-  // Process analytics data based on selected view
-  const processAnalyticsData = () => {
-    if (selectedView === 'personal' || selectedView === 'summary') {
-      return processPersonalAnalytics();
-    }
-    return processPersonalAnalytics(); // Default to personal analytics
-  };
-
-  // Real-time data updates
-  useEffect(() => {
-    const updateData = () => {
-      setAnalyticsData(processAnalyticsData());
-      setIsLoading(false);
-      setLastUpdated(new Date());
-    };
-
-    updateData();
-
-    let interval;
-    if (isRealTimeEnabled && (analysisData.length > 0 || localAnalysisHistory.length > 0)) {
-      interval = setInterval(updateData, 30000); // Update every 30 seconds when there's data
-    }
-
-    return () => {
-      if (interval) clearInterval(interval);
-    };
-  }, [selectedTimeRange, selectedView, analysisData.length, localAnalysisHistory.length]);
-
-  // Chart colors
-  const COLORS = {
-    primary: '#3b82f6',
-    secondary: '#10b981', 
-    danger: '#ef4444',
-    warning: '#f59e0b',
-    info: '#06b6d4',
-    purple: '#8b5cf6',
-    safe: '#10b981',
-    suspicious: '#f59e0b',
-    threat: '#ef4444'
-  };
-
-  const CHART_COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4'];
-
-  // Export function for real data
-  const exportAnalytics = (format) => {
-    const exportData = {
-      exportDate: new Date().toISOString(),
-      timeRange: selectedTimeRange,
-      view: selectedView,
-      userScope: user ? 'authenticated' : 'anonymous',
-      totalDataPoints: analyticsData.totalAnalyses || 0,
-      data: analyticsData,
-      rawAnalysisData: analysisData.length > 0 ? analysisData : 'No analysis data available'
-    };
-
-    const blob = new Blob([JSON.stringify(exportData, null, 2)], { 
-      type: 'application/json' 
+    setAnalyticsData({
+      totalAnalyses: filteredData.length, threatsDetected, safeContent,
+      averageAccuracy: filteredData.length > 0 ? Math.round(totalScore / filteredData.length) : 0,
+      timeSeriesData: timeBuckets,
+      categoryData: Object.entries(categories).map(([name, count]) => ({ name, value: count })),
+      recentAnalyses: filteredData.slice(0, 10)
     });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `xist-analytics-${selectedView}-${selectedTimeRange}-${Date.now()}.json`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+  }, [cloudData, selectedTimeRange]);
 
-    showNotification(`📊 Analytics exported (${analyticsData.totalAnalyses || 0} analyses)`, 'success');
+  const exportAnalytics = () => {
+    const blob = new Blob([JSON.stringify(analyticsData, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a'); a.href = url; a.download = `xist-analytics-${Date.now()}.json`;
+    a.click(); showNotification('📊 Analytics exported successfully', 'success');
   };
 
-  // Loading state
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-96">
-        <motion.div
-          animate={{ rotate: 360 }}
-          transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-          className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full"
-        />
-        <span className="ml-3 text-gray-600 dark:text-gray-400">Loading your analytics...</span>
-      </div>
-    );
-  }
+  if (isLoading) return (
+    <div className={`flex items-center justify-center min-h-screen ${theme.background}`} style={{ marginLeft: '280px' }}>
+      <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 1 }} className="w-10 h-10 border-4 border-indigo-500 border-t-transparent rounded-full shadow-[0_0_15px_rgba(99,102,241,0.5)]" />
+    </div>
+  );
 
-  // No data state
-  if (!analyticsData.totalAnalyses || analyticsData.totalAnalyses === 0) {
-    return (
-      <div className="max-w-6xl mx-auto p-6">
-        <div className="text-center py-12">
-          <motion.div
-            initial={{ scale: 0 }}
-            animate={{ scale: 1 }}
-            transition={{ type: "spring", duration: 0.6 }}
-          >
-            <ChartBarIcon className="w-24 h-24 mx-auto text-gray-400 mb-6" />
-          </motion.div>
-          
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
-            No Analysis Data Available
-          </h2>
-          
-          <p className="text-gray-600 dark:text-gray-400 mb-8 max-w-md mx-auto">
-            Start analyzing content in the Verify section to see your analytics and insights here.
-            Your analysis history will appear once you begin using Xist AI's verification tools.
-          </p>
-          
-          <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-6 max-w-lg mx-auto">
-            <h3 className="text-lg font-semibold text-blue-900 dark:text-blue-200 mb-3">
-              📊 What you'll see here:
-            </h3>
-            <ul className="text-left text-blue-800 dark:text-blue-300 space-y-2">
-              <li>• Real-time analysis statistics</li>
-              <li>• Threat detection trends</li>
-              <li>• Content safety metrics</li>
-              <li>• Analysis accuracy rates</li>
-              <li>• Category breakdowns</li>
-            </ul>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  // Main render with real data
   return (
-    <div className="max-w-6xl mx-auto p-6 space-y-6">
-      {/* Header */}
-      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white flex items-center">
-            <ChartBarIcon className="w-8 h-8 mr-3 text-blue-600" />
-            Your Analytics Dashboard
-          </h1>
-          <p className="text-gray-600 dark:text-gray-400 mt-2">
-            Real-time insights from your content analysis activity
-          </p>
-        </div>
+    <motion.div initial="hidden" animate="visible" variants={containerVariants}
+      className={`w-full min-h-screen relative transition-colors duration-500 ${theme.background} ${theme.textPrimary} overflow-x-hidden p-8`} 
+      style={{ marginLeft: '280px', marginTop: '64px', fontFamily: 'Inter, system-ui, sans-serif' }}
+    >
+      {/* 🌐 DYNAMIC GRID BACKGROUND OVERLAY */}
+      <div className={`absolute inset-0 pointer-events-none opacity-[0.03] ${isDark ? '' : 'invert'}`} 
+           style={{ backgroundImage: 'linear-gradient(to right, #ffffff 1px, transparent 1px), linear-gradient(to bottom, #ffffff 1px, transparent 1px)', backgroundSize: '40px 40px' }}></div>
 
-        <div className="flex items-center gap-4">
-          {/* Real-time toggle */}
-          <div className="flex items-center gap-2">
-            <motion.button
-              onClick={() => setIsRealTimeEnabled(!isRealTimeEnabled)}
-              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                isRealTimeEnabled ? 'bg-blue-600' : 'bg-gray-200 dark:bg-gray-700'
-              }`}
-              whileTap={{ scale: 0.95 }}
-            >
-              <motion.span
-                className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                  isRealTimeEnabled ? 'translate-x-6' : 'translate-x-1'
-                }`}
-                layout
-              />
-            </motion.button>
-            <span className="text-sm text-gray-600 dark:text-gray-400">
-              {isRealTimeEnabled && (
-                <span className="flex items-center">
-                  <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse mr-1" />
-                  Live
-                </span>
-              )}
-            </span>
+      <div className="max-w-6xl mx-auto relative z-10 space-y-6">
+        
+        {/* Header */}
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-8">
+          <div>
+            <h1 className="text-4xl font-black flex items-center gap-3">
+              <ChartBarIcon className="w-10 h-10 text-indigo-500" /> 
+              <span>{typingTitle}</span>
+              <motion.span animate={{ opacity: [0, 1, 0] }} transition={{ repeat: Infinity, duration: 0.8 }} className="w-1.5 h-8 bg-indigo-500 inline-block ml-1" />
+            </h1>
+            <p className={`${theme.muted} text-xs uppercase tracking-widest font-bold mt-2`}>Real-Time Forensic Data Streams</p>
           </div>
-
-          {/* Export button */}
-          <motion.button
-            onClick={() => exportAnalytics('json')}
-            className="flex items-center gap-2 px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-          >
-            <ArrowDownTrayIcon className="w-4 h-4" />
-            Export
-          </motion.button>
-        </div>
-      </div>
-
-      {/* Time Range Selector */}
-      <div className="flex flex-wrap gap-2">
-        {Object.entries(TIME_RANGES).map(([key, range]) => (
-          <motion.button
-            key={key}
-            onClick={() => setSelectedTimeRange(key)}
-            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-              selectedTimeRange === key
-                ? 'bg-blue-600 text-white'
-                : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
-            }`}
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-          >
-            {range.label}
-          </motion.button>
-        ))}
-      </div>
-
-      {/* Stats Overview */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {[
-          {
-            title: 'Total Analyses',
-            value: analyticsData.totalAnalyses || 0,
-            subtitle: `Last ${TIME_RANGES[selectedTimeRange].label.toLowerCase()}`,
-            icon: DocumentTextIcon,
-            color: 'blue',
-            change: analyticsData.totalAnalyses > 0 ? '+' + analyticsData.totalAnalyses : '0'
-          },
-          {
-            title: 'Threats Detected',
-            value: analyticsData.threatsDetected || 0,
-            subtitle: `${analyticsData.totalAnalyses > 0 ? Math.round((analyticsData.threatsDetected / analyticsData.totalAnalyses) * 100) : 0}% of total`,
-            icon: ExclamationTriangleIcon,
-            color: 'red',
-            change: analyticsData.threatsDetected > 0 ? `${analyticsData.threatsDetected} flagged` : 'None detected'
-          },
-          {
-            title: 'Safe Content',
-            value: analyticsData.safeContent || 0,
-            subtitle: `${analyticsData.totalAnalyses > 0 ? Math.round((analyticsData.safeContent / analyticsData.totalAnalyses) * 100) : 0}% verified safe`,
-            icon: CheckCircleIcon,
-            color: 'green',
-            change: analyticsData.safeContent > 0 ? `${analyticsData.safeContent} verified` : 'None yet'
-          },
-          {
-            title: 'Average Accuracy',
-            value: `${analyticsData.averageAccuracy || 0}%`,
-            subtitle: 'Confidence score',
-            icon: SparklesIcon,
-            color: 'purple',
-            change: analyticsData.averageAccuracy >= 90 ? 'High confidence' : analyticsData.averageAccuracy >= 70 ? 'Good confidence' : 'Building confidence'
-          }
-        ].map((stat, index) => (
-          <motion.div
-            key={stat.title}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: index * 0.1 }}
-            className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-gray-700"
-          >
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
-                  {stat.title}
-                </p>
-                <p className="text-2xl font-bold text-gray-900 dark:text-white mt-1">
-                  {stat.value}
-                </p>
-                <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                  {stat.subtitle}
-                </p>
-              </div>
-              <div className={`p-3 rounded-full bg-${stat.color}-100 dark:bg-${stat.color}-900/20`}>
-                <stat.icon className={`w-6 h-6 text-${stat.color}-600`} />
-              </div>
-            </div>
-            <div className="mt-4">
-              <span className="text-sm text-gray-600 dark:text-gray-400">
-                {stat.change}
+          
+          <div className="flex items-center gap-4">
+            <div className={`flex items-center gap-3 px-4 py-2 rounded-xl border ${theme.inner}`}>
+              <button onClick={() => setIsRealTimeEnabled(!isRealTimeEnabled)} className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${isRealTimeEnabled ? 'bg-indigo-500' : 'bg-slate-700'}`}>
+                <motion.span className={`inline-block h-3 w-3 transform rounded-full bg-white transition-transform ${isRealTimeEnabled ? 'translate-x-5' : 'translate-x-1'}`} layout />
+              </button>
+              <span className={`text-[10px] font-black uppercase tracking-widest ${isRealTimeEnabled ? 'text-emerald-400' : theme.muted}`}>
+                {isRealTimeEnabled ? 'Live Sync' : 'Offline'}
               </span>
             </div>
-          </motion.div>
-        ))}
-      </div>
-
-      {/* Analysis Timeline */}
-      {analyticsData.timeSeriesData && analyticsData.timeSeriesData.length > 0 && (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-gray-700"
-        >
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-6">
-            Analysis Activity Timeline
-          </h3>
-          <div className="h-80">
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={analyticsData.timeSeriesData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#374151" opacity={0.3} />
-                <XAxis 
-                  dataKey="time" 
-                  stroke="#6b7280"
-                  fontSize={12}
-                />
-                <YAxis stroke="#6b7280" fontSize={12} />
-                <Tooltip
-                  contentStyle={{
-                    backgroundColor: '#1f2937',
-                    border: 'none',
-                    borderRadius: '8px',
-                    color: '#f9fafb'
-                  }}
-                />
-                <Legend />
-                <Area
-                  type="monotone"
-                  dataKey="analyses"
-                  stackId="1"
-                  stroke={COLORS.primary}
-                  fill={COLORS.primary}
-                  fillOpacity={0.6}
-                  name="Total Analyses"
-                />
-                <Area
-                  type="monotone"
-                  dataKey="threats"
-                  stackId="2"
-                  stroke={COLORS.danger}
-                  fill={COLORS.danger}
-                  fillOpacity={0.6}
-                  name="Threats Detected"
-                />
-                <Area
-                  type="monotone"
-                  dataKey="safe"
-                  stackId="3"
-                  stroke={COLORS.secondary}
-                  fill={COLORS.secondary}
-                  fillOpacity={0.6}
-                  name="Safe Content"
-                />
-              </AreaChart>
-            </ResponsiveContainer>
+            <button onClick={exportAnalytics} className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${isDark ? 'bg-slate-800 text-indigo-400 border border-slate-700 hover:bg-slate-700 hover:text-white' : 'bg-white text-indigo-600 border border-slate-200 hover:bg-slate-50 shadow-sm'}`}>
+              <ArrowDownTrayIcon className="w-4 h-4" /> Export Matrix
+            </button>
           </div>
-        </motion.div>
-      )}
+        </div>
 
-      {/* Category Breakdown */}
-      {analyticsData.categoryData && analyticsData.categoryData.length > 0 && (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-gray-700"
-          >
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-6">
-              Content Categories
-            </h3>
-            <div className="h-64">
+        {/* Time Controls */}
+        <motion.div variants={itemVariants} className="flex flex-wrap gap-2 mb-8">
+          {Object.entries(TIME_RANGES).map(([key, range]) => (
+            <button key={key} onClick={() => setSelectedTimeRange(key)} 
+                    className={`px-5 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${selectedTimeRange === key ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/20' : `${theme.inner} ${theme.textSecondary} hover:text-indigo-400 border border-transparent hover:border-indigo-500/30`}`}>
+              {range.label}
+            </button>
+          ))}
+        </motion.div>
+
+        {/* Top Stats */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          {[
+            { title: 'Total Scans', value: analyticsData.totalAnalyses || 0, icon: DocumentTextIcon, color: 'text-indigo-500', bg: 'bg-indigo-500/10 border-indigo-500/20' },
+            { title: 'Threats Detected', value: analyticsData.threatsDetected || 0, icon: ExclamationTriangleIcon, color: 'text-rose-500', bg: 'bg-rose-500/10 border-rose-500/20' },
+            { title: 'Verified Safe', value: analyticsData.safeContent || 0, icon: CheckCircleIcon, color: 'text-emerald-500', bg: 'bg-emerald-500/10 border-emerald-500/20' },
+            { title: 'Avg. Confidence', value: `${analyticsData.averageAccuracy || 0}%`, icon: SparklesIcon, color: 'text-purple-500', bg: 'bg-purple-500/10 border-purple-500/20' }
+          ].map((stat) => (
+            <motion.div key={stat.title} variants={itemVariants} className={`${theme.card} rounded-2xl p-6 border transition-all hover:-translate-y-1 hover:shadow-indigo-500/10 group`}>
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className={`${theme.muted} text-[9px] font-black tracking-widest uppercase mb-2 group-hover:text-indigo-400 transition-colors`}>{stat.title}</p>
+                  <p className="text-3xl font-black">{stat.value}</p>
+                </div>
+                <div className={`p-4 rounded-xl border ${stat.bg}`}><stat.icon className={`w-6 h-6 ${stat.color}`} /></div>
+              </div>
+            </motion.div>
+          ))}
+        </div>
+
+        {/* Charts Grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 mt-8">
+          
+          {/* AREA CHART */}
+          <motion.div variants={itemVariants} className={`lg:col-span-8 ${theme.card} rounded-2xl p-6 border flex flex-col`}>
+            <div className="flex items-center justify-between mb-6">
+               <h3 className="text-sm font-black uppercase tracking-widest flex items-center gap-2"><CpuChipIcon className="w-5 h-5 text-indigo-500" /> Activity Heartbeat</h3>
+               <div className="w-2 h-2 rounded-full bg-indigo-500 animate-pulse"></div>
+            </div>
+            
+            <div className="h-72 w-full flex-grow">
               <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={analyticsData.categoryData}
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={60}
-                    outerRadius={100}
-                    paddingAngle={5}
-                    dataKey="value"
-                  >
-                    {analyticsData.categoryData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={CHART_COLORS[index % CHART_COLORS.length]} />
-                    ))}
-                  </Pie>
-                  <Tooltip
-                    contentStyle={{
-                      backgroundColor: '#1f2937',
-                      border: 'none',
-                      borderRadius: '8px',
-                      color: '#f9fafb'
-                    }}
+                <AreaChart data={analyticsData.timeSeriesData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                  
+                  {/* 🎨 GLOWING GRADIENT DEFINITIONS */}
+                  <defs>
+                    <linearGradient id="colorScans" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#6366f1" stopOpacity={0.4}/>
+                      <stop offset="95%" stopColor="#6366f1" stopOpacity={0}/>
+                    </linearGradient>
+                    <linearGradient id="colorThreats" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#f43f5e" stopOpacity={0.4}/>
+                      <stop offset="95%" stopColor="#f43f5e" stopOpacity={0}/>
+                    </linearGradient>
+                  </defs>
+
+                  <CartesianGrid strokeDasharray="3 3" stroke={isDark ? "#1e293b" : "#e2e8f0"} vertical={false} />
+                  <XAxis dataKey="time" stroke={isDark ? "#64748b" : "#94a3b8"} fontSize={10} tickLine={false} axisLine={false} dy={10} />
+                  <YAxis stroke={isDark ? "#64748b" : "#94a3b8"} fontSize={10} tickLine={false} axisLine={false} />
+                  <Tooltip 
+                    contentStyle={{ backgroundColor: isDark ? '#0f172a' : '#fff', border: isDark ? '1px solid #1e293b' : '1px solid #e2e8f0', borderRadius: '12px', color: isDark ? '#f8fafc' : '#0f172a', fontWeight: 'bold' }} 
+                    itemStyle={{ fontSize: '12px' }}
                   />
-                  <Legend />
-                </PieChart>
+                  <Area type="monotone" dataKey="analyses" stroke="#6366f1" strokeWidth={3} fillOpacity={1} fill="url(#colorScans)" name="Total Scans" />
+                  <Area type="monotone" dataKey="threats" stroke="#f43f5e" strokeWidth={3} fillOpacity={1} fill="url(#colorThreats)" name="Threats" />
+                </AreaChart>
               </ResponsiveContainer>
             </div>
           </motion.div>
 
-          {/* Recent Analyses */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-gray-700"
-          >
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-6">
-              Recent Analysis Activity
+          {/* DONUT CHART (Replaces Pie Chart) */}
+          <motion.div variants={itemVariants} className={`lg:col-span-4 ${theme.card} rounded-2xl p-6 border flex flex-col`}>
+            <h3 className="text-sm font-black uppercase tracking-widest flex items-center gap-2 mb-2">
+              <ShieldCheckIcon className="w-5 h-5 text-indigo-500" /> Threat Vectors
             </h3>
-            <div className="space-y-4 max-h-64 overflow-y-auto">
-              {analyticsData.recentAnalyses && analyticsData.recentAnalyses.length > 0 ? (
-                analyticsData.recentAnalyses.map((analysis, index) => (
-                  <motion.div
-                    key={analysis.id || index}
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: index * 0.1 }}
-                    className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg"
+            
+            <div className="h-[300px] w-full relative"> 
+              {/* Center Readout for Donut Chart */}
+              <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none mb-10">
+                <span className={`text-3xl font-black ${theme.textPrimary}`}>{analyticsData.totalAnalyses || 0}</span>
+                <span className={`text-[8px] font-black uppercase tracking-widest ${theme.muted}`}>Total Vects</span>
+              </div>
+
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie 
+                     data={analyticsData.categoryData?.length > 0 ? analyticsData.categoryData : [{ name: 'No Data', value: 1 }]} 
+                     cx="50%" 
+                     cy="45%" 
+                     innerRadius={80} // 🍩 Creates the hollow Donut effect
+                     outerRadius={110} 
+                     paddingAngle={6} 
+                     cornerRadius={8} // 🍩 Sleek rounded edges
+                     dataKey="value"
+                     stroke="none"
                   >
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className="text-sm font-medium text-gray-900 dark:text-white">
-                          {analysis.type}
-                        </span>
-                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                          analysis.riskLevel === 'HIGH' || analysis.riskLevel === 'CRITICAL' 
-                            ? 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
-                            : analysis.riskLevel === 'MEDIUM' || analysis.riskLevel === 'SUSPICIOUS'
-                            ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200'
-                            : 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
-                        }`}>
-                          {analysis.riskLevel}
-                        </span>
-                      </div>
-                      <p className="text-sm text-gray-600 dark:text-gray-400 truncate">
-                        {analysis.summary}
-                      </p>
-                      <div className="flex items-center gap-4 mt-1 text-xs text-gray-500 dark:text-gray-400">
-                        <span>{new Date(analysis.timestamp).toLocaleTimeString()}</span>
-                        <span>{Math.round((typeof analysis.confidence === 'number' ? analysis.confidence : parseFloat(analysis.confidence) || 0.8) * 100)}% confidence</span>
-                      </div>
-                    </div>
-                  </motion.div>
-                ))
-              ) : (
-                <div className="text-center py-8 text-gray-500 dark:text-gray-400">
-                  <DocumentTextIcon className="w-12 h-12 mx-auto mb-3 opacity-50" />
-                  <p>No recent analyses to display</p>
-                  <p className="text-sm mt-1">Your analysis history will appear here</p>
-                </div>
-              )}
+                    {analyticsData.categoryData?.length > 0 ? (
+                      analyticsData.categoryData.map((_, index) => (
+                        <Cell key={`cell-${index}`} fill={CHART_COLORS[index % CHART_COLORS.length]} />
+                      ))
+                    ) : (
+                      <Cell fill={isDark ? '#1e293b' : '#e2e8f0'} />
+                    )}
+                  </Pie>
+                  <Tooltip 
+                    contentStyle={{ backgroundColor: isDark ? '#0f172a' : '#fff', border: isDark ? '1px solid #1e293b' : '1px solid #e2e8f0', borderRadius: '12px', color: isDark ? '#f8fafc' : '#0f172a', fontWeight: 'bold' }} 
+                    itemStyle={{ fontSize: '12px' }}
+                  />
+                  <Legend 
+                     verticalAlign="bottom" 
+                     align="center" 
+                     layout="horizontal" 
+                     iconType="circle"
+                     wrapperStyle={{ paddingTop: "10px", fontSize: "10px", fontWeight: "bold", textTransform: "uppercase", letterSpacing: "1px" }}
+                  />
+                </PieChart>
+              </ResponsiveContainer>
             </div>
           </motion.div>
         </div>
-      )}
 
-      {/* Status Bar */}
-      <div className="text-center text-sm text-gray-500 dark:text-gray-400">
-        {isRealTimeEnabled && (
-          <span className="inline-flex items-center mr-4">
-            <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse mr-2" />
-            Live updates enabled
-          </span>
-        )}
-        <span>Last updated: {lastUpdated.toLocaleTimeString()}</span>
-        <span className="mx-2">•</span>
-        <span>Showing real analysis data from Verify section</span>
+        {/* Activity Feed */}
+        <motion.div variants={itemVariants} className={`${theme.card} rounded-2xl p-6 border mt-8`}>
+          <div className="flex items-center justify-between mb-6 pb-4 border-b border-slate-800/50">
+             <h3 className="text-sm font-black uppercase tracking-widest flex items-center gap-2">
+               <DocumentTextIcon className="w-5 h-5 text-indigo-500" /> Recent Payload Dumps
+             </h3>
+          </div>
+          
+          <div className="space-y-3">
+            {analyticsData.recentAnalyses?.length > 0 ? (
+              analyticsData.recentAnalyses.map((record, index) => (
+                <motion.div initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: index * 0.05 }} key={record.id} 
+                            className={`flex items-center justify-between p-4 rounded-xl border transition-colors group ${isDark ? 'bg-white/5 border-white/5 hover:bg-white/10 hover:border-indigo-500/30' : 'bg-slate-50 border-slate-200 hover:bg-slate-100'}`}>
+                  <div className="flex items-center gap-4 overflow-hidden">
+                    <div className={`w-12 h-12 rounded-full flex items-center justify-center font-black text-xs shadow-lg flex-shrink-0 ${
+                      record.verdict === 'CRITICAL' ? 'bg-rose-500/20 text-rose-400 border border-rose-500/30' :
+                      record.verdict === 'QUESTIONABLE' || record.verdict === 'SUSPICIOUS' ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30' :
+                      'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
+                    }`}>
+                      {Math.round(record.score)}%
+                    </div>
+                    <div className="truncate">
+                      <p className={`font-black uppercase tracking-widest text-xs mb-1 ${theme.textPrimary}`}>{record.verdict}</p>
+                      <p className={`text-[10px] font-mono tracking-widest uppercase truncate ${theme.textSecondary}`}>
+                        <span className="text-indigo-400 mr-2">[{record.mode}]</span> {record.input || 'Encrypted Media'}
+                      </p>
+                    </div>
+                  </div>
+                  <div className={`text-[10px] font-black uppercase tracking-widest whitespace-nowrap pl-4 opacity-50 group-hover:opacity-100 transition-opacity ${theme.textPrimary}`}>
+                    {timeAgo(record.created_at)}
+                  </div>
+                </motion.div>
+              ))
+            ) : (
+              <div className={`py-12 text-center text-xs font-mono uppercase tracking-widest ${theme.muted}`}>
+                No intelligence telemetry found. Awaiting data injection.
+              </div>
+            )}
+          </div>
+        </motion.div>
+
       </div>
-    </div>
+      <div className="h-24" />
+    </motion.div>
   );
 };
 

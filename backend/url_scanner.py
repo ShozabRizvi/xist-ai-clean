@@ -4,170 +4,151 @@ from urllib.parse import urlparse
 from datetime import datetime
 import ssl
 import socket
+import os
 
 class URLScanner:
     def __init__(self):
-        self.dangerous_domains = [
-            'suspicious-bank.com', 'fake-security.org', 'scam-site.net',
-            'phishing-test.com', 'malware-download.biz'
-        ]
+        # Whitelist for known safe entities
         self.trusted_domains = [
             'google.com', 'microsoft.com', 'apple.com', 'github.com',
-            'stackoverflow.com', 'wikipedia.org', 'mozilla.org'
+            'stackoverflow.com', 'wikipedia.org', 'mozilla.org',
+            'xistai.web.app'
         ]
+        # Your Google Safe Browsing API Key (Get from Google Cloud Console)
+        self.safebrowsing_api_key = os.environ.get('GOOGLE_SAFE_BROWSING_KEY')
     
     def scan_url(self, url):
-        """Comprehensive URL security analysis"""
+        """Advanced dynamic URL security analysis"""
         try:
             parsed = urlparse(url)
             domain = parsed.netloc.lower()
             
-            # Basic URL analysis
-            risk_score = self.calculate_risk_score(url, domain, parsed)
-            ssl_info = self.check_ssl(url)
-            domain_age = self.estimate_domain_age(domain)
+            # Layer 1: Whitelist Check (Fastest)
+            if domain in self.trusted_domains:
+                return self._generate_safe_response(url, domain, "Domain is in trusted whitelist")
+
+            # Layer 2: Heuristic Analysis (Local Pattern Matching)
+            heuristic_risk = self.calculate_heuristic_risk(url, domain, parsed)
             
-            # Determine verdict
-            if risk_score > 70:
+            # Layer 3: Live Threat Intelligence (Google Safe Browsing)
+            global_threat = self.check_global_threat_intel(url)
+            
+            # Layer 4: Technical Validation (SSL/TLS)
+            ssl_info = self.check_ssl(url)
+            
+            # Aggregate Scoring
+            final_risk_score = max(heuristic_risk, global_threat['risk_score'])
+            
+            # Final Verdict
+            if final_risk_score > 70:
                 verdict = "Dangerous"
-            elif risk_score > 40:
+            elif final_risk_score > 40:
                 verdict = "Suspicious"
             else:
                 verdict = "Safe"
-            
-            # Generate warnings and recommendations
-            warnings = self.generate_warnings(url, domain, parsed, ssl_info)
-            recommendations = self.generate_recommendations(risk_score, domain)
-            checks = self.generate_security_checks(url, domain, ssl_info)
             
             return {
                 'success': True,
                 'url': url,
                 'domain': domain,
-                'riskScore': risk_score,
+                'riskScore': final_risk_score,
                 'verdict': verdict,
-                'warnings': warnings,
-                'recommendations': recommendations,
-                'checks': checks,
+                'warnings': self.generate_warnings(url, domain, parsed, ssl_info, global_threat),
+                'recommendations': self.generate_recommendations(final_risk_score, domain),
                 'technicalDetails': {
                     'hasSSL': ssl_info['valid'],
-                    'domainAge': domain_age,
-                    'responseTime': '150ms',
-                    'serverLocation': 'Unknown'
-                },
-                'scanTimestamp': datetime.utcnow().isoformat()
+                    'threatSource': global_threat['source'],
+                    'scanTimestamp': datetime.utcnow().isoformat()
+                }
             }
             
         except Exception as e:
-            return {
-                'success': False,
-                'error': f'URL scan failed: {str(e)}',
-                'url': url,
-                'riskScore': 100,
-                'verdict': 'Error'
+            return {'success': False, 'error': str(e), 'riskScore': 100, 'verdict': 'Error'}
+
+    def check_global_threat_intel(self, url):
+        """Queries Google Safe Browsing for real-time threat data"""
+        if not self.safebrowsing_api_key:
+            return {'risk_score': 0, 'source': 'Local Heuristics Only'}
+
+        endpoint = f"https://safebrowsing.googleapis.com/v4/threatMatches:find?key={self.safebrowsing_api_key}"
+        payload = {
+            "client": {"clientId": "xist-ai", "clientVersion": "3.0"},
+            "threatInfo": {
+                "threatTypes": ["MALWARE", "SOCIAL_ENGINEERING", "UNWANTED_SOFTWARE", "POTENTIALLY_HARMFUL_APPLICATION"],
+                "platformTypes": ["ANY_PLATFORM"],
+                "threatEntryTypes": ["URL"],
+                "threatEntries": [{"url": url}]
             }
-    
-    def calculate_risk_score(self, url, domain, parsed):
-        """Calculate risk score based on various factors"""
+        }
+        
+        try:
+            response = requests.post(endpoint, json=payload, timeout=5)
+            data = response.json()
+            if 'matches' in data:
+                return {'risk_score': 100, 'source': f"Google Safe Browsing: {data['matches'][0]['threatType']}"}
+        except:
+            pass
+        return {'risk_score': 0, 'source': 'Global Intel: Clean'}
+
+    def calculate_heuristic_risk(self, url, domain, parsed):
+        """Advanced Lexical Analysis (Catching patterns before they are blacklisted)"""
         score = 0
         
-        # Check against known dangerous domains
-        if domain in self.dangerous_domains:
-            score += 80
-        elif domain in self.trusted_domains:
-            score -= 20
-        
-        # Check for suspicious patterns
-        if re.search(r'[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+', domain):  # IP address
-            score += 40
+        # 1. IP Address Usage (High risk for phishing)
+        if re.search(r'[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+', domain):
+            score += 50
             
-        if len(domain.split('.')) > 3:  # Too many subdomains
+        # 2. Homoglyph/Typosquatting Detection (e.g., 'g00gle.com')
+        suspicious_chars = ['0', '1', 'l', 'v', 'w', '-']
+        if any(char in domain for char in suspicious_chars) and len(domain) > 15:
             score += 20
-            
-        if any(word in url.lower() for word in ['urgent', 'verify', 'secure', 'login', 'update']):
-            score += 15
-            
-        if not parsed.scheme == 'https':
+
+        # 3. URL Shortener Detection (Hiding destinations)
+        if any(s in domain for s in ['bit.ly', 'tinyurl.com', 't.co', 'short.link']):
+            score += 30
+
+        # 4. Excessive Subdomains (Typical for free hosting phishing)
+        if len(domain.split('.')) > 3:
             score += 25
             
-        if any(char in domain for char in ['-', '_']) and len(domain) > 20:
-            score += 10
+        # 5. Insecure Protocol
+        if parsed.scheme == 'http':
+            score += 20
             
-        return max(0, min(score, 100))
-    
+        return min(score, 100)
+
     def check_ssl(self, url):
-        """Check SSL certificate validity"""
+        """Live SSL handshake verification"""
         try:
             if not url.startswith('https'):
-                return {'valid': False, 'reason': 'Not HTTPS'}
-            
+                return {'valid': False, 'reason': 'Insecure Protocol'}
             parsed = urlparse(url)
             context = ssl.create_default_context()
-            
-            with socket.create_connection((parsed.netloc, 443), timeout=5) as sock:
+            with socket.create_connection((parsed.netloc, 443), timeout=3) as sock:
                 with context.wrap_socket(sock, server_hostname=parsed.netloc) as ssock:
-                    return {'valid': True, 'reason': 'Valid SSL certificate'}
-                    
-        except Exception:
-            return {'valid': False, 'reason': 'SSL verification failed'}
-    
-    def estimate_domain_age(self, domain):
-        """Estimate domain age (mock implementation)"""
-        if domain in self.trusted_domains:
-            return "10+ years"
-        elif domain in self.dangerous_domains:
-            return "< 1 month"
-        else:
-            return "Unknown"
-    
-    def generate_warnings(self, url, domain, parsed, ssl_info):
-        """Generate security warnings"""
+                    return {'valid': True, 'reason': 'Valid Certificate'}
+        except:
+            return {'valid': False, 'reason': 'SSL Handshake Failed'}
+
+    def generate_warnings(self, url, domain, parsed, ssl_info, global_threat):
         warnings = []
-        
+        if global_threat['risk_score'] == 100:
+            warnings.append(f"CRITICAL: {global_threat['source']}")
         if not ssl_info['valid']:
-            warnings.append("No valid SSL certificate - data may not be encrypted")
-            
-        if domain in self.dangerous_domains:
-            warnings.append("Known malicious domain - avoid interaction")
-            
-        if re.search(r'[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+', domain):
-            warnings.append("Direct IP address usage - potentially suspicious")
-            
-        if any(word in url.lower() for word in ['urgent', 'verify', 'update']):
-            warnings.append("URL contains urgency keywords often used in phishing")
-            
+            warnings.append(f"SECURITY: {ssl_info['reason']}")
+        if len(domain.split('.')) > 3:
+            warnings.append("SUSPICIOUS: Unusual number of subdomains detected")
         return warnings
-    
-    def generate_recommendations(self, risk_score, domain):
-        """Generate security recommendations"""
-        recommendations = []
-        
-        if risk_score > 50:
-            recommendations.extend([
-                "Do not enter personal information on this site",
-                "Verify the legitimate website URL independently",
-                "Use caution if you received this link via email or message"
-            ])
-        
-        recommendations.extend([
-            "Check for HTTPS and valid SSL certificates",
-            "Look for official contact information and privacy policy",
-            "When in doubt, navigate directly to the official website"
-        ])
-        
-        return recommendations
-    
-    def generate_security_checks(self, url, domain, ssl_info):
-        """Generate list of passed security checks"""
-        checks = []
-        
-        if ssl_info['valid']:
-            checks.append("Valid SSL certificate detected")
-            
-        if domain in self.trusted_domains:
-            checks.append("Domain is in trusted whitelist")
-            
-        if url.startswith('https'):
-            checks.append("HTTPS protocol in use")
-            
-        return checks
+
+    def _generate_safe_response(self, url, domain, reason):
+        return {
+            'success': True, 'url': url, 'domain': domain, 'riskScore': 0,
+            'verdict': 'Safe', 'warnings': [], 'checks': [reason]
+        }
+
+    def generate_recommendations(self, score, domain):
+        if score > 70:
+            return ["EXIT IMMEDIATELY: This site is flagged as malicious", "Report this URL to prevent others from being scammed"]
+        if score > 40:
+            return ["Use caution: Do not provide login credentials or financial data", "Manually type the address of the site you intended to visit"]
+        return ["Site appears safe based on current intelligence"]

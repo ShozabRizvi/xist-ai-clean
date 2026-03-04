@@ -55,3 +55,27 @@ coverage/
 # Python cache (for AI backend)
 __pycache__/
 *.pyc
+
+
+# ✅ ADD THESE FOR 2026 PROJECT SECURITY:
+
+# Supabase Local Development
+.supabase/
+supabase/.temp/
+supabase/functions/.env
+
+# Modern Build Tools (Vite/Turborepo)
+.vite/
+.turbo/
+
+# Firebase Emulator Logs & Config
+firebase-debug.log
+.firebase/
+firestore-debug.log
+ui-debug.log
+
+# Ensure all environment variations are caught
+.env.*
+!.env.example # Allow an example file to show other devs what keys are needed
+
+-e "\n# 2026 Security Updates\n.env.*\n.firebase/\n.supabase/\nfirebase-debug.log" 

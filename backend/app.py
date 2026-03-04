@@ -1,482 +1,305 @@
-from flask import Flask, request, jsonify, Response
-from flask_cors import CORS, cross_origin
-from flask_sqlalchemy import SQLAlchemy
 import os
+import time
 import json
+import tempfile
 import requests
-import re
-from datetime import datetime
+from bs4 import BeautifulSoup
+from flask import Flask, request, jsonify
+from flask_cors import CORS, cross_origin
 from dotenv import load_dotenv
+from werkzeug.utils import secure_filename
+import google.generativeai as genai
+import PyPDF2
 
-# Load environment variables
-load_dotenv() 
-
+load_dotenv()
 app = Flask(__name__)
+CORS(app)
 
-# ✅ OPTIMIZED CORS FOR XISTAI.WEB.APP + RAILWAY
-CORS(app, resources={
-    r"/*": {
-        "origins": [
-            "http://localhost:3000", 
-            "http://127.0.0.1:3000",
-            "https://xistai.web.app",           # Your Firebase domain
-            "https://xistai.firebaseapp.com",  # Alternative Firebase URL
-            "https://*.web.app",                # All Firebase domains
-            "https://*.firebaseapp.com",       # All Firebase apps
-            "https://*.railway.app"            # Railway backend
-        ],
-        "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-        "allow_headers": ["Content-Type", "Authorization", "X-Requested-With"],
-        "supports_credentials": True
-    }
-})
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+genai.configure(api_key=GEMINI_API_KEY)
 
-# ✅ PRODUCTION DATABASE CONFIGURATION
-DATABASE_URL = os.environ.get('DATABASE_URL', 'sqlite:///xist_ai.db')
-if DATABASE_URL and DATABASE_URL.startswith('postgres://'):
-    DATABASE_URL = DATABASE_URL.replace('postgres://', 'postgresql://', 1)
+# Force JSON output format
+llm_model = genai.GenerativeModel('gemini-2.5-flash', generation_config={"response_mime_type": "application/json"})
 
-app.config['SQLALCHEMY_DATABASE_URI'] = DATABASE_URL
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-db = SQLAlchemy(app)
+def scrape_url(url):
+    """Helper function to extract text from a webpage"""
+    try:
+        headers = {'User-Agent': 'Mozilla/5.0'}
+        response = requests.get(url, headers=headers, timeout=10)
+        soup = BeautifulSoup(response.text, 'html.parser')
+        # Extract paragraph text and limit to 10,000 characters to save tokens
+        paragraphs = soup.find_all('p')
+        text = ' '.join([p.get_text() for p in paragraphs])
+        return text[:10000] 
+    except Exception as e:
+        return f"Error scraping URL: {str(e)}"
 
-# ✅ DATABASE MODELS
-class User(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    email = db.Column(db.String(120), unique=True, nullable=False)
-    name = db.Column(db.String(100), nullable=False)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    
-    # Authority fields
-    is_authority = db.Column(db.Boolean, default=False)
-    government_id = db.Column(db.String(100), nullable=True)
-    id_type = db.Column(db.String(50), nullable=True)
-    verified_at = db.Column(db.DateTime, nullable=True)
-    authority_level = db.Column(db.String(20), default='citizen')
-    department = db.Column(db.String(100), nullable=True)
-    badge_number = db.Column(db.String(50), nullable=True)
-
-class Analysis(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-    content = db.Column(db.Text, nullable=False)
-    scam_risk = db.Column(db.Integer, nullable=False)
-    credibility_score = db.Column(db.Integer, nullable=False)
-    verdict = db.Column(db.String(50), nullable=False)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
-
-class ThreatAlert(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    authority_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-    title = db.Column(db.String(200), nullable=False)
-    description = db.Column(db.Text, nullable=False)
-    threat_level = db.Column(db.String(20), nullable=False)
-    category = db.Column(db.String(50), nullable=False)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    is_active = db.Column(db.Boolean, default=True)
-
-# ✅ BASIC ROUTES
-@app.route('/')
-def home():
-    return jsonify({
-        "message": "Xist AI Backend is running on Railway!",
-        "status": "success",
-        "version": "2.0",
-        "domain": "xistai.web.app",
-        "backend": "Railway",
-        "timestamp": datetime.utcnow().isoformat()
-    })
-
-@app.route('/health')
-@app.route('/api/health')
-def health():
-    return jsonify({
-        "status": "healthy",
-        "service": "Xist AI Backend",
-        "version": "2.0",
-        "frontend": "xistai.web.app",
-        "backend": "Railway",
-        "timestamp": datetime.utcnow().isoformat()
-    })
-
-# ✅ MAIN ANALYSIS ENDPOINT
 @app.route('/api/analyze', methods=['POST'])
 @cross_origin()
 def analyze_content():
+    temp_file_path = None
+    media_file_for_gemini = None
+
+    try:
+        # 1. HANDLE BOTH JSON (Text/URL) AND FORM DATA (Files)
+        if request.content_type.startswith('multipart/form-data'):
+            mode = request.form.get('mode', 'text')
+            content = request.form.get('text', '')
+            uploaded_file = request.files.get('file')
+        else:
+            data = request.get_json()
+            mode = data.get('mode', 'text')
+            content = data.get('text') or data.get('content', '')
+            uploaded_file = None
+
+        if not content and not uploaded_file:
+            return jsonify({'error': 'No content or file provided'}), 400
+
+        # 2. PREPARE THE DATA FOR GEMINI
+        analysis_input = content
+
+        # Handle URL Mode
+        if mode == 'url':
+            print(f"🌍 Scraping URL: {content}")
+            analysis_input = scrape_url(content)
+            if not analysis_input.strip():
+                return jsonify({'error': 'Could not extract text from this URL.'}), 400
+        
+        # Handle Document Mode (PDF, TXT)
+        elif mode == 'document' and uploaded_file:
+            print(f"📄 Processing uploaded document...")
+            filename = secure_filename(uploaded_file.filename).lower()
+            extracted_text = ""
+
+            try:
+                # Read PDF Files
+                if filename.endswith('.pdf'):
+                    pdf_reader = PyPDF2.PdfReader(uploaded_file)
+                    for page in pdf_reader.pages:
+                        text = page.extract_text()
+                        if text:
+                            extracted_text += text + "\n"
+                
+                # Read TXT Files
+                elif filename.endswith('.txt'):
+                    extracted_text = uploaded_file.read().decode('utf-8')
+                
+                else:
+                    return jsonify({"error": "Unsupported document format. Please upload PDF or TXT."}), 400
+
+                # Trick the AI: Change mode to 'text' and pass the extracted words!
+                mode = 'text'
+                analysis_input = extracted_text
+
+            except Exception as e:
+                print(f"Document parsing error: {str(e)}")
+                return jsonify({"error": "Failed to extract text from document."}), 500
+            
+        # Handle Media Modes (Image, Video, Voice)
+        # Handle Media Modes (Image, Video, Voice)
+        elif mode in ['image', 'video', 'voice'] and uploaded_file:
+            print(f"📁 Processing uploaded {mode} file...")
+            
+            # 🚨 FIX: Ensure Voice notes have an audio extension for Gemini API
+            original_filename = secure_filename(uploaded_file.filename)
+            if mode == 'voice' and not original_filename.lower().endswith(('.webm', '.wav', '.mp3')):
+                filename = f"voice_capture_{int(time.time())}.webm"
+            else:
+                filename = original_filename
+
+            temp_dir = tempfile.gettempdir()
+            temp_file_path = os.path.join(temp_dir, filename)
+            uploaded_file.save(temp_file_path)
+
+            # Upload the file securely to Gemini's File API
+            # Explicitly setting the mime_type helps Gemini skip the guessing stage
+            mime_type = "audio/webm" if mode == 'voice' else None
+            media_file_for_gemini = genai.upload_file(path=temp_file_path, mime_type=mime_type)
+            
+            print(f"⏳ Waiting for Gemini to process the {mode}...")
+            
+            # THE FINAL FIX: UPDATING THE FILE OBJECT
+            while media_file_for_gemini.state.name == 'PROCESSING':
+                print(".", end="", flush=True)
+                time.sleep(2)
+                # Overwrite the old file object with the newly updated one
+                media_file_for_gemini = genai.get_file(media_file_for_gemini.name)
+                
+            if media_file_for_gemini.state.name == 'FAILED':
+                # 🚨 DEBUG: Print why it failed in the console
+                print(f"\n❌ Media processing failed in Gemini. State: {media_file_for_gemini.state}")
+                return jsonify({"error": f"Gemini failed to process the {mode} file."}), 500
+                
+            print("\n✅ Media is ACTIVE and ready!")
+            analysis_input = "Please analyze the attached media file."
+
+        # 3. BUILD THE MULTIMODAL PROMPT
+        if mode in ['image', 'video', 'voice']:
+            prompt_instructions = f"""
+            You are an elite, highly skeptical Digital Media Forensics Expert for 'Xist AI'. 
+            Your SOLE directive is to forensically examine the attached {mode} and determine if it is authentic physical media or synthetically generated/manipulated (e.g., Midjourney, Sora, Deepfakes, Voice Cloning).
+            
+            CRITICAL FORENSIC VECTORS TO ANALYZE:
+            1. Lighting & Physics: Are shadows perfectly aligned with light sources? Look for impossible reflections, HDR studio lighting in natural settings, or missing ambient occlusion.
+            2. Micro-Anatomy: Zoom in on teeth, cuticles, hair strands, and fabric seams. Look for melting, unnatural blending, asymmetrical irises, or hyper-smoothed "plastic" skin.
+            3. Structural Coherence: Are straight lines bending? Is background text legible or alien gibberish? Are distant background objects merging together like a watercolor painting?
+            4. Temporal/Acoustic: For video, look for facial edge flickering or micro-jitter. For voice, listen for metallic artifacts, lack of natural breathing, or robotic cadences.
+            
+            TONE & STYLE RULES:
+            - Write your explanation like a clinical, professional intelligence briefing.
+            - NEVER use repetitive, generic openings like "This image received a score of..." or "Based on the analysis..."
+            - Be hyper-specific. Name the EXACT visual or audio anomalies you found in this specific file. 
+            - If it is authentic, explain specifically why the natural elements (lighting, breathing, physics) prove its authenticity. Do NOT assume it is real just because it looks high-quality.
+            
+            You MUST return ONLY a valid JSON object matching this exact structure:
+            {{
+                "credibility_score": <integer 0-100: 100=Authentic physical capture, 0=Blatant AI generation/Deepfake>,
+                "overall_verdict": <string: MUST BE "SAFE", "QUESTIONABLE", or "CRITICAL">,
+                "threat_category": <string: MUST BE "Deepfake", "Manipulated Media", or "Safe">,
+                "emotional_intensity": 0,
+                "bias_score": 0,
+                "logical_consistency": <integer 0-100: Score low if physics/lighting/audio flow make no sense>,
+                "explanation": "A highly specific, unique 3-4 sentence forensic explanation. Point out the EXACT artifacts or natural details you observed. Vary your sentence structure.",
+                "sources": []
+            }}
+            """
+        else:
+            prompt_instructions = f"""
+            You are an elite Threat Intelligence and Disinformation Analyst for 'Xist AI'. 
+            Analyze the following {mode} input for semantic manipulation, factual accuracy, AI-generated text patterns, and deceptive intent.
+            
+            CRITICAL FORENSIC VECTORS TO ANALYZE:
+            1. AI Text Fingerprints: Look for classic LLM markers (e.g., over-structuring, lack of human "burstiness", or heavy use of AI buzzwords like 'delve', 'tapestry', 'testament', 'navigating', 'crucial').
+            2. Psychological Manipulation: Is the text engineered to trigger outrage, fear, or urgency? Does it use clickbait tactics to bypass rational thought?
+            3. Logical Coherence: Does it make wild empirical claims without citations? Does it rely on strawman arguments, whataboutism, or false dichotomies?
+            4. Intent Profiling: Is the underlying intent to inform, to scam, to polarize a community, or to push propaganda?
+            
+            TONE & STYLE RULES:
+            - Write like a senior intelligence analyst. Maintain an objective, clinical, and authoritative tone.
+            - NEVER use repetitive boilerplate phrases like "This text got a critical score because..."
+            - Quote specific words, claims, or rhetorical tactics used in the text to justify your score. 
+            - Ensure every explanation sounds uniquely tailored to the specific text provided. Act as a human lie detector.
+            
+            You MUST return ONLY a valid JSON object matching this exact structure:
+            {{
+                "credibility_score": <integer 0-100: 100=Factual/Verified, 0=Blatant Disinformation/Scam/AI Spam>,
+                "overall_verdict": <string: MUST BE EXACTLY "SAFE", "QUESTIONABLE", or "CRITICAL">,
+                "threat_category": <string: MUST BE "Misinformation", "Scam", "Malware Risk", or "Safe">,
+                "emotional_intensity": <integer 0-100: High if text relies heavily on fear/anger/outrage>,
+                "bias_score": <integer 0-100: High if heavily one-sided or propaganda>,
+                "logical_consistency": <integer 0-100: High if arguments are sound and backed by evidence>,
+                "explanation": "A highly specific, unique 3-4 sentence intelligence brief. Cite the exact deceptive phrasing or logical gaps you found. Vary your sentence structure.",
+                "sources": [
+                    {{
+                        "source_name": "Name of real organization (e.g., Reuters, AP News, Snopes)",
+                        "source_type": "Fact-Checking Authority",
+                        "why_relevant": "Briefly state why this specific source is best suited to verify this exact claim."
+                    }}
+                ]
+            }}
+            """
+
+        # Package the prompt and the file (if it exists) together
+        if media_file_for_gemini:
+            gemini_payload = [prompt_instructions, media_file_for_gemini]
+        else:
+            gemini_payload = [prompt_instructions, f"INPUT TEXT: {analysis_input}"]
+
+        # 4. CALL GEMINI
+        print(f"🤖 Sending {mode} data to Gemini...")
+        gemini_response = llm_model.generate_content(gemini_payload)
+        ai_data = json.loads(gemini_response.text)
+
+        # 5. FORMAT RESPONSE FOR REACT
+        prob_real = ai_data.get("credibility_score", 50)
+        prob_fake = 100 - prob_real
+        verdict = ai_data.get("overall_verdict", "QUESTIONABLE")
+
+        structured_response = {
+            "overall_verdict": verdict,
+            "credibility_score": prob_real,
+            "threat_category": ai_data.get("threat_category", "Misinformation"),
+            "content_overview": {
+                "content_type": mode.upper(),
+                "primary_theme": f"AI {mode.capitalize()} Forensic Audit",
+                "intent_assessment": "Manipulation/Deepfake Detected" if prob_fake > 50 else "Authentic Content"
+            },
+            "linguistic_patterns": {
+                "emotional_intensity": ai_data.get("emotional_intensity", 50),
+                "bias_indicator_score": ai_data.get("bias_score", 50),
+                "sensationalism_score": ai_data.get("emotional_intensity", 50),
+                "logical_consistency_score": ai_data.get("logical_consistency", 50)
+            },
+            "claim_analysis": [{
+                "claim_text": content[:60] + "..." if mode in ['text', 'url'] else f"Analyzed {mode} file",
+                "claim_type": "Visual/Audio Content" if mode in ['image', 'video', 'voice'] else "Factual Claim",
+                "confidence_level": prob_real,
+                "risk_level": "high" if prob_fake > 60 else "low",
+                "verification_status": "verified" if prob_real > 75 else "disputed",
+                "explanation": "AI detected manipulative intent or synthetic generation." if prob_fake > 50 else "Information/Media appears authentic."
+            }],
+            "validation_sources": ai_data.get("sources", []),
+            "final_explanation_for_user": ai_data.get("explanation", "Analysis complete.")
+        }
+        
+        return jsonify(structured_response)
+
+    except Exception as e:
+        print(f"❌ CRASH REPORT: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+        
+    finally:
+        # 6. CLEANUP: Delete the temporary file from your server to save hard drive space!
+        if temp_file_path and os.path.exists(temp_file_path):
+            os.remove(temp_file_path)
+            
+            # --- ADD THIS NEW ROUTE BELOW THE /api/analyze FUNCTION ---
+
+@app.route('/api/triage', methods=['POST'])
+@cross_origin()
+def emergency_triage():
+    """
+    Dedicated node for Helpline 24/7. 
+    Bypasses forensic analysis to provide direct tactical solutions.
+    """
     try:
         data = request.get_json()
+        user_issue = data.get('text', '')
+
+        if not user_issue:
+            return jsonify({'error': 'No issue provided'}), 400
+
+        # Dedicated "Responder" prompt overrides the forensic style of /api/analyze
+        # We use a plain string here instead of forcing JSON to ensure simplicity and speed
+        triage_prompt = f"""
+        ACT AS: A senior, clinical Emergency Cyber-Responder for XIST AI.
+        USER ISSUE: {user_issue}
         
-        # Handle both 'text' and 'content' fields for compatibility
-        content = data.get('content') or data.get('text', '')
-        user_email = data.get('user_email', '')
+        STRICT PROTOCOL:
+        1. Provide ONLY a 3-step tactical survival plan.
+        2. NO introductory text (e.g., "I'm sorry to hear that" or "Based on...").
+        3. NO analysis of whether the text is AI or human.
+        4. NO forensic technical terms.
+        5. TONE: Cold, commanding, and action-oriented.
+        6. FORMAT: A simple numbered list.
+        """
+
+        response = llm_model.generate_content(triage_prompt)
         
-        if not content or not user_email:
-            return jsonify({'error': 'Content and user email required'}), 400
-        
-        # Get or create user
-        user = User.query.filter_by(email=user_email).first()
-        if not user:
-            user = User(email=user_email, name=data.get('user_name', 'Unknown'))
-            db.session.add(user)
-            db.session.commit()
-        
-        # Perform comprehensive analysis
-        result = perform_comprehensive_analysis(content, user.name)
-        
-        # Save analysis to database
-        analysis = Analysis(
-            user_id=user.id,
-            content=content[:500],
-            scam_risk=result['scamRisk'],
-            credibility_score=result['credibilityScore'],
-            verdict=result['verdict']
-        )
-        db.session.add(analysis)
-        db.session.commit()
-        
-        return jsonify(result)
-        
+        try:
+            # Since your model is FORCED to JSON, we must parse it
+            ai_data = json.loads(response.text)
+            # We look for common keys Gemini might use, or the whole string
+            solution_text = ai_data.get('explanation', ai_data.get('solution', response.text))
+        except:
+            # Fallback if it returns plain text despite the config
+            solution_text = response.text
+
+        return jsonify({"solution": solution_text})
+
     except Exception as e:
-        app.logger.error(f"Analysis error: {str(e)}")
-        return jsonify({'error': 'Analysis failed', 'details': str(e)}), 500
-
-# ✅ COMPREHENSIVE AI ANALYSIS FUNCTION
-def perform_comprehensive_analysis(content, user_name):
-    """Advanced AI analysis system"""
+        print(f"❌ TRIAGE ERROR: {str(e)}")
+        return jsonify({"error": "Emergency Triage Node Offline"}), 500
     
-    # Multi-layer analysis
-    scam_patterns = analyze_scam_patterns(content)
-    url_analysis = analyze_urls(content)
-    language_analysis = analyze_language_patterns(content)
-    
-    # Calculate final scores
-    scam_risk = min((scam_patterns['score'] + url_analysis['risk'] + language_analysis['urgency']) / 3, 100)
-    credibility_score = max(100 - scam_risk - 10, 0)
-    
-    # Determine verdict
-    if scam_risk > 70:
-        verdict = "High Risk"
-        risk_level = "HIGH"
-    elif scam_risk > 40:
-        verdict = "Suspicious"
-        risk_level = "MEDIUM"
-    else:
-        verdict = "Credible"
-        risk_level = "LOW"
-    
-    # Generate warnings and recommendations
-    warnings = []
-    warnings.extend(scam_patterns['warnings'])
-    warnings.extend(url_analysis['warnings'])
-    
-    recommendations = [
-        "🔍 Always verify information through official sources",
-        "🚫 Never share personal information with untrusted sources", 
-        "📞 Contact organizations directly using official phone numbers",
-        "🔒 Use secure, updated browsers and devices",
-        "📢 Report suspicious content to help protect others"
-    ]
-    
-    return {
-        'scamRisk': round(scam_risk),
-        'credibilityScore': round(credibility_score),
-        'verdict': verdict,
-        'riskLevel': risk_level,  # For compatibility
-        'warnings': warnings[:5],
-        'recommendations': recommendations[:6],
-        'summary': f"Multi-layer AI analysis detected {round(scam_risk)}% scam risk based on content patterns, URL analysis, and language indicators. Analysis performed for {user_name}.",
-        'analysisDate': datetime.utcnow().isoformat(),
-        'confidence': round((credibility_score + (100 - scam_risk)) / 2),
-        'processingTime': '2.1 seconds',
-        'aiModel': 'Xist AI Advanced Detection v3.0'
-    }
-
-def analyze_scam_patterns(content):
-    """Analyze for scam patterns"""
-    scam_indicators = [
-        r'urgent.*action.*required', r'click.*here.*immediately', r'you.*won.*\$[\d,]+',
-        r'limited.*time.*offer', r'verify.*account.*suspended', r'congratulations.*winner',
-        r'free.*money', r'guaranteed.*income', r'work.*from.*home.*\$\d+',
-        r'act.*now.*expires', r'miracle.*cure', r'doctors.*hate.*this'
-    ]
-    
-    score = 0
-    warnings = []
-    content_lower = content.lower()
-    
-    for pattern in scam_indicators:
-        if re.search(pattern, content_lower):
-            score += 15
-            warnings.append("🚨 Scam language pattern detected")
-    
-    return {'score': min(score, 100), 'warnings': warnings}
-
-def analyze_urls(content):
-    """Analyze URLs for security risks"""
-    urls = re.findall(r'https?://[^\s]+', content)
-    
-    risk = 0
-    warnings = []
-    
-    for url in urls:
-        if any(shortener in url for shortener in ['bit.ly', 'tinyurl', 't.co', 'short.link']):
-            risk += 25
-            warnings.append("⚠️ Shortened URL detected - destination hidden")
-        
-        if url.startswith('http://'):
-            risk += 20
-            warnings.append("🔓 Insecure HTTP connection found")
-    
-    return {'risk': min(risk, 100), 'warnings': warnings}
-
-def analyze_language_patterns(content):
-    """Analyze language for manipulation tactics"""
-    urgency_words = ['urgent', 'immediately', 'expires', 'limited', 'hurry', 'act now', 'deadline']
-    words = content.lower().split()
-    
-    urgency_score = sum(8 for word in words if any(uw in word for uw in urgency_words))
-    
-    return {'urgency': min(urgency_score, 100)}
-
-# ✅ USER STATS ENDPOINT
-@app.route('/api/user/stats/<email>', methods=['GET'])
-@app.route('/api/stats', methods=['GET'])  # For compatibility
-@cross_origin()
-def get_user_stats(email=None):
-    try:
-        # If no email in path, try to get from query params
-        if not email:
-            email = request.args.get('email', 'demo@xistai.com')
-        
-        user = User.query.filter_by(email=email).first()
-        if not user:
-            user = User(email=email, name="User")
-            db.session.add(user)
-            db.session.commit()
-        
-        analyses = Analysis.query.filter_by(user_id=user.id).all()
-        
-        stats = {
-            'totalAnalyses': len(analyses) or 127,  # Default demo values
-            'averageScamRisk': sum(a.scam_risk for a in analyses) / len(analyses) if analyses else 23,
-            'averageCredibility': sum(a.credibility_score for a in analyses) / len(analyses) if analyses else 94.2,
-            'threatsStopped': len([a for a in analyses if a.scam_risk > 70]) or 23,
-            'accuracyRate': 94.2,
-            'isAuthority': getattr(user, 'is_authority', False),
-            'authorityLevel': getattr(user, 'authority_level', 'citizen'),
-            'recentAnalyses': [
-                {
-                    'date': a.created_at.isoformat(),
-                    'verdict': a.verdict,
-                    'scamRisk': a.scam_risk,
-                    'credibilityScore': a.credibility_score
-                }
-                for a in analyses[-10:]
-            ] if analyses else [],
-            'chartData': generate_chart_data(analyses)
-        }
-        
-        return jsonify(stats)
-        
-    except Exception as e:
-        app.logger.error(f"Stats error: {str(e)}")
-        return jsonify({'error': str(e)}), 500
-
-def generate_chart_data(analyses):
-    """Generate data for charts"""
-    if not analyses:
-        return {
-            'monthly': [{'month': 'Sep', 'count': 45}, {'month': 'Aug', 'count': 38}],
-            'threatLevels': [{'level': 'low', 'count': 89}, {'level': 'medium', 'count': 28}, {'level': 'high', 'count': 10}],
-            'credibilityTrend': [{'date': '09/15', 'score': 94}, {'date': '09/16', 'score': 92}]
-        }
-    
-    monthly_counts = {}
-    threat_levels = {'low': 0, 'medium': 0, 'high': 0}
-    
-    for analysis in analyses:
-        month = analysis.created_at.strftime('%b')
-        monthly_counts[month] = monthly_counts.get(month, 0) + 1
-        
-        if analysis.scam_risk < 30:
-            threat_levels['low'] += 1
-        elif analysis.scam_risk < 70:
-            threat_levels['medium'] += 1
-        else:
-            threat_levels['high'] += 1
-    
-    return {
-        'monthly': [{'month': k, 'count': v} for k, v in monthly_counts.items()],
-        'threatLevels': [{'level': k, 'count': v} for k, v in threat_levels.items()],
-        'credibilityTrend': [
-            {'date': a.created_at.strftime('%m/%d'), 'score': a.credibility_score}
-            for a in analyses[-10:]
-        ]
-    }
-
-# ✅ AI CHAT ENDPOINT
-@app.route('/api/chat', methods=['POST'])
-@cross_origin()
-def chat_with_ai():
-    try:
-        data = request.get_json()
-        user_message = data.get('message', '')
-        user_email = data.get('user_email', '')
-        api_key = data.get('api_key', '')
-        
-        if not user_message or not user_email:
-            return jsonify({'error': 'Message and user email required'}), 400
-        
-        user = User.query.filter_by(email=user_email).first()
-        if not user:
-            user = User(email=user_email, name=data.get('user_name', 'Unknown'))
-            db.session.add(user)
-            db.session.commit()
-        
-        # Generate AI response
-        bot_response = generate_ai_response_with_key(user_message, user.name, api_key)
-        
-        return jsonify({
-            'response': bot_response,
-            'timestamp': datetime.utcnow().isoformat(),
-            'user': user.name
-        })
-        
-    except Exception as e:
-        app.logger.error(f"Chat error: {str(e)}")
-        return jsonify({'error': str(e)}), 500
-
-def generate_ai_response_with_key(message, user_name, api_key):
-    """Generate AI responses using user's API key"""
-    
-    if not api_key:
-        return generate_fallback_response(message, user_name)
-    
-    try:
-        headers = {
-            "Authorization": f"Bearer {api_key}",
-            "Content-Type": "application/json"
-        }
-        
-        payload = {
-            "model": "deepseek/deepseek-r1:free",
-            "messages": [
-                {
-                    "role": "system",
-                    "content": f"You are Xist AI, an expert digital safety assistant helping {user_name}. Provide helpful, accurate advice about scams, cybersecurity, and online safety."
-                },
-                {
-                    "role": "user",
-                    "content": message
-                }
-            ],
-            "max_tokens": 300,
-            "temperature": 0.7
-        }
-        
-        response = requests.post(
-            "https://openrouter.ai/api/v1/chat/completions",
-            headers=headers,
-            json=payload,
-            timeout=15
-        )
-        
-        if response.status_code == 200:
-            result = response.json()
-            return result["choices"][0]["message"]["content"]
-        else:
-            return generate_fallback_response(message, user_name)
-            
-    except Exception as e:
-        app.logger.error(f"AI API error: {str(e)}")
-        return generate_fallback_response(message, user_name)
-
-def generate_fallback_response(message, user_name):
-    """Fallback when API unavailable"""
-    message_lower = message.lower()
-    
-    if any(word in message_lower for word in ['scam', 'fraud', 'suspicious']):
-        return f"Hi {user_name}! 🚨 Key scam warning signs: urgent requests, too-good-to-be-true offers, requests for personal info, suspicious links. Always verify through official channels!"
-    elif any(word in message_lower for word in ['hello', 'hi', 'hey']):
-        return f"Hello {user_name}! 👋 I'm Xist AI, your digital safety assistant. I can help with scam detection, cybersecurity tips, and online safety. What would you like to know?"
-    else:
-        return f"Thanks {user_name}! I specialize in digital safety, scam detection, and cybersecurity guidance. How can I help protect you online today?"
-
-# ✅ GOVERNMENT ID VERIFICATION
-@app.route('/api/auth/verify-government-id', methods=['POST'])
-@cross_origin()
-def verify_government_id():
-    try:
-        data = request.get_json()
-        user_email = data.get('user_email')
-        government_id = data.get('government_id')
-        id_type = data.get('id_type')
-        department = data.get('department', '')
-        badge_number = data.get('badge_number', '')
-        
-        if not all([user_email, government_id, id_type]):
-            return jsonify({'error': 'Missing required information'}), 400
-        
-        user = User.query.filter_by(email=user_email).first()
-        if not user:
-            return jsonify({'error': 'User not found'}), 404
-        
-        # Demo verification
-        is_valid = verify_government_credentials(government_id, id_type)
-        
-        if is_valid:
-            user.is_authority = True
-            user.government_id = government_id
-            user.id_type = id_type
-            user.verified_at = datetime.utcnow()
-            user.authority_level = 'authority'
-            user.department = department
-            user.badge_number = badge_number
-            db.session.commit()
-            
-            return jsonify({
-                'success': True,
-                'message': 'Government ID verified successfully',
-                'authority_level': user.authority_level,
-                'verified_at': user.verified_at.isoformat()
-            })
-        else:
-            return jsonify({'error': 'Invalid government ID or credentials'}), 401
-            
-    except Exception as e:
-        app.logger.error(f"Verification error: {str(e)}")
-        return jsonify({'error': str(e)}), 500
-
-def verify_government_credentials(gov_id, id_type):
-    """Demo verification"""
-    valid_patterns = {
-        'government_badge': ['GOV', 'DEPT', 'FED', 'STATE'],
-        'law_enforcement': ['PD', 'FBI', 'POLICE', 'SHERIFF'],
-        'national_id': ['ID', 'SSN', 'AADHAAR'],
-        'passport': ['P', 'US', 'IN', 'UK']
-    }
-    
-    if id_type in valid_patterns:
-        return any(gov_id.upper().startswith(pattern) for pattern in valid_patterns[id_type])
-    
-    return False
-
-# ✅ ERROR HANDLERS
-@app.errorhandler(404)
-def not_found(error):
-    return jsonify({'error': 'Endpoint not found'}), 404
-
-@app.errorhandler(500)
-def internal_error(error):
-    return jsonify({'error': 'Internal server error'}), 500
-
-# ✅ INITIALIZE DATABASE AND RUN
 if __name__ == '__main__':
-    with app.app_context():
-        db.create_all()
-        app.logger.info("Database initialized")
-    
-    port = int(os.environ.get('PORT', 5000))
-    debug = os.environ.get('FLASK_ENV') == 'development'
-    
-    app.run(debug=debug, port=port, host='0.0.0.0')
+    app.run(debug=True, port=5000, host='0.0.0.0')

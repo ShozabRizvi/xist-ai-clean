@@ -1,65 +1,89 @@
 import React from 'react';
-import { HeartIcon, ShieldCheckIcon, GlobeAltIcon, CpuChipIcon, ClockIcon } from '@heroicons/react/24/outline';
+import { 
+  HeartIcon, ShieldCheckIcon, GlobeAltIcon, 
+  CpuChipIcon, ClockIcon, CodeBracketIcon, 
+  UserCircleIcon 
+} from '@heroicons/react/24/outline';
 
-const Footer = () => {
+const Footer = ({ theme: globalTheme = 'dark' }) => {
+  const isDark = globalTheme === 'dark';
   const currentYear = new Date().getFullYear();
+  
+  const theme = {
+    bg: isDark ? 'bg-[#020617]' : 'bg-slate-50',
+    border: isDark ? 'border-slate-800/60' : 'border-slate-200',
+    textPrimary: isDark ? 'text-slate-200' : 'text-slate-800', 
+    textSecondary: isDark ? 'text-slate-400' : 'text-slate-600',
+    brandText: isDark ? 'text-white' : 'text-slate-900',
+    accent: 'text-indigo-500'
+  };
+
+  const team = [
+    { name: 'Shozab Rizvi', url: 'https://www.linkedin.com/in/shozab-rizvi' },
+    { name: 'Rishabh Srivastava', url: 'https://www.linkedin.com/in/srishabh9140' },
+    { name: 'Asmit Gupta', url: 'https://www.linkedin.com/in/asmit-gupta' }
+  ];
+
   return (
-    <footer className="bg-slate-900 text-white border-t border-gray-800">
-      <div className="max-w-7xl mx-auto px-4 py-5 grid grid-cols-1 md:grid-cols-3 items-center gap-8">
-        {/* Brand Section */}
-        <div className="flex items-center space-x-3">
-          <img
-            src="/logo.png"
-            alt="Xist AI Logo"
-            className="w-9 h-9 object-contain"
-            onError={e => {
-              e.target.style.display = 'none';
-              e.target.nextSibling.style.display = 'flex';
-            }}
-          />
-          <div className="w-9 h-9 bg-gradient-to-br from-purple-600 to-blue-600 rounded-xl flex items-center justify-center shadow-lg hidden">
-            <ShieldCheckIcon className="w-6 h-6 text-white" />
+    // ✅ Added "rounded-2xl" for curvy corners
+    <footer className={`w-full py-4 border transition-colors duration-500 relative overflow-hidden rounded-2xl ${theme.bg} ${theme.border} ${theme.textSecondary}`}
+            style={{ marginLeft: '280px', width: 'calc(100% - 280px)' }}>
+      
+      {/* 🟦 CURVY TACTICAL CORNER BARS */}
+      {/* Added "rounded" to the corner lines so they follow the footer's curve */}
+      <div className="absolute top-0 left-0 w-6 h-6 border-t-2 border-l-2 border-indigo-500/50 rounded-tl-2xl"></div>
+      <div className="absolute top-0 right-0 w-6 h-6 border-t-2 border-r-2 border-indigo-500/50 rounded-tr-2xl"></div>
+      <div className="absolute bottom-0 left-0 w-6 h-6 border-b-2 border-l-2 border-indigo-500/50 rounded-bl-2xl"></div>
+      <div className="absolute bottom-0 right-0 w-6 h-6 border-b-2 border-r-2 border-indigo-500/50 rounded-br-2xl"></div>
+
+      {/* 🚨 ADAPTIVE GRID CONTINUITY */}
+      <div className={`absolute inset-0 pointer-events-none opacity-[0.04] ${isDark ? '' : 'invert'}`} 
+           style={{ backgroundImage: 'linear-gradient(to right, #ffffff 1px, transparent 1px), linear-gradient(to bottom, #ffffff 1px, transparent 1px)', backgroundSize: '40px 40px' }}></div>
+
+      <div className="max-w-7xl mx-auto px-10 flex flex-col lg:flex-row items-center justify-between gap-10 relative z-10">
+        
+        {/* Brand Node */}
+        <div className="flex items-center space-x-4">
+          <div className="w-12 h-12 bg-gradient-to-br from-indigo-600 to-blue-700 rounded-2xl flex items-center justify-center shadow-2xl shadow-indigo-500/20">
+            <ShieldCheckIcon className="w-7 h-7 text-white" />
           </div>
           <div>
-            <h3 className="text-lg font-bold bg-gradient-to-r from-purple-400 to-blue-400 bg-clip-text text-transparent">
-              Xist AI
-            </h3>
-            <p className="text-xs text-gray-400 font-medium mt-0.5">AI Cybersecurity</p>
+            <h3 className={`text-xl font-black tracking-tighter ${theme.brandText}`}>XIST INTELLIGENCE</h3>
+            <div className="flex items-center gap-2">
+                <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse border border-emerald-400/50"></div>
+                <span className={`text-[10px] font-black uppercase tracking-[0.2em] ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>Node Pulse Active</span>
+            </div>
           </div>
         </div>
 
-        {/* Key Platform Features */}
-        <div className="flex flex-wrap gap-5 justify-center">
-          <div className="flex items-center space-x-2 text-xs text-gray-400">
-            <CpuChipIcon className="w-4 h-4 text-purple-400" />
-            <span>Powered by DeepSeek-R1</span>
+        {/* Global Matrix Stats & Links */}
+        <div className="flex flex-col items-center gap-4">
+          <div className={`flex flex-wrap gap-8 justify-center font-black uppercase tracking-[0.15em] text-[10px] ${theme.textPrimary}`}>
+            <div className="flex items-center gap-2 group cursor-default hover:text-indigo-500 transition-colors"><CpuChipIcon className="w-4 h-4 text-indigo-500" /> GEMINI</div>
+            <div className="flex items-center gap-2 group cursor-default hover:text-emerald-500 transition-colors"><ClockIcon className="w-4 h-4 text-emerald-500" /> 24/7_SURVEILLANCE</div>
+            <div className="flex items-center gap-2 group cursor-default hover:text-blue-500 transition-colors"><GlobeAltIcon className="w-4 h-4 text-blue-500" /> GLOBAL COMMUNITY</div>
           </div>
-          <div className="flex items-center space-x-2 text-xs text-gray-400">
-            <ClockIcon className="w-4 h-4 text-green-400" />
-            <span>24/7 Threat Monitoring</span>
-          </div>
-          <div className="flex items-center space-x-2 text-xs text-gray-400">
-            <ShieldCheckIcon className="w-4 h-4 text-blue-400" />
-            <span>98.7% Accuracy Rate</span>
+          
+          <div className="flex flex-wrap gap-4 justify-center">
+            <a href="https://github.com/ShozabRizvi/xist-ai-clean" target="_blank" rel="noreferrer" className="flex items-center gap-1.5 text-[9px] font-black uppercase tracking-widest hover:text-indigo-400 transition-colors">
+              <CodeBracketIcon className="w-3.5 h-3.5" /> Source_Code
+            </a>
+            {team.map((m) => (
+              <a key={m.name} href={m.url} target="_blank" rel="noreferrer" className="flex items-center gap-1 text-[9px] font-black uppercase tracking-widest hover:text-blue-400 transition-colors">
+                <UserCircleIcon className="w-3.5 h-3.5" /> {m.name}
+              </a>
+            ))}
           </div>
         </div>
 
-        {/* Copyright */}
-        <div className="flex flex-col items-end md:items-end space-y-1 text-xs text-gray-500">
-          <div className="flex items-center space-x-2">
-            <span>© {currentYear} Xist AI.</span>
-            <span className="text-gray-400">All rights reserved.</span>
-          </div>
-          <div className="flex items-center space-x-1">
-            <span>Built with</span>
-            <HeartIcon className="w-3 h-3 text-red-500" />
-            <span>for Security</span>
-          </div>
-          <div className="flex items-center space-x-2 mt-1">
-            <GlobeAltIcon className="w-3 h-3 text-white" />
-            <span>Global Protection</span>
+        {/* Legal & Built-by */}
+        <div className="text-center lg:text-right flex flex-col items-center lg:items-end gap-2">
+          <div className={`text-[10px] font-black uppercase tracking-widest ${theme.textPrimary}`}>© {currentYear} XIST AI. ALL RIGHTS RESERVED.</div>
+          <div className={`flex items-center justify-center gap-2 text-[9px] font-black uppercase tracking-widest opacity-60`}>
+            BUILT WITH <HeartIcon className="w-3.5 h-3.5 text-rose-500 fill-rose-500 animate-pulse" /> FOR DIGITAL_SOVEREIGNTY
           </div>
         </div>
+
       </div>
     </footer>
   );

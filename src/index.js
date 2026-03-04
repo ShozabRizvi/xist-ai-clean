@@ -1,7 +1,7 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { GoogleOAuthProvider } from '@react-oauth/google';
-import { AuthProvider } from './hooks/useAuth'; // Fixed import
+import { AuthProvider } from './hooks/useAuth'; 
 import App from './App';
 import './index.css';
 import './i18n/i18n';
@@ -11,13 +11,12 @@ const GOOGLE_CLIENT_ID = "875405800278-5efl58h5jj7uqgnf7krgetbr127hi9em.apps.goo
 const root = ReactDOM.createRoot(document.getElementById('root'));
 
 root.render(
-  <React.StrictMode>
-    <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
-      <AuthProvider>
-        <App />
-      </AuthProvider>
-    </GoogleOAuthProvider>
-  </React.StrictMode>
+  // ❌ React.StrictMode has been removed to protect the Firebase redirect token
+  <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
+    <AuthProvider>
+      <App />
+    </AuthProvider>
+  </GoogleOAuthProvider>
 );
 
 // Service Worker Registration
@@ -32,4 +31,3 @@ if ('serviceWorker' in navigator) {
       });
   });
 }
-

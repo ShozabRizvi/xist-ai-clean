@@ -1,9 +1,12 @@
 import { useState, useEffect, createContext, useContext } from 'react';
-import {
-  signInWithPopup,
-  signOut,
-  onAuthStateChanged,
+import { 
+  signInWithRedirect, 
+  getRedirectResult, 
+  signOut, 
+  onAuthStateChanged, 
   GoogleAuthProvider,
+  browserLocalPersistence,
+  setPersistence 
 } from 'firebase/auth';
 import { doc, setDoc, getDoc, updateDoc } from 'firebase/firestore';
 import { auth, db } from '../config/firebase';
@@ -13,78 +16,104 @@ const AuthContext = createContext();
 
 const googleProvider = new GoogleAuthProvider();
 googleProvider.setCustomParameters({ 
-  prompt: 'select_account',
-  // Add popup parameters
-  popup: 'true',
-  login_hint: '',
+  prompt: 'select_account'
 });
 
 const useAuthLogic = () => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [isRedirecting, setIsRedirecting] = useState(false); 
+  
+  const [operatorIdentity, setOperatorIdentity] = useState({ alias: 'Unknown Node', avatar: 'ghost' });
+  
   const [userStats, setUserStats] = useState({
-    totalAnalyses: 0,
-    threatsStopped: 0,
-    communityPoints: 0,
-    badges: [],
-    streak: 0,
-    level: 1,
-    reputation: 'Newcomer',
-    dailyActivity: [],
-    securityScore: 95,
+    totalAnalyses: 0, threatsStopped: 0, communityPoints: 0,
+    badges: [], streak: 0, level: 1, reputation: 'Newcomer',
+    dailyActivity: [], securityScore: 95,
   });
 
-  // Flag to prevent multiple popups
-  let popupInProgress = false;
-
+  // ✅ 1. THE REDIRECT CATCHER (Extreme Debug Mode)
   useEffect(() => {
+    console.log('🕵️ [DEBUG 1] Redirect useEffect MOUNTED. (If you see this twice instantly, React StrictMode is killing your token)');
+
+    const handleRedirectResult = async () => {
+      console.log('🕵️ [DEBUG 2] Firing getRedirectResult(auth)...');
+      try {
+        const result = await getRedirectResult(auth);
+        
+        console.log('🕵️ [DEBUG 3] RAW RESULT FROM FIREBASE:', result);
+
+        if (result?.user) {
+          console.log('✅ [DEBUG 4] SUCCESS! User found:', result.user.email);
+          await handleUserCreation(result.user);
+        } else {
+          console.warn('⚠️ [DEBUG 5] Result is NULL. Firebase forgot the redirect happened.');
+        }
+      } catch (error) {
+        console.error('❌ [DEBUG 6] ERROR CAUGHT in getRedirectResult:', error.code, error.message);
+        toast.error(`Auth Error: ${error.code}`);
+      }
+    };
+
+    handleRedirectResult();
+
+    return () => console.log('🗑️ [DEBUG 7] Redirect useEffect UNMOUNTED.');
+  }, []);
+
+  // ✅ 2. MONITOR AUTH STATE (Extreme Debug Mode)
+  useEffect(() => {
+    console.log('🕵️ [DEBUG A] Auth State Listener Initialized.');
+    
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+      console.log('🕵️ [DEBUG B] Auth State Changed. Current User:', firebaseUser ? firebaseUser.email : 'NULL');
+      
       if (firebaseUser) {
         setUser(firebaseUser);
-        await loadUserStats(firebaseUser.uid);
+        await loadUserStats(firebaseUser.uid, firebaseUser.displayName);
       } else {
         setUser(null);
         resetUserStats();
       }
       setLoading(false);
+      setIsRedirecting(false);
     });
-
-    return () => unsubscribe();
+    
+    return () => {
+      console.log('🗑️ [DEBUG C] Auth State Listener UNMOUNTED.');
+      unsubscribe();
+    };
   }, []);
 
   const resetUserStats = () => {
-    setUserStats({
-      totalAnalyses: 0,
-      threatsStopped: 0,
-      communityPoints: 0,
-      badges: [],
-      streak: 0,
-      level: 1,
-      reputation: 'Newcomer',
-      dailyActivity: [],
-      securityScore: 95,
+    setUserStats({ 
+      totalAnalyses: 0, threatsStopped: 0, communityPoints: 0, 
+      badges: [], streak: 0, level: 1, reputation: 'Newcomer', 
+      dailyActivity: [], securityScore: 95 
     });
+    setOperatorIdentity({ alias: 'Unknown Node', avatar: 'ghost' });
   };
 
-  const loadUserStats = async (userId) => {
+  const loadUserStats = async (userId, fallbackName) => {
     try {
       const userDoc = await getDoc(doc(db, 'users', userId));
       if (userDoc.exists()) {
         const data = userDoc.data();
+        setOperatorIdentity({
+          alias: data.alias || fallbackName || 'Unknown Node',
+          avatar: data.avatar || 'ghost'
+        });
+        
         setUserStats({
           totalAnalyses: data.totalAnalyses || 0,
           threatsStopped: data.threatsStopped || 0,
           communityPoints: data.communityPoints || 0,
-          badges: data.badges || [],
-          streak: data.streak || 0,
-          level: data.level || 1,
-          reputation: data.reputation || 'Newcomer',
-          dailyActivity: data.dailyActivity || [],
-          securityScore: data.securityScore || 95,
+          badges: data.badges || [], streak: data.streak || 0,
+          level: data.level || 1, reputation: data.reputation || 'Newcomer',
+          dailyActivity: data.dailyActivity || [], securityScore: data.securityScore || 95,
         });
       }
     } catch (error) {
-      console.error('Error loading user stats:', error);
+      console.error('Stats load failed:', error);
     }
   };
 
@@ -95,105 +124,54 @@ const useAuthLogic = () => {
 
       if (!userSnap.exists()) {
         await setDoc(userRef, {
-          uid: firebaseUser.uid,
-          email: firebaseUser.email,
-          name: firebaseUser.displayName,
+          uid: firebaseUser.uid, email: firebaseUser.email,
+          name: firebaseUser.displayName, 
+          alias: firebaseUser.displayName, 
+          avatar: 'ghost',
           photoURL: firebaseUser.photoURL,
-          totalAnalyses: 0,
-          threatsStopped: 0,
-          communityPoints: 0,
-          badges: [],
-          streak: 0,
-          level: 1,
-          reputation: 'Newcomer',
-          dailyActivity: [],
-          securityScore: 95,
-          createdAt: new Date(),
-          lastLoginAt: new Date(),
+          totalAnalyses: 0, threatsStopped: 0, communityPoints: 0,
+          badges: [], streak: 0, level: 1, reputation: 'Newcomer',
+          dailyActivity: [], securityScore: 95,
+          createdAt: new Date(), lastLoginAt: new Date(),
         });
-        toast.success('🎉 Welcome to Xist AI! Your account has been created.');
+        setOperatorIdentity({ alias: firebaseUser.displayName, avatar: 'ghost' });
+        toast.success('🎉 Node Activated!');
       } else {
         await updateDoc(userRef, { lastLoginAt: new Date() });
-        toast.success('🎉 Welcome back! Your digital protection is active.');
       }
     } catch (error) {
-      console.error('Error handling user creation:', error);
-      toast.error('Account setup failed. Please try again.');
+      console.error('User sync failed:', error);
     }
   };
 
+  // ✅ THE PURE REDIRECT LOGIN FUNCTION
   const login = async () => {
-    if (popupInProgress) {
-      console.warn('Popup login already in progress - ignoring duplicate call');
-      return;
-    }
-    popupInProgress = true;
-    
+    setIsRedirecting(true);
     try {
-      // Clear existing auth state
+      // Clear any ghost sessions
       if (auth.currentUser) await signOut(auth);
       
-      console.log('🔐 Starting Google sign-in...');
-      const result = await signInWithPopup(auth, googleProvider);
+      console.log('🌍 Initiating Pure Secure Redirect Handshake...');
+      // 100% Redirect. No popups. No fallbacks.
+      await signInWithRedirect(auth, googleProvider);
       
-      if (result?.user) {
-        console.log('✅ Sign-in successful:', result.user.email);
-        await handleUserCreation(result.user);
-      }
     } catch (error) {
       console.error('Login error:', error);
-      switch (error.code) {
-        case 'auth/popup-closed-by-user':
-          // User closed popup - don't show error
-          break;
-        case 'auth/popup-blocked':
-          toast.error('🚫 Pop-up blocked. Please allow popups and try again.');
-          break;
-        case 'auth/cancelled-popup-request':
-          // Ignore - another popup was triggered
-          break;
-        case 'auth/internal-error':
-          toast.error('🔧 Authentication service temporarily unavailable.');
-          break;
-        case 'auth/network-request-failed':
-          toast.error('🌐 Network error. Please check your connection.');
-          break;
-        case 'auth/too-many-requests':
-          toast.error('⏰ Too many login attempts. Please try again later.');
-          break;
-        case 'auth/unauthorized-domain':
-          toast.error('🏠 This domain is not authorized for authentication.');
-          break;
-        default:
-          toast.error('❌ Login failed. Please try again.');
-      }
-    } finally {
-      popupInProgress = false;
+      toast.error('❌ Redirect Protocol Failed.');
+      setIsRedirecting(false);
     }
   };
 
   const logout = async () => {
     try {
       await signOut(auth);
-      toast.success('👋 Logged out successfully!');
+      toast.success('👋 Node Disconnected.');
     } catch (error) {
-      console.error('Logout error:', error);
-      toast.error('❌ Logout failed.');
+      toast.error('❌ Disconnect failed.');
     }
   };
 
-  const updateUserStats = async (updates) => {
-    if (!user) return;
-    try {
-      const userRef = doc(db, 'users', user.uid);
-      await updateDoc(userRef, { ...updates, updatedAt: new Date() });
-      setUserStats((prev) => ({ ...prev, ...updates }));
-    } catch (error) {
-      console.error('Error updating user stats:', error);
-    }
-  };
-
-  return { user, userStats, loading, login, logout, updateUserStats };
+  return { user, userStats, operatorIdentity, loading, isRedirecting, login, logout };
 };
 
 export const AuthProvider = ({ children }) => {
@@ -201,8 +179,4 @@ export const AuthProvider = ({ children }) => {
   return <AuthContext.Provider value={authData}>{children}</AuthContext.Provider>;
 };
 
-export const useAuth = () => {
-  const context = useContext(AuthContext);
-  if (!context) throw new Error('useAuth must be used within an AuthProvider');
-  return context;
-};
+export const useAuth = () => useContext(AuthContext);
