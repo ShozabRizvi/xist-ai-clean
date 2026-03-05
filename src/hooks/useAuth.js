@@ -1,12 +1,9 @@
 import { useState, useEffect, createContext, useContext } from 'react';
 import { 
-  signInWithRedirect, 
-  getRedirectResult, 
+  signInWithPopup, // 🛡️ SWITCHED TO POPUP
   signOut, 
   onAuthStateChanged, 
-  GoogleAuthProvider,
-  browserLocalPersistence,
-  setPersistence 
+  GoogleAuthProvider
 } from 'firebase/auth';
 import { doc, setDoc, getDoc, updateDoc } from 'firebase/firestore';
 import { auth, db } from '../config/firebase';
@@ -22,6 +19,8 @@ googleProvider.setCustomParameters({
 const useAuthLogic = () => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  
+  // Kept this variable name so your UI loading spinners don't break
   const [isRedirecting, setIsRedirecting] = useState(false); 
   
   const [operatorIdentity, setOperatorIdentity] = useState({ alias: 'Unknown Node', avatar: 'ghost' });
@@ -32,41 +31,9 @@ const useAuthLogic = () => {
     dailyActivity: [], securityScore: 95,
   });
 
-  // ✅ 1. THE REDIRECT CATCHER (Extreme Debug Mode)
+  // ✅ 1. MONITOR AUTH STATE (Cleaned up)
   useEffect(() => {
-    console.log('🕵️ [DEBUG 1] Redirect useEffect MOUNTED. (If you see this twice instantly, React StrictMode is killing your token)');
-
-    const handleRedirectResult = async () => {
-      console.log('🕵️ [DEBUG 2] Firing getRedirectResult(auth)...');
-      try {
-        const result = await getRedirectResult(auth);
-        
-        console.log('🕵️ [DEBUG 3] RAW RESULT FROM FIREBASE:', result);
-
-        if (result?.user) {
-          console.log('✅ [DEBUG 4] SUCCESS! User found:', result.user.email);
-          await handleUserCreation(result.user);
-        } else {
-          console.warn('⚠️ [DEBUG 5] Result is NULL. Firebase forgot the redirect happened.');
-        }
-      } catch (error) {
-        console.error('❌ [DEBUG 6] ERROR CAUGHT in getRedirectResult:', error.code, error.message);
-        toast.error(`Auth Error: ${error.code}`);
-      }
-    };
-
-    handleRedirectResult();
-
-    return () => console.log('🗑️ [DEBUG 7] Redirect useEffect UNMOUNTED.');
-  }, []);
-
-  // ✅ 2. MONITOR AUTH STATE (Extreme Debug Mode)
-  useEffect(() => {
-    console.log('🕵️ [DEBUG A] Auth State Listener Initialized.');
-    
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
-      console.log('🕵️ [DEBUG B] Auth State Changed. Current User:', firebaseUser ? firebaseUser.email : 'NULL');
-      
       if (firebaseUser) {
         setUser(firebaseUser);
         await loadUserStats(firebaseUser.uid, firebaseUser.displayName);
@@ -75,13 +42,10 @@ const useAuthLogic = () => {
         resetUserStats();
       }
       setLoading(false);
-      setIsRedirecting(false);
+      setIsRedirecting(false); // Reset UI state just in case
     });
     
-    return () => {
-      console.log('🗑️ [DEBUG C] Auth State Listener UNMOUNTED.');
-      unsubscribe();
-    };
+    return () => unsubscribe();
   }, []);
 
   const resetUserStats = () => {
@@ -144,20 +108,30 @@ const useAuthLogic = () => {
     }
   };
 
-  // ✅ THE PURE REDIRECT LOGIN FUNCTION
+  // ✅ 2. THE PURE POPUP LOGIN FUNCTION
   const login = async () => {
-    setIsRedirecting(true);
+    setIsRedirecting(true); // Triggers loading UI while popup is active
     try {
-      // Clear any ghost sessions
+      // Clear any ghost sessions before initiating
       if (auth.currentUser) await signOut(auth);
       
-      console.log('🌍 Initiating Pure Secure Redirect Handshake...');
-      // 100% Redirect. No popups. No fallbacks.
-      await signInWithRedirect(auth, googleProvider);
+      console.log('🌍 Initiating Secure Popup Handshake...');
+      
+      // Awaits the popup directly. No useEffect listener needed!
+      const result = await signInWithPopup(auth, googleProvider);
+      
+      if (result?.user) {
+        console.log('✅ SUCCESS! User authenticated:', result.user.email);
+        await handleUserCreation(result.user);
+      }
       
     } catch (error) {
       console.error('Login error:', error);
-      toast.error('❌ Redirect Protocol Failed.');
+      // Ignores the error if the user just closed the popup manually
+      if (error.code !== 'auth/popup-closed-by-user') {
+        toast.error(`❌ Auth Failed: ${error.code}`);
+      }
+    } finally {
       setIsRedirecting(false);
     }
   };

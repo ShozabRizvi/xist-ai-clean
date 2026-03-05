@@ -7,6 +7,8 @@
     "@react-oauth/google": "^0.12.2",
     "@supabase/supabase-js": "^2.75.1",
     "@tailwindcss/forms": "^0.5.10",
+    "baseline-browser-mapping": "^2.10.0",
+    "caniuse-lite": "^1.0.30001776",
     "firebase": "^12.2.1",
     "framer-motion": "^10.18.0",
     "html2canvas": "^1.4.1",
@@ -51,10 +53,10 @@
     ]
   },
   "browser": {
-  "fs": false,
-  "path": false,
-  "crypto": false
-},
+    "fs": false,
+    "path": false,
+    "crypto": false
+  },
   "devDependencies": {
     "@tailwindcss/postcss": "^4.1.13",
     "autoprefixer": "^10.4.21",

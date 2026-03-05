@@ -191,44 +191,45 @@ const theme = THEMES[themeMode];
   // --- UPDATE THIS FUNCTION IN ProtectionSection.js ---
 
 const handleGeminiTriage = async (input) => {
-  if (!input.trim()) return;
-  const userMsg = { id: Date.now(), role: 'user', text: input };
-  setMessages(prev => [...prev, userMsg]);
-  setIsAiAnalyzing(true);
-  setUserInput('');
+    if (!input.trim()) return;
+    const userMsg = { id: Date.now(), role: 'user', text: input };
+    setMessages(prev => [...prev, userMsg]);
+    setIsAiAnalyzing(true);
+    setUserInput('');
 
-  try {
-    // ✅ Hits the NEW dedicated triage route on your backend
-    const response = await fetch('http://localhost:5000/api/triage', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ text: input })
-    });
+    try {
+      // ✅ FORENSIC FIX: Dynamic routing for the triage endpoint
+      const BACKEND_URL = 'https://xist-ai-clean.onrender.com';
 
-    const data = await response.json();
-    if (!response.ok) throw new Error(data.error);
+      const response = await fetch(`${BACKEND_URL}/api/triage`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text: input })
+      });
 
-    // ✅ Displays ONLY the 3-step solution
-    setMessages(prev => [...prev, { 
-      id: Date.now() + 1, 
-      role: 'ai', 
-      text: data.solution 
-    }]);
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error);
 
-  } catch (err) {
-    // Fallback for reliability
-    setTimeout(() => {
       setMessages(prev => [...prev, { 
         id: Date.now() + 1, 
         role: 'ai', 
-        text: "1. Call 1930 immediately.\n2. Freeze accounts via 155260.\n3. Secure device passwords." 
+        text: data.solution 
       }]);
+
+    } catch (err) {
+      // Fallback for reliability
+      setTimeout(() => {
+        setMessages(prev => [...prev, { 
+          id: Date.now() + 1, 
+          role: 'ai', 
+          text: "1. Call 1930 immediately.\n2. Freeze accounts via 155260.\n3. Secure device passwords." 
+        }]);
+        setIsAiAnalyzing(false);
+      }, 600);
+    } finally {
       setIsAiAnalyzing(false);
-    }, 600);
-  } finally {
-    setIsAiAnalyzing(false);
-  }
-};
+    }
+  };
 
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}

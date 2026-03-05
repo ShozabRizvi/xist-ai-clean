@@ -407,13 +407,16 @@ const theme = THEMES[themeMode];
 
     setRunning(true); setScore(0); setCurrentMediaUrl(null);
     try {
-      const BACKEND_URL = process.env.NODE_ENV === 'development' ? 'http://localhost:5000' : 'https://your-flask-backend.onrender.com';
+      // ✅ FORENSIC FIX: Pointing to your live Railway backend in production
+      const BACKEND_URL = 'https://xist-ai-clean.onrender.com';
+      
       const formData = new FormData();
       formData.append('mode', mode);
       if (['text', 'url'].includes(mode)) formData.append('text', inputValue);
       else if (mode === 'voice' && audioBlob) formData.append('file', audioBlob, 'voice_note.webm');
       else if (file) formData.append('file', file);
 
+      // ✅ Uses the dynamic URL
       const response = await fetch(`${BACKEND_URL}/api/analyze`, { method: 'POST', body: formData });
       if (!response.ok) throw new Error('Engine offline');
       const analysis = await response.json();
