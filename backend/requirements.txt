@@ -30,3 +30,5 @@ Werkzeug==3.1.6
 wheel==0.46.3
 gunicorn==21.2.0
 google-generativeai==0.8.3
+beautifulsoup4==4.12.3
+soupsieve==2.5
