@@ -23,7 +23,7 @@ import { useResponsive } from './hooks/useResponsive';
 // UI Components
 import { NotificationProvider } from './components/UI/NotificationToast';
 
-const APP_VERSION = process.env.REACT_APP_BUILD_TIME || '1.0.0';
+const APP_VERSION = process.env.REACT_APP_BUILD_TIME || '1.1.0'; // 🚀 Bumped to 1.1.0 to trigger the cache wipe
 
 const checkForUpdates = () => {
   const currentVersion = localStorage.getItem('xist_app_version');
@@ -50,7 +50,9 @@ const App = () => {
   // Auth and user management
   const { user, userStats, loading, login, logout, updateUserStats } = useAuth();
   const { screenSize } = useResponsive();
-
+useEffect(() => {
+    checkForUpdates();
+  }, []);
   // ==========================================
   // GLOBAL SETTINGS & IDENTITY STATE (FIXED)
   // ==========================================
@@ -70,7 +72,21 @@ const App = () => {
     };
   });
 
-  const [theme, setTheme] = useState(globalSettings.theme);
+ // Calculates the correct theme immediately before the first frame renders
+  const [theme, setTheme] = useState(() => {
+    const savedTheme = globalSettings.theme;
+    if (savedTheme === 'system') {
+      return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    }
+    return savedTheme;
+  });
+  
+  // Instantly apply it to the HTML tag to prevent the black/white glitch
+  if (theme === 'dark') {
+    document.documentElement.classList.add('dark');
+  } else {
+    document.documentElement.classList.remove('dark');
+  }
 
   // Unified function to update settings globally
   const updateGlobalSettings = (newSettings) => {
@@ -185,6 +201,21 @@ const App = () => {
     }, 50);
   }, [currentSection]);
 
+// ✅ FIX: Lock background scrolling when mobile menu is open
+  useEffect(() => {
+    if (mobileMenuOpen) {
+      document.body.style.overflow = 'hidden';
+      document.body.style.touchAction = 'none'; 
+    } else {
+      document.body.style.overflow = '';
+      document.body.style.touchAction = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+      document.body.style.touchAction = '';
+    };
+  }, [mobileMenuOpen]);
+
   const handleUpdateUserStats = async (newStats) => {
     try {
       if (updateUserStats) {
@@ -207,7 +238,27 @@ const App = () => {
     <ErrorBoundary>
       <NotificationProvider>
         <div className={`app min-h-screen transition-colors duration-300 ${theme === 'dark' ? 'dark bg-slate-900' : 'bg-slate-50'}`}>
-          
+          {isMobile && (
+  <div className={`fixed inset-0 z-[100] lg:hidden transition-opacity duration-300 ${mobileMenuOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}>
+    {/* Backdrop */}
+    <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setMobileMenuOpen(false)} />
+    
+    {/* Menu Content */}
+    <div className={`absolute top-0 left-0 w-72 h-[100dvh] bg-slate-900 shadow-2xl transition-transform duration-300 transform overflow-y-auto overscroll-contain pb-24 ${mobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+       <DesktopSidebar 
+                  user={user} /* ✅ FIX: Added user data so the mobile stats can load! */
+                  isMobile={true}
+                  identity={globalSettings.identity}
+                  currentSection={currentSection}
+                  setCurrentSection={(section) => {
+                    setCurrentSection(section);
+                    setMobileMenuOpen(false); 
+                  }}
+                  setCollapsed={() => setMobileMenuOpen(false)}
+               />
+    </div>
+  </div>
+)}
           <TopNavigation
             user={user}
             identity={globalSettings.identity} // ✅ Passed Identity Prop
@@ -239,8 +290,13 @@ const App = () => {
               />
             )}
 
-            <main className={`flex-1 transition-all duration-300 ${!isMobile && !sidebarCollapsed ? 'ml-64' : !isMobile ? 'ml-16' : 'ml-0'} ${isMobile ? 'pb-20' : 'pb-4'}`}>
-              <div className="container mx-auto px-4 py-6">
+            {/* ✅ FIX 1: Removed pb-32. Added flex & flex-col so the footer is naturally pushed to the bottom */}
+            <main className={`flex-1 flex flex-col min-h-[calc(100dvh-64px)] transition-all duration-300 
+              ${!isMobile && !sidebarCollapsed ? 'ml-64' : !isMobile ? 'ml-16' : 'ml-0'}`}
+              style={{ overflow: 'visible' }}>
+              
+              {/* ✅ FIX 2: Added flex-1 here so the main content expands and pushes the footer down */}
+              <div className="flex-1 container mx-auto px-2 sm:px-4 py-6">
                 <SectionRouter
                   currentSection={currentSection}
                   setCurrentSection={setCurrentSection}
@@ -251,14 +307,18 @@ const App = () => {
                   analysisResult={analysisResult}
                   onAnalysisComplete={handleAnalysisComplete}
                   globalSettings={globalSettings}
-                  updateGlobalSettings={updateGlobalSettings} // ✅ Passed Update Function
+                  updateGlobalSettings={updateGlobalSettings} 
                   theme={theme}
                   setTheme={setTheme}
                   isMobile={isMobile}
                   isTablet={isTablet}
                 />
+             </div>
+             
+              {/* ✅ FIX 3: This adds exactly 72px of space below the footer. Your Mobile Bottom Nav is about 72px tall, meaning it will perfectly cover this empty space, making the Footer sit EXACTLY on top of the nav bar! */}
+              <div className={isMobile ? "pb-[72px]" : "pb-4"}> 
+                 <Footer currentSection={currentSection} setCurrentSection={setCurrentSection} theme={theme} />
               </div>
-              {!isMobile && <Footer currentSection={currentSection} setCurrentSection={setCurrentSection} theme={theme} />}
             </main>
           </div>
 

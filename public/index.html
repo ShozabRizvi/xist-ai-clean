@@ -9,14 +9,13 @@
   <link rel="apple-touch-icon" href="/logo192.png" />
   <link rel="manifest" href="/manifest.json" />
   
-  <!-- ✅ CROSS-ORIGIN-OPENER-POLICY FIX FOR FIREBASE AUTH POPUPS -->
   <meta http-equiv="Cross-Origin-Opener-Policy" content="same-origin-allow-popups" />
   
-  <!-- ✅ CORRECTED CSP: REMOVED MARKDOWN BRACKETS -->
-<meta http-equiv="Content-Security-Policy" content="
+  <meta http-equiv="Content-Security-Policy" content="
     default-src 'self';
     connect-src 'self' 
       http://localhost:5000
+      https://xist-ai-clean.onrender.com
       https://uqanolaetxychootskdq.supabase.co
       wss://uqanolaetxychootskdq.supabase.co
       https://qijkqnqohepukezoyggv.supabase.co
@@ -30,7 +29,6 @@
       https://accounts.google.com
       https://firebase.googleapis.com
       https://*.firebaseio.com
-      https://xist-ai-backend-production.up.railway.app
       ws://localhost:3000 wss://localhost:3000;
     script-src 'self' 'unsafe-inline' 'unsafe-eval'
       https://accounts.google.com https://www.googletagmanager.com
@@ -43,7 +41,6 @@
     frame-src 'self' https://accounts.google.com https://*.firebaseapp.com;
     worker-src 'self' blob:;
   " />
-
 
   <title>Xist AI</title>
 </head>

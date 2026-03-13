@@ -558,13 +558,12 @@ const theme = THEMES[themeMode];
         <motion.div variants={itemVariants} className="lg:col-span-7 space-y-4">
           {running ? (
              <ForensicScanner theme={theme} />
-          ) : score > 0 ? (
+          ) : summary ? (                                 // ✅ CHANGED THIS LINE
             <div className="flex flex-col gap-4 h-full">
               <div className={`${theme.card} p-4 rounded-2xl flex items-center justify-between`}>
                  <h2 className={`text-sm font-bold uppercase tracking-widest ${theme.textSecondary}`}>Forensic Dossier</h2>
                  <button onClick={handleManualShareClick} className="text-[10px] font-black uppercase text-indigo-400 bg-indigo-500/10 px-3 py-1.5 rounded-lg border border-indigo-500/20 flex items-center gap-2"><ShareIcon className="w-3.5 h-3.5" /> Export Matrix</button>
               </div>
-
               <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
                 <div className={`md:col-span-4 ${theme.card} p-6 rounded-2xl flex flex-col items-center justify-center`}>
                    <div className="relative w-28 h-28 flex items-center justify-center shrink-0 mb-4">

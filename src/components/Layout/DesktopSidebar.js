@@ -18,7 +18,14 @@ const DesktopSidebar = ({ currentSection, setCurrentSection, user, identity, col
   useEffect(() => {
     const fetchSidebarStats = async () => {
       const currentUserId = user?.id || user?.uid;
-      if (!currentUserId) return;
+      
+      // 1. Check if the Sidebar is actually receiving the user prop
+      console.log("🛡️ SIDEBAR MOUNTED. Received User ID:", currentUserId);
+
+      if (!currentUserId) {
+        console.warn("⚠️ NO USER DETECTED IN SIDEBAR! (Check your main Layout file to make sure user={user} is being passed to this specific instance of the sidebar)");
+        return;
+      }
 
       try {
         const { data: userRecords, error } = await supabase
@@ -26,7 +33,15 @@ const DesktopSidebar = ({ currentSection, setCurrentSection, user, identity, col
           .select('*')
           .eq('user_id', currentUserId);
 
-        if (!error && userRecords) {
+        // 2. Check what Supabase is actually returning
+        console.log("📊 SUPABASE FETCH RESULT:", { recordsFound: userRecords?.length, error });
+
+        if (error) {
+           console.error("❌ SUPABASE ERROR:", error.message);
+           return;
+        }
+
+        if (userRecords) {
           const totalScans = userRecords.length;
           const totalThreats = userRecords.filter(r => {
             const status = (r.verdict || r.threat_level || r.severity || '').toLowerCase();
@@ -36,7 +51,7 @@ const DesktopSidebar = ({ currentSection, setCurrentSection, user, identity, col
           setRealStats({ scans: totalScans, threats: totalThreats, points: totalScans * 15 });
         }
       } catch (err) {
-        console.error("Sidebar stats sync error:", err);
+        console.error("🚨 Sidebar code execution error:", err);
       }
     };
 
@@ -44,8 +59,9 @@ const DesktopSidebar = ({ currentSection, setCurrentSection, user, identity, col
 
     const currentUserId = user?.id || user?.uid;
     if (currentUserId) {
+      const uniqueChannelName = `sidebar_ledger_${Math.random().toString(36).substring(2, 10)}`;
       const historyChannel = supabase
-        .channel('sidebar_ledger')
+        .channel(uniqueChannelName)
         .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'user_history', filter: `user_id=eq.${currentUserId}` }, 
           () => fetchSidebarStats()
         ).subscribe();
@@ -92,8 +108,8 @@ const DesktopSidebar = ({ currentSection, setCurrentSection, user, identity, col
         initial={false}
         animate={{ width: collapsed ? 88 : 280, minWidth: collapsed ? 88 : 280, maxWidth: collapsed ? 88 : 280 }}
         transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-        style={{ overflowY: 'hidden', height: 'calc(100vh - 64px)' }}
-        className={`desktop-panel-menu fixed top-16 left-0 z-40 flex flex-col shadow-2xl transition-colors duration-300
+        style={{ overflowY: 'hidden', height: 'calc(100dvh - 64px)' }} 
+        className={`desktop-panel-menu fixed top-16 bottom-0 left-0 z-40 flex flex-col shadow-2xl transition-colors duration-300
           bg-white dark:bg-slate-900 
           border-r border-gray-200 dark:border-white/5 
           text-gray-800 dark:text-slate-300
@@ -156,9 +172,9 @@ const DesktopSidebar = ({ currentSection, setCurrentSection, user, identity, col
           </div>
         </nav>
 
-        <div className="flex-shrink-0 w-full mt-auto border-t border-gray-200 dark:border-white/5 bg-gray-50/80 dark:bg-slate-800/50 p-4 transition-colors duration-300">
+        {/* ✅ The padding and layout fixes are perfectly preserved here */}
+        <div className="flex-shrink-0 w-full mt-auto border-t border-gray-200 dark:border-white/5 bg-gray-50/80 dark:bg-slate-800/50 p-4 pb-24 md:pb-4 transition-colors duration-300">
           
-          {/* TACTICAL SIDEBAR PROFILE */}
           <div className={`flex items-center ${collapsed ? 'justify-center' : 'gap-3'}`}>
             <div className="w-10 h-10 shrink-0 rounded-xl bg-purple-600/20 dark:bg-cyan-500/10 border border-purple-500/30 dark:border-cyan-500/30 flex items-center justify-center">
               <ActiveIcon className="w-6 h-6 text-purple-600 dark:text-cyan-400" />

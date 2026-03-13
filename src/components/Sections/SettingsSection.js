@@ -74,7 +74,7 @@ export default function SettingsSection({ theme: globalTheme = 'dark', setTheme,
       return JSON.parse(saved);
     }
     return {
-      alias: currentAlias || 'Shozab Rizvi',
+      alias: currentAlias || 'UNKNOWN_OPERATOR', // Changed from your name
       avatar: currentAvatar || 'ghost'
     };
   });
@@ -109,10 +109,11 @@ export default function SettingsSection({ theme: globalTheme = 'dark', setTheme,
   };
 
   // ✅ BULLETPROOF FIX: Save directly to localStorage from here too
-  const commitIdentity = () => {
+ const commitIdentity = () => {
     localStorage.setItem('xist_operator_identity', JSON.stringify(localIdentity));
     if (onGlobalSettingsChange) onGlobalSettingsChange({ ...settings, identity: localIdentity });
     setIsSaved(true);
+    window.location.reload(); // This forces the instant refresh across the entire app
   };
 
   const settingsTabs = [

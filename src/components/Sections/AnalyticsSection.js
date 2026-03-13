@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { AreaChart, Area, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { AreaChart, Area, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Label } from 'recharts';
 import { useAuth } from '../../hooks/useAuth';
 import { showNotification } from '../UI/NotificationToast';
 import { supabase } from '../../lib/supabase';
@@ -172,16 +172,16 @@ const AnalyticsSection = ({ theme: globalTheme }) => {
     a.click(); showNotification('📊 Analytics exported successfully', 'success');
   };
 
-  if (isLoading) return (
-    <div className={`flex items-center justify-center min-h-screen ${theme.background}`} style={{ marginLeft: '280px' }}>
+ if (isLoading) return (
+    <div className={`flex items-center justify-center min-h-[80vh] w-full ${theme.background}`}>
       <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 1 }} className="w-10 h-10 border-4 border-indigo-500 border-t-transparent rounded-full shadow-[0_0_15px_rgba(99,102,241,0.5)]" />
     </div>
   );
 
   return (
     <motion.div initial="hidden" animate="visible" variants={containerVariants}
-      className={`w-full min-h-screen relative transition-colors duration-500 ${theme.background} ${theme.textPrimary} overflow-x-hidden p-8`} 
-      style={{ marginLeft: '280px', marginTop: '64px', fontFamily: 'Inter, system-ui, sans-serif' }}
+      className={`w-full min-h-screen relative transition-colors duration-500 ${theme.background} ${theme.textPrimary} overflow-x-hidden p-4 sm:p-8`} 
+      style={{ fontFamily: 'Inter, system-ui, sans-serif' }}
     >
       {/* 🌐 DYNAMIC GRID BACKGROUND OVERLAY */}
       <div className={`absolute inset-0 pointer-events-none opacity-[0.03] ${isDark ? '' : 'invert'}`} 
@@ -291,26 +291,36 @@ const AnalyticsSection = ({ theme: globalTheme }) => {
               <ShieldCheckIcon className="w-5 h-5 text-indigo-500" /> Threat Vectors
             </h3>
             
-            <div className="h-[300px] w-full relative"> 
-              {/* Center Readout for Donut Chart */}
-              <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none mb-10">
-                <span className={`text-3xl font-black ${theme.textPrimary}`}>{analyticsData.totalAnalyses || 0}</span>
-                <span className={`text-[8px] font-black uppercase tracking-widest ${theme.muted}`}>Total Vects</span>
-              </div>
+            <div className="h-[380px] w-full relative"> 
+              {/* ❌ HTML center text div was removed from here */}
 
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
                   <Pie 
                      data={analyticsData.categoryData?.length > 0 ? analyticsData.categoryData : [{ name: 'No Data', value: 1 }]} 
                      cx="50%" 
-                     cy="45%" 
-                     innerRadius={80} // 🍩 Creates the hollow Donut effect
-                     outerRadius={110} 
+                     cy="40%" 
+                     innerRadius="55%" 
+                     outerRadius="75%" 
                      paddingAngle={6} 
-                     cornerRadius={8} // 🍩 Sleek rounded edges
+                     cornerRadius={8} 
                      dataKey="value"
                      stroke="none"
                   >
+                    {/* ✅ NATIVE SVG LABEL - Binds permanently to the pie's center coordinates */}
+                    <Label
+                      content={({ viewBox: { cx, cy } }) => (
+                        <text x={cx} y={cy} textAnchor="middle" dominantBaseline="central">
+                          <tspan x={cx} y={cy - 5} fontSize="36" fontWeight="900" fill={isDark ? "#f8fafc" : "#0f172a"}>
+                            {analyticsData.totalAnalyses || 0}
+                          </tspan>
+                          <tspan x={cx} y={cy + 20} fontSize="10" fontWeight="900" letterSpacing="0.1em" fill={isDark ? "#64748b" : "#94a3b8"}>
+                            TOTAL VECTS
+                          </tspan>
+                        </text>
+                      )}
+                    />
+                    
                     {analyticsData.categoryData?.length > 0 ? (
                       analyticsData.categoryData.map((_, index) => (
                         <Cell key={`cell-${index}`} fill={CHART_COLORS[index % CHART_COLORS.length]} />
@@ -319,6 +329,7 @@ const AnalyticsSection = ({ theme: globalTheme }) => {
                       <Cell fill={isDark ? '#1e293b' : '#e2e8f0'} />
                     )}
                   </Pie>
+                  
                   <Tooltip 
                     contentStyle={{ backgroundColor: isDark ? '#0f172a' : '#fff', border: isDark ? '1px solid #1e293b' : '1px solid #e2e8f0', borderRadius: '12px', color: isDark ? '#f8fafc' : '#0f172a', fontWeight: 'bold' }} 
                     itemStyle={{ fontSize: '12px' }}
@@ -328,7 +339,7 @@ const AnalyticsSection = ({ theme: globalTheme }) => {
                      align="center" 
                      layout="horizontal" 
                      iconType="circle"
-                     wrapperStyle={{ paddingTop: "10px", fontSize: "10px", fontWeight: "bold", textTransform: "uppercase", letterSpacing: "1px" }}
+                     wrapperStyle={{ paddingTop: "20px", fontSize: "10px", fontWeight: "bold", textTransform: "uppercase", letterSpacing: "1px", lineHeight: "1.5" }}
                   />
                 </PieChart>
               </ResponsiveContainer>

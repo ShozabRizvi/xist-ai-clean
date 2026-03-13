@@ -143,10 +143,10 @@ const HELPLINE_DB = [
 ];
 
 const PROTOCOLS = [
-  { id: 'money', label: 'Financial Fraud', icon: BanknotesIcon, color: 'text-rose-500', prompt: 'I have been a victim of financial/UPI fraud. My money was stolen.' },
-  { id: 'hack', label: 'Account & Identity', icon: IdentificationIcon, color: 'text-indigo-500', prompt: 'My social media account is hacked or someone is impersonating me.' },
-  { id: 'extort', label: 'Extortion & Safety', icon: ShieldExclamationIcon, color: 'text-rose-500', prompt: 'I am being blackmailed, extorted, or threatened online.' },
-  { id: 'device', label: 'Device & Web', icon: CpuChipIcon, color: 'text-blue-500', prompt: 'I think my phone is hacked, or I clicked a suspicious link.' }
+  { id: 'money', label: 'Financial Fraud', icon: BanknotesIcon, color: 'text-rose-500', glow: 'bg-rose-500/20', border: 'group-hover:border-rose-500', dot: 'bg-rose-500', prompt: 'I have been a victim of financial/UPI fraud. My money was stolen.' },
+  { id: 'hack', label: 'Account & Identity', icon: IdentificationIcon, color: 'text-indigo-500', glow: 'bg-indigo-500/20', border: 'group-hover:border-indigo-500', dot: 'bg-indigo-500', prompt: 'My social media account is hacked or someone is impersonating me.' },
+  { id: 'extort', label: 'Extortion & Safety', icon: ShieldExclamationIcon, color: 'text-rose-500', glow: 'bg-rose-500/20', border: 'group-hover:border-rose-500', dot: 'bg-rose-500', prompt: 'I am being blackmailed, extorted, or threatened online.' },
+  { id: 'device', label: 'Device & Web', icon: CpuChipIcon, color: 'text-blue-500', glow: 'bg-blue-500/20', border: 'group-hover:border-blue-500', dot: 'bg-blue-500', prompt: 'I think my phone is hacked, or I clicked a suspicious link.' }
 ];
 
 const useTypewriterEffect = (text, speed = 80, delay = 200) => {
@@ -231,10 +231,19 @@ const handleGeminiTriage = async (input) => {
     }
   };
 
+  // ✅ STAGGERED ANIMATION ENGINE
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: { opacity: 1, transition: { staggerChildren: 0.1, delayChildren: 0.1 } }
+  };
+  const itemVariants = {
+    hidden: { y: 20, opacity: 0 },
+    visible: { y: 0, opacity: 1, transition: { type: 'spring', stiffness: 100 } }
+  };
+
   return (
-    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}
-                className={`w-full min-h-screen p-8 relative transition-colors duration-500 ${theme.background} ${theme.textPrimary}`}
-                style={{ marginLeft: '280px', marginTop: '64px' }}>
+    <motion.div initial="hidden" animate="visible" variants={containerVariants}
+                className={`w-full min-h-screen p-4 sm:p-8 relative transition-colors duration-500 ${theme.background} ${theme.textPrimary}`}>
       
       {/* BACKGROUND MATRIX */}
       <div className={`absolute inset-0 pointer-events-none opacity-[0.03] ${globalTheme === 'light' ? 'invert' : ''}`} 
@@ -242,7 +251,7 @@ const handleGeminiTriage = async (input) => {
       <div className={`absolute inset-0 pointer-events-none opacity-20 bg-gradient-to-tr ${theme.glow}`}></div>
 
       {/* HEADER */}
-      <div className="max-w-5xl mx-auto text-center mb-10 relative z-10">
+      <motion.div variants={itemVariants} className="max-w-5xl mx-auto text-center mb-10 relative z-10">
         <ShieldExclamationIcon className="w-16 h-16 text-rose-500 mx-auto mb-4 opacity-80" />
         <h1 className="text-4xl md:text-5xl font-black tracking-tight mb-3">
             <span>{typingTitle}</span>
@@ -251,26 +260,49 @@ const handleGeminiTriage = async (input) => {
         <p className={`${theme.muted} text-sm font-mono tracking-widest uppercase`}>
   Forensic Crisis Mitigation Hub
 </p>
-      </div>
+      </motion.div>
 
       <div className="max-w-7xl mx-auto relative z-10">
         
         {/* CONSOLIDATED 4 PROTOCOLS */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-10">
+        {/* ✅ FIX: Changed to grid-cols-1 for mobile, sm:grid-cols-2 for tablets, lg:grid-cols-4 for desktop */}
+        <motion.div variants={itemVariants} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4 mb-10">
           {PROTOCOLS.map(p => (
             <button key={p.id} onClick={() => handleGeminiTriage(p.prompt)}
-                    className={`${theme.card} p-5 rounded-tl-[1.5rem] rounded-br-[1.5rem] flex items-center justify-between group hover:scale-[1.02] transition-all`}>
-              <div className="flex items-center gap-4">
-                <div className={`p-3 rounded-xl ${theme.iconBg} ${p.color}`}>
-                  <p.icon className="w-6 h-6" />
+                    className={`${theme.card} p-3 md:p-4 rounded-tl-[1.5rem] rounded-br-[1.5rem] flex items-center justify-start gap-4 group hover:scale-[1.02] transition-all relative overflow-hidden`}>
+              
+              {/* ✅ ELITE TACTICAL ICON CONTAINER */}
+              <div className="relative shrink-0">
+                {/* Outer Glow on Hover */}
+                <div className={`absolute -inset-1 ${p.glow} rounded-xl blur opacity-0 group-hover:opacity-100 transition duration-500`}></div>
+                
+                {/* Main Icon Box */}
+                <div className={`relative w-10 h-10 md:w-12 md:h-12 flex items-center justify-center rounded-xl border transition-all duration-300 
+                  ${globalTheme === 'dark' ? 'bg-slate-900 border-slate-700' : 'bg-white border-slate-200'} 
+                  shadow-inner ${p.border}`}>
+                  
+                  <p.icon className={`w-5 h-5 md:w-6 md:h-6 transition-colors duration-300 ${p.color}`} />
+                  
+                  {/* Corner Accent Node */}
+                  <div className={`absolute top-1 right-1 w-1 h-1 rounded-full ${p.dot} opacity-40 group-hover:opacity-100 group-hover:animate-ping`}></div>
                 </div>
-                <span className={`text-xs font-black uppercase tracking-widest ${theme.textPrimary}`}>{p.label}</span>
               </div>
+
+              {/* ✅ FIX: Text truncation and responsive text sizes */}
+              <div className="flex flex-col items-start text-left w-full overflow-hidden">
+                <span className={`text-[10px] md:text-xs font-black uppercase tracking-tighter line-clamp-1 ${theme.textPrimary}`}>
+                  {p.label}
+                </span>
+                <span className={`text-[8px] md:text-[9px] font-mono tracking-widest uppercase mt-0.5 opacity-0 group-hover:opacity-100 transition-opacity ${p.color}`}>
+                  Execute Protocol
+                </span>
+              </div>
+              
             </button>
           ))}
-        </div>
+        </motion.div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+        <motion.div variants={itemVariants} className="grid grid-cols-1 lg:grid-cols-12 gap-8">
           
           {/* THEME-ADAPTIVE TERMINAL */}
           <div className="lg:col-span-6 flex flex-col gap-6">
@@ -342,16 +374,16 @@ const handleGeminiTriage = async (input) => {
             </div>
           </div>
 
-        </div>
+        </motion.div>
 
         {/* BOTTOM BANNER */}
-        <div className={`mt-12 p-8 rounded-[3rem] border flex flex-col md:flex-row items-center justify-between gap-6 ${globalTheme === 'light' ? 'bg-slate-100' : 'bg-indigo-600/10 border-indigo-500/20'}`}>
+        <motion.div variants={itemVariants} className={`mt-12 p-8 rounded-[3rem] border flex flex-col md:flex-row items-center justify-between gap-6 ${globalTheme === 'light' ? 'bg-slate-100' : 'bg-indigo-600/10 border-indigo-500/20'}`}>
             <div className="flex items-center gap-6">
                 <div className="w-16 h-16 bg-indigo-600 rounded-[1.5rem] flex items-center justify-center shadow-2xl shadow-indigo-600/30">
                   <GlobeAsiaAustraliaIcon className="w-9 h-9 text-white"/>
                 </div>
                 <div>
-                    <h3 className={`text-lg font-black uppercase tracking-tighter ${theme.textPrimary}`}>India_Cyber_Sovereignty</h3>
+                    <h3 className={`text-lg font-black uppercase tracking-tighter ${theme.textPrimary}`}>India Cyber Cell Website</h3>
                     <p className={`text-xs font-medium ${theme.textSecondary}`}>Official MHA Portal for National Incident Registration.</p>
                 </div>
             </div>
@@ -359,7 +391,7 @@ const handleGeminiTriage = async (input) => {
                     className="px-8 py-4 bg-indigo-600 hover:bg-indigo-50 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all">
                 Open Official Portal
             </button>
-        </div>
+        </motion.div>
 
       </div>
       <div className="h-24" />
