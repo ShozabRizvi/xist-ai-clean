@@ -35,10 +35,8 @@ const TopNavigation = ({ user, identity, userStats, login, logout, theme, setThe
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   const [showQRPopup, setShowQRPopup] = useState(false);
   
-  // ✅ GLOBAL REAL-TIME TRACKING & TIMEZONE STATE
-  const [liveGlobalScans, setLiveGlobalScans] = useState(0);
-  const [localResetTime, setLocalResetTime] = useState("");
-  const [lastMidnightUTC, setLastMidnightUTC] = useState("");
+  // ✅ NEW: REAL-TIME SCAN TRACKING STATE
+  const [liveScans, setLiveScans] = useState(0);
 
   useEffect(() => {
     const handleOnline = () => setIsOnline(true);
@@ -51,66 +49,42 @@ const TopNavigation = ({ user, identity, userStats, login, logout, theme, setThe
     };
   }, []);
 
-  // ✅ CALCULATE PACIFIC TIME (PT) MIDNIGHT & LOCAL RESET TIME
+  // ✅ NEW: REAL-TIME SUPABASE LISTENER
   useEffect(() => {
-    const calculateTimes = () => {
-      const now = new Date();
-      // Convert current time to Los Angeles (PT) time
-      const ptString = now.toLocaleString("en-US", { timeZone: "America/Los_Angeles" });
-      const ptTime = new Date(ptString);
-      
-      // Find what midnight looked like this morning in PT
-      const lastMidnightPT = new Date(ptTime);
-      lastMidnightPT.setHours(0, 0, 0, 0);
-      
-      // Find what midnight looks like tonight in PT
-      const nextMidnightPT = new Date(lastMidnightPT);
-      nextMidnightPT.setDate(nextMidnightPT.getDate() + 1);
+    const fetchScans = async () => {
+      const currentUserId = user?.id || user?.uid;
+      if (!currentUserId) return;
 
-      // Convert those PT times back to pure UTC so the database understands it
-      const offsetMs = now.getTime() - ptTime.getTime();
-      const absoluteLastMidnight = new Date(lastMidnightPT.getTime() + offsetMs);
-      const absoluteNextMidnight = new Date(nextMidnightPT.getTime() + offsetMs);
+      // ✅ GET TODAY's DATE AT MIDNIGHT
+      const startOfDay = new Date();
+      startOfDay.setHours(0, 0, 0, 0);
 
-      setLastMidnightUTC(absoluteLastMidnight.toISOString());
-      
-      // Format the NEXT reset time perfectly to the user's local device timezone
-      setLocalResetTime(absoluteNextMidnight.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
-    };
-    
-    calculateTimes();
-    
-    // Recalculate if the app stays open past midnight
-    const interval = setInterval(calculateTimes, 60000 * 60); 
-    return () => clearInterval(interval);
-  }, []);
-
-  // ✅ FETCH GLOBAL SCANS AND LISTEN FOR APP-WIDE UPDATES
-  useEffect(() => {
-    if (!lastMidnightUTC) return;
-
-    const fetchGlobalScans = async () => {
+      // ✅ ONLY COUNT SCANS CREATED TODAY
       const { count, error } = await supabase
         .from('user_history')
         .select('*', { count: 'exact', head: true })
-        .gte('created_at', lastMidnightUTC); // Only count scans since the last PT midnight
+        .eq('user_id', currentUserId)
+        .gte('created_at', startOfDay.toISOString()); // <-- This is the magic line!
       
-      if (!error) setLiveGlobalScans(count || 0);
+      if (!error) setLiveScans(count || 0);
     };
 
-    fetchGlobalScans();
+    fetchScans();
 
-    // Listen to ALL inserts in the table, regardless of user_id
-    const uniqueChannelName = `global_scans_${Math.random().toString(36).substring(2, 10)}`;
-    const channel = supabase
-      .channel(uniqueChannelName)
-      .on('postgres_changes', 
-          { event: 'INSERT', schema: 'public', table: 'user_history' }, 
-          () => fetchGlobalScans()
-      ).subscribe();
+    const currentUserId = user?.id || user?.uid;
+    if (currentUserId) {
+      // Unique channel name prevents collision with your Sidebar listener
+      const uniqueChannelName = `topnav_scans_${Math.random().toString(36).substring(2, 10)}`;
+      const channel = supabase
+        .channel(uniqueChannelName)
+        .on('postgres_changes', 
+            { event: 'INSERT', schema: 'public', table: 'user_history', filter: `user_id=eq.${currentUserId}` }, 
+            () => fetchScans()
+        ).subscribe();
 
-    return () => supabase.removeChannel(channel);
-  }, [lastMidnightUTC]);
+      return () => supabase.removeChannel(channel);
+    }
+  }, [user?.id, user?.uid]);
 
   const navigationItems = [
     { id: 'home', icon: HomeIcon, label: 'Home' },
@@ -137,8 +111,8 @@ const TopNavigation = ({ user, identity, userStats, login, logout, theme, setThe
 
   const ActiveIcon = AVATAR_OPTIONS?.find(a => a.id === identity?.avatar)?.icon || UserCircleIcon;
   
-  // ✅ GLOBAL MATH: App-wide limit of 20 minus the total global scans today
-  const scansRemaining = Math.max(0, 20 - liveGlobalScans);
+  // ✅ DYNAMIC MATH: 20 minus whatever the database says they have used
+  const scansRemaining = Math.max(0, 20 - liveScans);
 
   return (
     <>
@@ -213,30 +187,26 @@ const TopNavigation = ({ user, identity, userStats, login, logout, theme, setThe
                 </div>
               )}
 
-              {/* ✅ GLOBAL APP-WIDE SCAN COUNTER */}
+              {/* ✅ DYNAMIC SCAN COUNTER */}
               {user && (
                 <div className="flex flex-col items-center justify-center mr-1">
-                  <div className={`flex flex-col items-center px-2 py-1 rounded-lg border transition-all duration-300
+                  <div className={`flex items-center space-x-1.5 px-2.5 py-1 rounded-lg border transition-all duration-300
                     ${scansRemaining <= 5 ? 'bg-rose-500/20 border-rose-500/50 shadow-[0_0_10px_rgba(244,63,94,0.2)]' : 'bg-white/10 border-white/20'}`}>
                     
-                    <div className="flex items-center space-x-1.5">
-                      <BoltIcon className={`w-3.5 h-3.5 ${scansRemaining <= 5 ? 'text-rose-400 animate-pulse' : 'text-yellow-400'}`} />
-                      <div className="flex items-baseline gap-0.5">
-                        <span className="text-xs font-black text-white font-mono">{scansRemaining}</span>
-                        <span className="text-[8px] font-bold text-white/60 uppercase tracking-tighter">/ 20</span>
-                      </div>
-                      <span className="hidden sm:inline text-[8px] font-black text-white/80 uppercase tracking-widest ml-1">
-                        Global Scans
+                    <BoltIcon className={`w-3.5 h-3.5 ${scansRemaining <= 5 ? 'text-rose-400 animate-pulse' : 'text-yellow-400'}`} />
+                    
+                    <div className="flex items-baseline gap-0.5">
+                      <span className="text-xs font-black text-white font-mono">
+                        {scansRemaining}
+                      </span>
+                      <span className="text-[8px] font-bold text-white/60 uppercase tracking-tighter">
+                        / 20
                       </span>
                     </div>
                     
-                    {/* ✅ THE LOCAL RESET TIMER */}
-                    {localResetTime && (
-                      <div className="text-[6px] sm:text-[7px] font-mono text-white/50 uppercase tracking-widest mt-0.5 text-center w-full">
-                        Resets at {localResetTime}
-                      </div>
-                    )}
-                    
+                    <span className="hidden sm:inline text-[9px] font-black text-white/80 uppercase tracking-widest ml-1">
+                      Scans
+                    </span>
                   </div>
                 </div>
               )}

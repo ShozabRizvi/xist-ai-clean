@@ -37,9 +37,6 @@ const THEMES = {
   }
 };
 
-// ==============================
-// TYPEWRITER EFFECT HOOK
-// ==============================
 const useTypewriterEffect = (text, speed = 80, delay = 200) => {
   const [displayedText, setDisplayedText] = useState("");
   const [started, setStarted] = useState(false);
@@ -59,9 +56,6 @@ const useTypewriterEffect = (text, speed = 80, delay = 200) => {
   return displayedText;
 };
 
-// ==============================
-// MASSIVE FAQ DATABASE FOR SEARCH
-// ==============================
 const FAQS = [
   {
     category: 'Operator Guide (How to Use)',
@@ -69,7 +63,7 @@ const FAQS = [
     questions: [
       { q: 'How do I scan a suspicious text message or email?', a: 'Navigate to the Verify section, select "Text" mode, paste the suspicious content into the terminal, and click Analyze. The AI will extract psychological manipulation tactics and scam markers.' },
       { q: 'How do I check if a website link is safe?', a: 'Select "URL" mode in the Verify section and paste the link. Xist AI will scrape the target page securely and analyze its contents without you having to open the malicious site yourself.' },
-      { q: 'Can I upload a PDF bank statement to check for forgery?', a: 'Yes. Select "Document" mode and upload the PDF. The backend uses PyPDF2 to extract the raw text and analyze it for logical inconsistencies or typical phishing terminology.' },
+      { q: 'Can I check PDF bank statements for forgery?', a: 'Yes. Select "Document" mode and upload the PDF. The backend uses PyPDF2 to extract the raw text and analyze it for logical inconsistencies or typical phishing terminology.' },
       { q: 'How do I test a voice note or video for Deepfakes?', a: 'Select the corresponding "Media" mode and upload your .webm, .mp4, or .mp3 file. The engine will look for acoustic jitter or lighting asymmetry.' }
     ]
   },
@@ -110,7 +104,6 @@ export default function SupportSection({ theme: globalTheme = 'dark' }) {
   const [searchQuery, setSearchQuery] = useState('');
   const [expandedFaq, setExpandedFaq] = useState(null);
 
-  // Initialize Typewriter
   const typingTitle = useTypewriterEffect("Intelligence Base: Active", 80, 200);
 
   const toggleFaq = (id) => {
@@ -130,7 +123,6 @@ export default function SupportSection({ theme: globalTheme = 'dark' }) {
                 className={`w-full min-h-screen p-6 relative transition-colors duration-500 ${theme.background} ${theme.textPrimary}`}
                 style={{ marginLeft: screenSize.isMobile ? '0' : '280px', marginTop: '64px' }}>
       
-      {/* BACKGROUND MATRIX GRID */}
       <div className={`absolute inset-0 pointer-events-none opacity-[0.03] ${globalTheme === 'light' ? 'invert' : ''}`} 
            style={{ backgroundImage: 'linear-gradient(to right, #ffffff 1px, transparent 1px), linear-gradient(to bottom, #ffffff 1px, transparent 1px)', backgroundSize: '40px 40px' }}></div>
       <div className={`absolute inset-0 pointer-events-none opacity-20 bg-gradient-to-tr ${theme.glow}`}></div>
@@ -138,7 +130,6 @@ export default function SupportSection({ theme: globalTheme = 'dark' }) {
       <div className="max-w-7xl mx-auto text-center mb-10 relative z-10">
         <LifebuoyIcon className={`w-16 h-16 mx-auto mb-4 ${theme.accent} opacity-80`} />
         
-        {/* TYPEWRITER TITLE + BLINKING CURSOR */}
         <h1 className="text-4xl md:text-5xl font-black tracking-tight mb-3 uppercase flex justify-center items-center">
           <span>{typingTitle}</span>
           <motion.span animate={{ opacity: [0, 1, 0] }} transition={{ repeat: Infinity, duration: 0.8 }} className="w-1.5 h-8 md:h-10 bg-indigo-500 inline-block ml-2" />
@@ -151,77 +142,53 @@ export default function SupportSection({ theme: globalTheme = 'dark' }) {
 
       <div className="max-w-7xl mx-auto relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-8">
         
-        {/* LEFT COLUMN: GUIDES & LEGENDS */}
-        <div className="lg:col-span-5 space-y-8">
-          
-          {/* OPERATOR'S QUICK GUIDE */}
+        <div className="lg:col-span-5 space-y-8 h-fit">
           <div className={`${theme.card} p-6 rounded-[2rem] border-t-4 border-t-indigo-500`}>
             <div className="flex items-center gap-3 mb-6">
               <BoltIcon className="w-6 h-6 text-indigo-500" />
               <h3 className="text-xs font-black uppercase tracking-widest">Operator's Quick Guide</h3>
             </div>
             <div className="relative border-l-2 border-indigo-500/30 ml-3 space-y-6 pb-2">
-              <div className="relative pl-6">
-                <div className="absolute w-3 h-3 bg-indigo-500 rounded-full -left-[7px] top-1 shadow-[0_0_10px_#6366f1]" />
-                <h4 className={`text-[11px] font-bold uppercase mb-1 ${theme.textPrimary}`}>1. Select Input Vector</h4>
-                <p className={`text-[10px] ${theme.textSecondary}`}>Open the Verify tab. Choose Text, URL, Document, or Media depending on the suspected threat.</p>
-              </div>
-              <div className="relative pl-6">
-                <div className="absolute w-3 h-3 bg-indigo-500 rounded-full -left-[7px] top-1 shadow-[0_0_10px_#6366f1]" />
-                <h4 className={`text-[11px] font-bold uppercase mb-1 ${theme.textPrimary}`}>2. Initiate Scan</h4>
-                <p className={`text-[10px] ${theme.textSecondary}`}>Provide the data and trigger the analysis. The engine will extract features and query the forensics model.</p>
-              </div>
-              <div className="relative pl-6">
-                <div className="absolute w-3 h-3 bg-indigo-500 rounded-full -left-[7px] top-1 shadow-[0_0_10px_#6366f1]" />
-                <h4 className={`text-[11px] font-bold uppercase mb-1 ${theme.textPrimary}`}>3. Review Intelligence</h4>
-                <p className={`text-[10px] ${theme.textSecondary}`}>Analyze the returned Credibility Score, Threat Category, and specific anomaly explanations.</p>
-              </div>
-              <div className="relative pl-6">
-                <div className="absolute w-3 h-3 bg-indigo-500 rounded-full -left-[7px] top-1 shadow-[0_0_10px_#6366f1]" />
-                <h4 className={`text-[11px] font-bold uppercase mb-1 ${theme.textPrimary}`}>4. Tactical Mitigation</h4>
-                <p className={`text-[10px] ${theme.textSecondary}`}>If the threat is CRITICAL, switch to the Protection tab for immediate 3-step survival protocols.</p>
-              </div>
+              {[
+                { step: "1. Select Input Vector", desc: "Open the Verify tab. Choose Text, URL, Document, or Media depending on the suspected threat." },
+                { step: "2. Initiate Scan", desc: "Provide the data and trigger the analysis. The engine will extract features and query the forensics model." },
+                { step: "3. Review Intelligence", desc: "Analyze the returned Credibility Score, Threat Category, and specific anomaly explanations." },
+                { step: "4. Tactical Mitigation", desc: "If the threat is CRITICAL, switch to the Protection tab for immediate 3-step survival protocols." }
+              ].map((item, i) => (
+                <div key={i} className="relative pl-6">
+                  <div className="absolute w-3 h-3 bg-indigo-500 rounded-full -left-[7px] top-1 shadow-[0_0_10px_#6366f1]" />
+                  <h4 className={`text-[11px] font-bold uppercase mb-1 ${theme.textPrimary}`}>{item.step}</h4>
+                  <p className={`text-[10px] ${theme.textSecondary}`}>{item.desc}</p>
+                </div>
+              ))}
             </div>
           </div>
 
-          {/* THE FORENSIC LEGEND */}
           <div className={`${theme.card} p-6 rounded-[2rem] border-l-4 border-l-rose-500`}>
             <div className="flex items-center gap-3 mb-6">
               <ShieldCheckIcon className="w-6 h-6 text-rose-500" />
               <h3 className="text-xs font-black uppercase tracking-widest">Forensic Scoring Legend</h3>
             </div>
             <div className="space-y-3">
-              <div className={`p-4 rounded-xl ${theme.inner} border border-emerald-500/20`}>
-                <div className="flex justify-between items-center mb-1">
-                  <span className="text-emerald-500 font-bold text-[11px] uppercase tracking-wider">[SAFE]</span>
-                  <span className="text-emerald-500 font-mono text-[10px]">80-100%</span>
+              {[
+                { label: "[SAFE]", range: "80-100%", color: "text-emerald-500", border: "border-emerald-500/20", desc: "Content exhibits natural human patterns. Low risk of manipulation." },
+                { label: "[QUESTIONABLE]", range: "40-79%", color: "text-amber-500", border: "border-amber-500/20", desc: "AI detected missing metadata or mild psychological manipulation. Verify source." },
+                { label: "[CRITICAL]", range: "0-39%", color: "text-rose-500", border: "border-rose-500/20", desc: "High-probability detection of Deepfake anomalies or phishing. Do not interact." }
+              ].map((legend, i) => (
+                <div key={i} className={`p-4 rounded-xl ${theme.inner} border ${legend.border}`}>
+                  <div className="flex justify-between items-center mb-1">
+                    <span className={`${legend.color} font-bold text-[11px] uppercase tracking-wider`}>{legend.label}</span>
+                    <span className={`${legend.color} font-mono text-[10px]`}>{legend.range}</span>
+                  </div>
+                  <p className={`text-[10px] ${theme.textSecondary} leading-relaxed`}>{legend.desc}</p>
                 </div>
-                <p className={`text-[10px] ${theme.textSecondary} leading-relaxed`}>Content exhibits natural human patterns. Low risk of manipulation.</p>
-              </div>
-              <div className={`p-4 rounded-xl ${theme.inner} border border-amber-500/20`}>
-                <div className="flex justify-between items-center mb-1">
-                  <span className="text-amber-500 font-bold text-[11px] uppercase tracking-wider">[QUESTIONABLE]</span>
-                  <span className="text-amber-500 font-mono text-[10px]">40-79%</span>
-                </div>
-                <p className={`text-[10px] ${theme.textSecondary} leading-relaxed`}>AI detected missing metadata or mild psychological manipulation. Verify source.</p>
-              </div>
-              <div className={`p-4 rounded-xl ${theme.inner} border border-rose-500/20`}>
-                <div className="flex justify-between items-center mb-1">
-                  <span className="text-rose-500 font-bold text-[11px] uppercase tracking-wider">[CRITICAL]</span>
-                  <span className="text-rose-500 font-mono text-[10px]">0-39%</span>
-                </div>
-                <p className={`text-[10px] ${theme.textSecondary} leading-relaxed`}>High-probability detection of Deepfake anomalies or phishing. Do not interact.</p>
-              </div>
+              ))}
             </div>
           </div>
-
         </div>
 
-        {/* RIGHT COLUMN: SEARCH & MASSIVE FAQ */}
-        <div className="lg:col-span-7 flex flex-col space-y-6">
-          
-          {/* SEARCH BAR */}
-          <div className="relative">
+        <div className="lg:col-span-7 flex flex-col space-y-6 min-h-0">
+          <div className="relative shrink-0">
             <MagnifyingGlassIcon className={`w-5 h-5 absolute left-5 top-1/2 -translate-y-1/2 ${theme.muted}`} />
             <input
               type="text"
@@ -232,10 +199,9 @@ export default function SupportSection({ theme: globalTheme = 'dark' }) {
             />
           </div>
 
-          {/* DYNAMIC FAQ ACCORDION */}
-          <div className="flex-grow overflow-y-auto h-[600px] custom-scrollbar pr-2 space-y-6">
+          <div className="flex-grow overflow-y-auto h-[600px] custom-scrollbar pr-2 space-y-6 pb-20">
             {filteredFaqs.map((cat, catIdx) => (
-              <div key={catIdx} className={`${theme.card} p-6 rounded-[2rem]`}>
+              <div key={catIdx} className={`${theme.card} p-6 rounded-[2rem] h-auto`}>
                 <div className="flex items-center gap-3 mb-4">
                   <div className={`p-2 rounded-lg ${theme.iconContainer}`}>
                     <cat.icon className={`w-5 h-5 ${theme.accent}`} />
@@ -243,23 +209,33 @@ export default function SupportSection({ theme: globalTheme = 'dark' }) {
                   <h3 className={`text-xs font-black uppercase tracking-widest ${theme.textPrimary}`}>{cat.category}</h3>
                 </div>
                 
-                <div className="space-y-3">
+                <div className="space-y-3 h-auto">
                   {cat.questions.map((faq, qIdx) => {
                     const id = `${catIdx}-${qIdx}`;
                     const isOpen = expandedFaq === id;
                     return (
-                      <div key={qIdx} className={`rounded-xl overflow-hidden transition-all ${theme.inner} border ${isOpen ? 'border-indigo-500/50' : 'border-transparent'}`}>
-                        <button onClick={() => toggleFaq(id)}
-                                className="w-full p-4 flex items-start justify-between text-left focus:outline-none">
-                          <span className={`text-[11px] font-bold leading-relaxed pr-4 ${theme.textPrimary}`}>{faq.q}</span>
-                          <motion.div animate={{ rotate: isOpen ? 180 : 0 }} className="mt-0.5">
-                            <ChevronDownIcon className={`w-4 h-4 ${theme.muted}`} />
-                          </motion.div>
-                        </button>
+                      <div key={qIdx} className={`rounded-xl overflow-hidden h-auto transition-all ${theme.inner} border ${isOpen ? 'border-indigo-500/50' : 'border-transparent'}`}>
+                        {/* ✅ REMOVED flex-nowrap / FIXED HEIGHT CONSTRAINTS */}
+                        <button 
+  onClick={() => toggleFaq(id)}
+  className="w-full p-4 flex items-start justify-between text-left focus:outline-none h-auto min-h-fit"
+>
+  {/* ✅ THE FIX: 'block' instead of 'span' + 'w-full' + 'whitespace-normal' */}
+  <div className={`block w-full text-[11px] font-bold leading-relaxed pr-4 whitespace-normal break-words ${theme.textPrimary}`}>
+    {faq.q}
+  </div>
+
+  <motion.div 
+    animate={{ rotate: isOpen ? 180 : 0 }} 
+    className="mt-1 shrink-0"
+  >
+    <ChevronDownIcon className={`w-4 h-4 ${theme.muted}`} />
+  </motion.div>
+</button>
                         <AnimatePresence>
                           {isOpen && (
-                            <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden">
-                              <p className={`px-4 pb-4 text-[10px] leading-relaxed ${theme.textSecondary} font-mono border-t border-slate-700/30 pt-3`}>
+                            <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden h-auto">
+                              <p className={`px-4 pb-4 text-[10px] leading-relaxed whitespace-normal break-words ${theme.textSecondary} font-mono border-t border-slate-700/30 pt-3`}>
                                 {faq.a}
                               </p>
                             </motion.div>
@@ -279,7 +255,6 @@ export default function SupportSection({ theme: globalTheme = 'dark' }) {
               </div>
             )}
           </div>
-
         </div>
       </div>
       <div className="h-24" />
