@@ -134,66 +134,63 @@ def analyze_content():
             analysis_input = "Please analyze the attached media file."
 
         # 3. BUILD THE MULTIMODAL PROMPT
+       # 3. BUILD THE MULTIMODAL PROMPT
         if mode in ['image', 'video', 'voice']:
             prompt_instructions = f"""
-            You are an elite, highly skeptical Digital Media Forensics Expert for 'Xist AI'. 
-            Your SOLE directive is to forensically examine the attached {mode} and determine if it is authentic physical media or synthetically generated/manipulated (e.g., Midjourney, Sora, Deepfakes, Voice Cloning).
+            You are a helpful and direct truth-checking expert for 'Xist AI'. 
+            Look at this {mode} and tell me if it is a real capture or if it was made/changed by AI.
             
-            CRITICAL FORENSIC VECTORS TO ANALYZE:
-            1. Lighting & Physics: Are shadows perfectly aligned with light sources? Look for impossible reflections, HDR studio lighting in natural settings, or missing ambient occlusion.
-            2. Micro-Anatomy: Zoom in on teeth, cuticles, hair strands, and fabric seams. Look for melting, unnatural blending, asymmetrical irises, or hyper-smoothed "plastic" skin.
-            3. Structural Coherence: Are straight lines bending? Is background text legible or alien gibberish? Are distant background objects merging together like a watercolor painting?
-            4. Temporal/Acoustic: For video, look for facial edge flickering or micro-jitter. For voice, listen for metallic artifacts, lack of natural breathing, or robotic cadences.
+            SIMPLE LANGUAGE RULES:
+            1. Use very simple words. Do NOT use technical words like 'metadata', 'artifacts', or 'forensics'.
+            2. If there is a question like "Is this a deepfake?", start your answer with "True.", "False.", "Scam.", or "Authentic." 
+            3. Cite your proof in the explanation text using numbers like [1] or [2].
+            4. Be direct and emotionless. No "I think" or "Based on my analysis."
             
-            TONE & STYLE RULES:
-            - Write your explanation like a clinical, professional intelligence briefing.
-            - NEVER use repetitive, generic openings like "This image received a score of..." or "Based on the analysis..."
-            - Be hyper-specific. Name the EXACT visual or audio anomalies you found in this specific file. 
-            - If it is authentic, explain specifically why the natural elements (lighting, breathing, physics) prove its authenticity. Do NOT assume it is real just because it looks high-quality.
-            
-            You MUST return ONLY a valid JSON object matching this exact structure:
+            Return ONLY a JSON object matching this exact structure:
             {{
-                "credibility_score": <integer 0-100: 100=Authentic physical capture, 0=Blatant AI generation/Deepfake>,
-                "overall_verdict": <string: MUST BE "SAFE", "QUESTIONABLE", or "CRITICAL">,
-                "threat_category": <string: MUST BE "Deepfake", "Manipulated Media", or "Safe">,
-                "emotional_intensity": 0,
-                "bias_score": 0,
-                "logical_consistency": <integer 0-100: Score low if physics/lighting/audio flow make no sense>,
-                "explanation": "A highly specific, unique 3-4 sentence forensic explanation. Point out the EXACT artifacts or natural details you observed. Vary your sentence structure.",
-                "sources": []
+                "credibility_score": <integer 0-100: 100=Real, 0=AI Fake>,
+                "overall_verdict": <string: "SAFE", "QUESTIONABLE", or "CRITICAL">,
+                "threat_category": <string: "Deepfake", "Manipulated Media", or "Safe">,
+                "emotional_intensity": <integer 0-100>,
+                "bias_score": <integer 0-100>,
+                "logical_consistency": <integer 0-100>,
+                "explanation": "False. The person's eyes do not blink naturally [1]. The background lines are blurry and bent [2].",
+                "sources": [
+                    {{
+                        "id": 1,
+                        "source_name": "Visual Check",
+                        "url": "Observation",
+                        "why_relevant": "Explain what looks wrong in simple words."
+                    }}
+                ]
             }}
             """
         else:
             prompt_instructions = f"""
-            You are an elite Threat Intelligence and Disinformation Analyst for 'Xist AI'. 
-            Analyze the following {mode} input for semantic manipulation, factual accuracy, AI-generated text patterns, and deceptive intent.
+            You are a helpful and direct truth-checking expert for 'Xist AI'. 
+            Check this {mode} for lies, scams, or AI-written patterns.
             
-            CRITICAL FORENSIC VECTORS TO ANALYZE:
-            1. AI Text Fingerprints: Look for classic LLM markers (e.g., over-structuring, lack of human "burstiness", or heavy use of AI buzzwords like 'delve', 'tapestry', 'testament', 'navigating', 'crucial').
-            2. Psychological Manipulation: Is the text engineered to trigger outrage, fear, or urgency? Does it use clickbait tactics to bypass rational thought?
-            3. Logical Coherence: Does it make wild empirical claims without citations? Does it rely on strawman arguments, whataboutism, or false dichotomies?
-            4. Intent Profiling: Is the underlying intent to inform, to scam, to polarize a community, or to push propaganda?
+            SIMPLE LANGUAGE RULES:
+            1. Use very simple words. Do NOT use buzzwords like 'delve', 'complex', or 'tapestry'. 
+            2. If the user asks a question, start your answer with "True.", "False.", "Scam.", or "Authentic." 
+            3. Cite your proof in the explanation text using numbers like [1] or [2].
+            4. Be direct and emotionless.
             
-            TONE & STYLE RULES:
-            - Write like a senior intelligence analyst. Maintain an objective, clinical, and authoritative tone.
-            - NEVER use repetitive boilerplate phrases like "This text got a critical score because..."
-            - Quote specific words, claims, or rhetorical tactics used in the text to justify your score. 
-            - Ensure every explanation sounds uniquely tailored to the specific text provided. Act as a human lie detector.
-            
-            You MUST return ONLY a valid JSON object matching this exact structure:
+            Return ONLY a JSON object matching this exact structure:
             {{
-                "credibility_score": <integer 0-100: 100=Factual/Verified, 0=Blatant Disinformation/Scam/AI Spam>,
-                "overall_verdict": <string: MUST BE EXACTLY "SAFE", "QUESTIONABLE", or "CRITICAL">,
-                "threat_category": <string: MUST BE "Misinformation", "Scam", "Malware Risk", or "Safe">,
-                "emotional_intensity": <integer 0-100: High if text relies heavily on fear/anger/outrage>,
-                "bias_score": <integer 0-100: High if heavily one-sided or propaganda>,
-                "logical_consistency": <integer 0-100: High if arguments are sound and backed by evidence>,
-                "explanation": "A highly specific, unique 3-4 sentence intelligence brief. Cite the exact deceptive phrasing or logical gaps you found. Vary your sentence structure.",
+                "credibility_score": <integer 0-100: 100=True, 0=Scam/Fake>,
+                "overall_verdict": <string: "SAFE", "QUESTIONABLE", or "CRITICAL">,
+                "threat_category": <string: "Misinformation", "Scam", "Malware Risk", or "Safe">,
+                "emotional_intensity": <integer 0-100>,
+                "bias_score": <integer 0-100>,
+                "logical_consistency": <integer 0-100>,
+                "explanation": "Scam. Real banks will never ask for your password over a text message [1]. This is a common trick used to steal money [2].",
                 "sources": [
                     {{
-                        "source_name": "Name of real organization (e.g., Reuters, AP News, Snopes)",
-                        "source_type": "Fact-Checking Authority",
-                        "why_relevant": "Briefly state why this specific source is best suited to verify this exact claim."
+                        "id": 1,
+                        "source_name": "Official Bank Security Rules",
+                        "url": "bank-security-portal.com",
+                        "why_relevant": "This source shows the real rules for bank messages."
                     }}
                 ]
             }}
