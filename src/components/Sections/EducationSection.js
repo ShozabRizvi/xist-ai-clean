@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   PlayIcon, ClockIcon, ShieldCheckIcon, QuestionMarkCircleIcon, 
   ArrowRightIcon, ArrowLeftIcon, XMarkIcon, AcademicCapIcon, 
-  CpuChipIcon, ArrowTopRightOnSquareIcon
+  CpuChipIcon, ArrowTopRightOnSquareIcon, FunnelIcon
 } from '@heroicons/react/24/outline';
 import { showNotification } from '../UI/NotificationToast';
 
@@ -12,9 +12,10 @@ import { showNotification } from '../UI/NotificationToast';
 // ==============================
 const THEMES = {
   dark: { 
-    background: 'bg-slate-950', 
-    card: 'bg-slate-900/60 backdrop-blur-xl border-slate-800 shadow-2xl', 
-    inner: 'bg-slate-950 border-slate-800', 
+    background: 'bg-[#020617]', 
+    headerBg: 'bg-[#020617]/80 backdrop-blur-xl',
+    card: 'bg-slate-900/60 backdrop-blur-xl border border-slate-800 shadow-2xl', 
+    inner: 'bg-slate-950 border border-slate-800', 
     textPrimary: 'text-slate-100', 
     textSecondary: 'text-slate-400', 
     muted: 'text-slate-500',
@@ -22,8 +23,9 @@ const THEMES = {
   },
   light: { 
     background: 'bg-slate-50', 
-    card: 'bg-white/80 backdrop-blur-xl border-slate-200 shadow-xl', 
-    inner: 'bg-slate-100 border-slate-200', 
+    headerBg: 'bg-white/80 backdrop-blur-xl',
+    card: 'bg-white/80 backdrop-blur-xl border border-slate-200 shadow-xl', 
+    inner: 'bg-slate-100 border border-slate-200', 
     textPrimary: 'text-slate-900', 
     textSecondary: 'text-slate-600', 
     muted: 'text-slate-400',
@@ -45,9 +47,6 @@ const useTypewriter = (text, speed = 60, delay = 200) => {
   return displayedText;
 };
 
-// ==============================
-// 20 REAL MODULES WITH FULL QUIZZES
-// ==============================
 // ==============================
 // 20 ACTIVE CYBER MODULES (2024/2025 VERIFIED)
 // ==============================
@@ -249,6 +248,7 @@ const EducationSection = ({ theme: globalTheme = 'dark' }) => {
   const typingTitle = useTypewriter("Intelligence Academy", 80, 200);
 
   const [selectedCategory, setSelectedCategory] = useState('all');
+  const [showCategoryMenu, setShowCategoryMenu] = useState(false);
   const [currentQuiz, setCurrentQuiz] = useState(null);
   const [quizAnswers, setQuizAnswers] = useState({});
 
@@ -275,67 +275,93 @@ const EducationSection = ({ theme: globalTheme = 'dark' }) => {
     showNotification(`Protocol Completed! Score: ${score}/${questions.length}`, 'success');
   };
 
-  // Staggered Layout Animations
   const containerVariants = { hidden: { opacity: 0 }, visible: { opacity: 1, transition: { staggerChildren: 0.1 } } };
   const itemVariants = { hidden: { y: 20, opacity: 0 }, visible: { y: 0, opacity: 1, transition: { type: 'spring', stiffness: 100 } } };
 
   return (
     <motion.div initial="hidden" animate="visible" variants={containerVariants}
-                className={`w-full min-h-screen p-8 transition-colors duration-500 ${theme.background} ${theme.textPrimary} relative overflow-x-hidden`}
-                style={{ marginLeft: '280px', marginTop: '64px', fontFamily: 'Inter, system-ui, sans-serif' }}>
+                className={`w-full min-h-screen transition-colors duration-500 ${theme.background} ${theme.textPrimary} relative overflow-x-hidden`}
+                style={{ marginLeft: window.innerWidth > 768 ? '280px' : '0px', marginTop: '64px', fontFamily: 'Inter, system-ui, sans-serif' }}>
       
-      {/* 🚨 ADAPTIVE GRID BACKGROUND (NO LAGGY BLURS) */}
-      <div className={`absolute inset-0 pointer-events-none opacity-[0.03] ${isDark ? '' : 'invert'}`} 
+      {/* 🚨 GLOBAL GRID BACKGROUND */}
+      <div className={`absolute inset-0 pointer-events-none opacity-[0.03] ${isDark ? '' : 'invert'} z-0`} 
            style={{ backgroundImage: 'linear-gradient(to right, #ffffff 1px, transparent 1px), linear-gradient(to bottom, #ffffff 1px, transparent 1px)', backgroundSize: '40px 40px' }}></div>
 
-      <div className="max-w-7xl mx-auto relative z-10">
+      {/* ========================================= */}
+      {/* 🚀 HERO HEADER (ACADEMY STYLE)            */}
+      {/* ========================================= */}
+      <div className={`sticky top-0 z-30 px-4 py-8 md:py-12 transition-all overflow-visible ${theme.headerBg}`}>
         
-        {/* HEADER */}
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-10">
-          <div>
-            <h1 className={`text-4xl font-black flex items-center gap-3 ${isDark ? 'text-white' : 'text-slate-900'}`}>
-              <AcademicCapIcon className="w-10 h-10 text-indigo-500" /> 
-              <span>{typingTitle}</span>
-              <motion.span animate={{ opacity: [0, 1, 0] }} transition={{ repeat: Infinity, duration: 0.8 }} className="w-1.5 h-8 bg-indigo-500 inline-block ml-1" />
-            </h1>
-            <p className={`${theme.muted} text-sm font-bold uppercase tracking-widest mt-2`}>Cognitive Firewall Training & Security Modules</p>
+        {/* 🔥 TACTICAL GRID FOR HEADER (SEAMLESS) 🔥 */}
+        <div className={`absolute inset-0 pointer-events-none opacity-[0.05] md:opacity-[0.03] ${isDark ? '' : 'invert'} z-0`} 
+             style={{ backgroundImage: 'linear-gradient(to right, #ffffff 1px, transparent 1px), linear-gradient(to bottom, #ffffff 1px, transparent 1px)', backgroundSize: '24px 24px' }}></div>
+
+        <div className="max-w-4xl mx-auto flex flex-col items-center justify-center relative z-10 overflow-visible">
+          
+          <AcademicCapIcon className="w-10 h-10 md:w-14 md:h-14 text-indigo-500 mb-5 stroke-[1.5]" />
+          
+          {/* ✅ SIMPLIFIED MASSIVE TITLE: Bulletproof Descender Fix */}
+          <h1 className="text-4xl md:text-5xl lg:text-6xl font-black text-center mb-2 pb-4 leading-normal tracking-tight">
+            <span>{typingTitle}</span>
+            <motion.span 
+              animate={{ opacity: [0, 1, 0] }} 
+              transition={{ repeat: Infinity, duration: 0.9 }} 
+              className="inline-block w-2.5 md:w-3 h-[0.8em] bg-indigo-500 ml-2 align-baseline" 
+            />
+          </h1>
+
+          <p className="text-[9px] md:text-[11px] font-mono font-bold uppercase tracking-[0.3em] md:tracking-[0.4em] text-slate-500 mb-8 md:mb-12 text-center px-4">
+            Cognitive Firewall Training & Security Modules
+          </p>
+          
+          {/* ✅ DESKTOP: SEGMENTED CONTROL (DESCENDER PROTECTED) */}
+          <div className="hidden md:flex w-full max-w-4xl px-2 overflow-visible justify-center pb-2 flex-wrap gap-y-2">
+            <div className={`p-1.5 flex items-center gap-1 rounded-full border transition-all flex-wrap justify-center ${
+              isDark ? 'bg-slate-900/50 border-slate-800' : 'bg-slate-100 border-slate-200'
+            }`}>
+              {categories.map(f => (
+                <button 
+                  key={f} onClick={() => setSelectedCategory(f)} 
+                  className={`relative px-6 py-2.5 rounded-full text-[10px] md:text-[11px] font-black uppercase tracking-widest transition-all duration-300 flex-shrink-0 ${selectedCategory === f ? 'text-white' : (isDark ? 'text-slate-500 hover:text-slate-300' : 'text-slate-500 hover:text-slate-700')}`}
+                >
+                  {selectedCategory === f && (
+                    <motion.div layoutId="activeCategory" className="absolute inset-0 rounded-full shadow-lg bg-indigo-600" transition={{ type: 'spring', stiffness: 400, damping: 30 }} />
+                  )}
+                  {/* Py-0.5 span ensures the tail of the 'y' isn't chopped off */}
+                  <span className="relative z-10 block py-0.5">{f}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* ✅ MOBILE: CATEGORY BUTTON (OPENS GLOBAL MODAL) */}
+          <div className="md:hidden relative mt-1 w-max mx-auto overflow-visible pb-2">
+            <button 
+              onClick={() => setShowCategoryMenu(true)}
+              className={`flex items-center gap-2 px-6 py-3 rounded-full border shadow-lg transition-all ${isDark ? 'bg-slate-900 border-slate-700 text-white' : 'bg-white border-slate-300 text-slate-900'}`}
+            >
+              <FunnelIcon className="w-4 h-4 text-indigo-500" />
+              <span className="text-[11px] font-black uppercase tracking-widest block py-0.5">
+                {selectedCategory}
+              </span>
+            </button>
           </div>
         </div>
+      </div>
 
-        {/* Categories Toggle */}
-        <div className="flex gap-2 flex-wrap mb-10">
-          {categories.map(category => (
-            <button key={category} onClick={() => setSelectedCategory(category)}
-              className={`px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all border ${
-                selectedCategory === category 
-                ? 'bg-indigo-600 text-white border-indigo-500 shadow-[0_0_15px_rgba(79,70,229,0.4)]' 
-                : `${theme.inner} ${theme.textSecondary} hover:text-indigo-400 hover:border-indigo-500/30`
-              }`}>
-              {category}
-            </button>
-          ))}
-        </div>
-
-        {/* 🚨 TACTICAL "CORNICE" GRID */}
+      <div className="max-w-7xl mx-auto relative z-10 px-4 md:px-8 py-8">
         <div className="grid gap-8 grid-cols-1 md:grid-cols-2 xl:grid-cols-3">
           {filteredContent.map(course => (
             <motion.div variants={itemVariants} key={course.id} 
                         className={`${theme.card} p-1.5 overflow-hidden group hover:border-indigo-500/50 transition-all flex flex-col relative
                                    rounded-tl-3xl rounded-br-3xl rounded-tr-lg rounded-bl-lg`}> 
               
-              {/* Tactical Corner Brackets */}
               <div className="absolute top-0 left-0 w-6 h-6 border-t-2 border-l-2 border-indigo-500/30 rounded-tl-3xl z-20 pointer-events-none"></div>
               <div className="absolute bottom-0 right-0 w-6 h-6 border-b-2 border-r-2 border-indigo-500/30 rounded-br-3xl z-20 pointer-events-none"></div>
 
-              {/* 🚨 DIRECT YOUTUBE LINK: Opens in new tab, avoids Iframe blocking */}
               <div className="relative aspect-video cursor-pointer overflow-hidden rounded-tl-[1.3rem] rounded-tr-md rounded-bl-md rounded-br-md" 
                    onClick={() => window.open(`https://www.youtube.com/watch?v=${course.videoId}`, '_blank')}>
-                <img 
-                  src={`https://img.youtube.com/vi/${course.videoId}/hqdefault.jpg`} 
-                  onError={(e) => { e.target.onerror = null; e.target.src = `https://img.youtube.com/vi/${course.videoId}/0.jpg`; }}
-                  alt={course.title} 
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" 
-                />
+                <img src={`https://img.youtube.com/vi/${course.videoId}/hqdefault.jpg`} alt={course.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
                 <div className="absolute inset-0 bg-slate-900/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity backdrop-blur-sm">
                   <div className="w-16 h-16 rounded-full bg-indigo-600 shadow-[0_0_20px_rgba(79,70,229,0.8)] flex items-center justify-center">
                     <ArrowTopRightOnSquareIcon className="w-8 h-8 text-white ml-1" />
@@ -346,23 +372,23 @@ const EducationSection = ({ theme: globalTheme = 'dark' }) => {
                 </div>
               </div>
 
-              {/* Data Area */}
-              <div className="p-6 flex flex-col flex-grow">
+              <div className="p-5 md:p-6 flex flex-col flex-grow">
                 <h3 className={`font-black text-lg mb-2 leading-tight ${theme.textPrimary} group-hover:text-indigo-400 transition-colors`}>{course.title}</h3>
                 <p className={`text-xs leading-relaxed mb-6 line-clamp-3 ${theme.textSecondary}`}>{course.content}</p>
                 
-                <div className="mt-auto pt-4 border-t border-slate-800/30 grid grid-cols-2 gap-3 items-center">
-                  <div className="flex flex-col gap-1">
-                     <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest flex items-center gap-1"><ClockIcon className="w-3 h-3"/> {course.duration}</span>
-                     <span className={`text-[10px] font-bold ${theme.textPrimary}`}>{course.creator}</span>
+                {/* ✅ DYNAMIC FLEX FOOTER (FIXES SQUISHED BUTTONS ON MOBILE) */}
+                <div className="mt-auto pt-4 border-t border-slate-800/30 flex items-center justify-between gap-2">
+                  <div className="flex flex-col gap-1 min-w-0 pr-2">
+                     <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest flex items-center gap-1 truncate"><ClockIcon className="w-3 h-3 shrink-0"/> {course.duration}</span>
+                     <span className={`text-[10px] font-bold truncate ${theme.textPrimary}`}>{course.creator}</span>
                   </div>
-                  <div className="flex justify-end gap-2">
-                    <button onClick={() => window.open(`https://www.youtube.com/watch?v=${course.videoId}`, '_blank')} className="px-4 h-8 rounded-lg bg-indigo-500/10 text-indigo-500 hover:bg-indigo-600 hover:text-white flex items-center justify-center gap-1 transition-all border border-indigo-500/20 text-[10px] font-black uppercase tracking-widest">
+                  <div className="flex items-center gap-1.5 md:gap-2 shrink-0">
+                    <button onClick={() => window.open(`https://www.youtube.com/watch?v=${course.videoId}`, '_blank')} className="px-3 md:px-4 h-8 rounded-lg bg-indigo-500/10 text-indigo-500 hover:bg-indigo-600 hover:text-white flex items-center justify-center gap-1 transition-all border border-indigo-500/20 text-[9px] md:text-[10px] font-black uppercase tracking-widest">
                       <PlayIcon className="w-3 h-3" /> Watch
                     </button>
                     {course.quiz && (
-                      <button onClick={() => startQuiz(course.id)} className={`px-4 h-8 rounded-lg flex items-center justify-center gap-1 transition-all border text-[10px] font-black uppercase tracking-widest ${isDark ? 'bg-slate-800 text-slate-300 border-slate-700 hover:bg-slate-700' : 'bg-slate-100 text-slate-700 border-slate-200 hover:bg-slate-200'}`}>
-                        <QuestionMarkCircleIcon className="w-3 h-3" /> Quiz
+                      <button onClick={() => startQuiz(course.id)} className={`px-3 md:px-4 h-8 rounded-lg flex items-center justify-center gap-1 transition-all border text-[9px] md:text-[10px] font-black uppercase tracking-widest ${isDark ? 'bg-slate-800 text-slate-300 border-slate-700 hover:bg-slate-700' : 'bg-slate-100 text-slate-700 border-slate-200 hover:bg-slate-200'}`}>
+                        <QuestionMarkCircleIcon className="w-3 h-3 shrink-0" /> Quiz
                       </button>
                     )}
                   </div>
@@ -371,11 +397,30 @@ const EducationSection = ({ theme: globalTheme = 'dark' }) => {
             </motion.div>
           ))}
         </div>
-
-        {/* ENDLESS SCROLL FIX */}
         <div className="pb-24"></div>
-
       </div>
+
+      {/* ========================================= */}
+      {/* 🎛️ GLOBAL CATEGORY MODAL (MOBILE FIX)     */}
+      {/* ========================================= */}
+      <AnimatePresence>
+        {showCategoryMenu && (
+          <div className="fixed inset-0 z-[99999] flex items-center justify-center p-4">
+            <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setShowCategoryMenu(false)} />
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.9, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              className={`relative w-64 rounded-3xl shadow-2xl border overflow-hidden flex flex-col z-10 ${isDark ? 'bg-slate-900 border-slate-700' : 'bg-white border-slate-200'}`}
+            >
+              <div className={`p-4 border-b text-center text-xs font-black uppercase tracking-widest ${isDark ? 'border-slate-800 text-slate-400' : 'border-slate-100 text-slate-500'}`}>Intelligence Modules</div>
+              {categories.map(f => (
+                <button key={f} onClick={() => { setSelectedCategory(f); setShowCategoryMenu(false); }}
+                  className={`w-full text-center px-5 py-4 text-[11px] font-black uppercase tracking-widest transition-all ${selectedCategory === f ? 'bg-indigo-600 text-white' : (isDark ? 'text-slate-300 hover:bg-slate-800' : 'text-slate-600 hover:bg-slate-50')}`}
+                > {f} </button>
+              ))}
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
 
       {/* 🚨 QUIZ MODAL: Fixed Z-Index & Sidebar Offset */}
       <AnimatePresence>

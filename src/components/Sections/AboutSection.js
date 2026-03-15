@@ -108,10 +108,14 @@ const AboutSection = ({ theme: globalTheme }) => {
         {/* Header Section */}
         <motion.div variants={itemVariants} className="text-center space-y-6">
           <InformationCircleIcon className={`w-16 h-16 mx-auto ${theme.accent} opacity-80 mb-4`} />
-          <h1 className="text-4xl md:text-5xl font-black tracking-tight mb-3">
-              <span>{typingTitle}</span>
-              <motion.span animate={{ opacity: [0, 1, 0] }} transition={{ repeat: Infinity, duration: 0.8 }} className={`w-1.5 h-8 bg-indigo-500 inline-block ml-1`} />
-          </h1>
+           <h1 className="text-4xl md:text-5xl lg:text-6xl font-black text-center mb-2 pb-4 leading-normal tracking-tight">
+                               <span>{typingTitle}</span>
+                               <motion.span 
+                                 animate={{ opacity: [0, 1, 0] }} 
+                                 transition={{ repeat: Infinity, duration: 0.9 }} 
+                                 className="inline-block w-2.5 md:w-3 h-[0.8em] bg-indigo-500 ml-2 align-baseline" 
+                               />
+                             </h1>
           <p className={`${theme.muted} text-sm font-mono tracking-widest uppercase`}>
             Advanced AI platform built by students
           </p>

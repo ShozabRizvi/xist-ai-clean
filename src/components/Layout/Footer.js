@@ -43,7 +43,7 @@ const Footer = ({ theme: globalTheme = 'dark' }) => {
       <div className="max-w-7xl mx-auto px-10 flex flex-col lg:flex-row items-center justify-between gap-10 relative z-10">
         
         {/* Brand Node */}
-        <div className="flex items-center space-x-4">
+        <div className="flex items-center space-x-4 hover:scale-105 transition-transform duration-300 cursor-pointer">
           <div className="w-8 h-8 shrink-0">
                   <img src="/logo.png" alt="Logo" className="w-full h-full object-contain" />
                </div>
@@ -51,7 +51,7 @@ const Footer = ({ theme: globalTheme = 'dark' }) => {
             <h3 className={`text-xl font-black tracking-tighter ${theme.brandText}`}>XIST INTELLIGENCE</h3>
             <div className="flex items-center gap-2">
                 <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse border border-emerald-400/50"></div>
-                <span className={`text-[10px] font-black uppercase tracking-[0.2em] ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>Node Pulse Active</span>
+                <span className={`text-[10px] font-black uppercase tracking-[0.2em] ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>SYSTEMS ONLINE</span>
             </div>
           </div>
         </div>
@@ -59,20 +59,36 @@ const Footer = ({ theme: globalTheme = 'dark' }) => {
         {/* Global Matrix Stats & Links */}
         <div className="flex flex-col items-center gap-4">
           <div className={`flex flex-wrap gap-8 justify-center font-black uppercase tracking-[0.15em] text-[10px] ${theme.textPrimary}`}>
-            <div className="flex items-center gap-2 group cursor-default hover:text-indigo-500 transition-colors"><CpuChipIcon className="w-4 h-4 text-indigo-500" /> GEMINI</div>
-            <div className="flex items-center gap-2 group cursor-default hover:text-emerald-500 transition-colors"><ClockIcon className="w-4 h-4 text-emerald-500" /> 24/7 SURVEILLANCE</div>
-            <div className="flex items-center gap-2 group cursor-default hover:text-blue-500 transition-colors"><GlobeAltIcon className="w-4 h-4 text-blue-500" /> GLOBAL COMMUNITY</div>
+            
+            {/* GEMINI - Rotates right on hover */}
+            {/* GEMINI - Added padding and overflow-visible to prevent cutting off */}
+            <div className="flex items-center gap-2 group cursor-default hover:text-indigo-500 hover:scale-110 transition-all duration-300 px-1 overflow-visible">
+              <div className="flex-shrink-0 overflow-visible">
+                <CpuChipIcon className="w-4 h-4 text-indigo-500 transition-transform duration-300 group-hover:rotate-12" />
+              </div> 
+              <span className="whitespace-nowrap">GEMINI</span>
+            </div>
+
+            <div className="flex items-center gap-2 group cursor-default hover:text-emerald-500 hover:scale-110 transition-all duration-300">
+              <ClockIcon className="w-4 h-4 text-emerald-500 transition-transform duration-300 group-hover:rotate-12" /> 
+              24/7 SURVEILLANCE
+            </div>
+
+            <div className="flex items-center gap-2 group cursor-default hover:text-blue-500 hover:scale-110 transition-all duration-300">
+              <GlobeAltIcon className="w-4 h-4 text-blue-500 transition-transform duration-300 group-hover:rotate-12" /> 
+              GLOBAL COMMUNITY
+            </div>
           </div>
           
           {/* Links Block */}
           <div className="flex flex-wrap gap-4 justify-center">
             <a href="https://github.com/ShozabRizvi/xist-ai-clean" target="_blank" rel="noreferrer" 
-               className={`flex items-center gap-1.5 text-[9px] font-black uppercase tracking-widest transition-colors ${theme.textSecondary} hover:text-indigo-500`}>
+               className={`flex items-center gap-1.5 text-[9px] font-black uppercase tracking-widest transition-all duration-300 hover:scale-110 ${theme.textSecondary} hover:text-indigo-500`}>
               <CodeBracketIcon className="w-3.5 h-3.5" /> Source_Code
             </a>
             {team.map((m) => (
               <a key={m.name} href={m.url} target="_blank" rel="noreferrer" 
-                 className={`flex items-center gap-1 text-[9px] font-black uppercase tracking-widest transition-colors ${theme.textSecondary} hover:text-blue-500`}>
+                 className={`flex items-center gap-1 text-[9px] font-black uppercase tracking-widest transition-all duration-300 hover:scale-110 ${theme.textSecondary} hover:text-blue-500`}>
                 <UserCircleIcon className="w-3.5 h-3.5" /> {m.name}
               </a>
             ))}
@@ -81,7 +97,7 @@ const Footer = ({ theme: globalTheme = 'dark' }) => {
 
         {/* Legal & Built-by */}
         <div className="text-center lg:text-right flex flex-col items-center lg:items-end gap-2">
-          <div className={`text-[10px] font-black uppercase tracking-widest ${theme.textPrimary}`}>
+          <div className={`text-[10px] font-black uppercase tracking-widest ${theme.textPrimary} hover:scale-105 transition-transform duration-300 cursor-default`}>
             © {currentYear} XIST AI. ALL RIGHTS RESERVED.
           </div>
           {/* ✅ Removed opacity-60 and used theme.textSecondary for higher contrast */}

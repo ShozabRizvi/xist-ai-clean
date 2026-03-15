@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { AreaChart, Area, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Label } from 'recharts';
 import { useAuth } from '../../hooks/useAuth';
 import { showNotification } from '../UI/NotificationToast';
 import { supabase } from '../../lib/supabase';
 import {
   ChartBarIcon, ShieldCheckIcon, DocumentTextIcon, SparklesIcon,
-  ExclamationTriangleIcon, CheckCircleIcon, ArrowDownTrayIcon, CpuChipIcon
+  ExclamationTriangleIcon, CheckCircleIcon, ArrowDownTrayIcon, CpuChipIcon,
+  ClockIcon, FunnelIcon
 } from '@heroicons/react/24/outline';
 
 // ==============================
@@ -15,16 +16,18 @@ import {
 const THEMES = {
   dark: {
     background: 'bg-[#020617]',
-    card: 'bg-slate-900/80 border-slate-800 shadow-2xl backdrop-blur-xl',
-    inner: 'bg-slate-950 border-slate-800',
+    headerBg: 'bg-[#020617]/80 backdrop-blur-xl',
+    card: 'bg-slate-900/80 border border-slate-800 shadow-2xl backdrop-blur-xl',
+    inner: 'bg-slate-950 border border-slate-800',
     textPrimary: 'text-slate-100',
     textSecondary: 'text-slate-400',
     muted: 'text-slate-500',
   },
   light: {
     background: 'bg-slate-50',
-    card: 'bg-white border-slate-200 shadow-xl backdrop-blur-xl',
-    inner: 'bg-slate-100 border-slate-200',
+    headerBg: 'bg-white/80 backdrop-blur-xl',
+    card: 'bg-white/80 border border-slate-200 shadow-xl backdrop-blur-xl',
+    inner: 'bg-slate-100 border border-slate-200',
     textPrimary: 'text-slate-900',
     textSecondary: 'text-slate-600',
     muted: 'text-slate-400',
@@ -72,9 +75,10 @@ const AnalyticsSection = ({ theme: globalTheme }) => {
   const isDark = globalTheme === 'dark';
   const themeMode = isDark ? 'dark' : 'light';
   const theme = THEMES[themeMode];
-  const typingTitle = useTypewriter("Intelligence Telemetry", 80, 200);
+  const typingTitle = useTypewriter("Analytics Dashboard", 80, 200);
   
   const [selectedTimeRange, setSelectedTimeRange] = useState('24hours');
+  const [showTimeMenu, setShowTimeMenu] = useState(false);
   const [isRealTimeEnabled, setIsRealTimeEnabled] = useState(true);
   const [analyticsData, setAnalyticsData] = useState({});
   const [isLoading, setIsLoading] = useState(true);
@@ -172,7 +176,7 @@ const AnalyticsSection = ({ theme: globalTheme }) => {
     a.click(); showNotification('📊 Analytics exported successfully', 'success');
   };
 
- if (isLoading) return (
+  if (isLoading) return (
     <div className={`flex items-center justify-center min-h-[80vh] w-full ${theme.background}`}>
       <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 1 }} className="w-10 h-10 border-4 border-indigo-500 border-t-transparent rounded-full shadow-[0_0_15px_rgba(99,102,241,0.5)]" />
     </div>
@@ -180,27 +184,92 @@ const AnalyticsSection = ({ theme: globalTheme }) => {
 
   return (
     <motion.div initial="hidden" animate="visible" variants={containerVariants}
-      className={`w-full min-h-screen relative transition-colors duration-500 ${theme.background} ${theme.textPrimary} overflow-x-hidden p-4 sm:p-8`} 
-      style={{ fontFamily: 'Inter, system-ui, sans-serif' }}
+      className={`w-full min-h-screen relative transition-colors duration-500 ${theme.background} ${theme.textPrimary} overflow-x-hidden`} 
+      style={{ fontFamily: 'Inter, system-ui, sans-serif', marginLeft: typeof window !== 'undefined' && window.innerWidth > 768 ? '280px' : '0px', marginTop: '64px' }}
     >
-      {/* 🌐 DYNAMIC GRID BACKGROUND OVERLAY */}
-      <div className={`absolute inset-0 pointer-events-none opacity-[0.03] ${isDark ? '' : 'invert'}`} 
+      {/* 🌐 GLOBAL GRID BACKGROUND OVERLAY */}
+      <div className={`absolute inset-0 pointer-events-none opacity-[0.03] ${isDark ? '' : 'invert'} z-0`} 
            style={{ backgroundImage: 'linear-gradient(to right, #ffffff 1px, transparent 1px), linear-gradient(to bottom, #ffffff 1px, transparent 1px)', backgroundSize: '40px 40px' }}></div>
 
-      <div className="max-w-6xl mx-auto relative z-10 space-y-6">
+      {/* ========================================= */}
+      {/* 🚀 HERO HEADER (ANALYTICS STYLE)          */}
+      {/* ========================================= */}
+      <div className={`sticky top-0 z-30 px-4 py-8 md:py-12 transition-all overflow-visible ${theme.headerBg}`}>
         
-        {/* Header */}
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-8">
-          <div>
-            <h1 className="text-4xl font-black flex items-center gap-3">
-              <ChartBarIcon className="w-10 h-10 text-indigo-500" /> 
-              <span>{typingTitle}</span>
-              <motion.span animate={{ opacity: [0, 1, 0] }} transition={{ repeat: Infinity, duration: 0.8 }} className="w-1.5 h-8 bg-indigo-500 inline-block ml-1" />
-            </h1>
-            <p className={`${theme.muted} text-xs uppercase tracking-widest font-bold mt-2`}>Real-Time Forensic Data Streams</p>
-          </div>
+        {/* 🔥 TACTICAL GRID FOR HEADER (SEAMLESS) 🔥 */}
+        <div className={`absolute inset-0 pointer-events-none opacity-[0.05] md:opacity-[0.03] ${isDark ? '' : 'invert'} z-0`} 
+             style={{ backgroundImage: 'linear-gradient(to right, #ffffff 1px, transparent 1px), linear-gradient(to bottom, #ffffff 1px, transparent 1px)', backgroundSize: '24px 24px' }}></div>
+
+        <div className="max-w-4xl mx-auto flex flex-col items-center justify-center relative z-10 overflow-visible">
           
-          <div className="flex items-center gap-4">
+          {/* Top Shield/Chart Icon */}
+          <ChartBarIcon className="w-10 h-10 md:w-14 md:h-14 text-indigo-500 mb-5 stroke-[1.5]" />
+          
+          {/* ✅ SIMPLIFIED MASSIVE TITLE: Bulletproof Descender Fix */}
+          <h1 className="text-4xl md:text-5xl lg:text-6xl font-black text-center mb-2 pb-4 leading-normal tracking-tight">
+            <span>{typingTitle}</span>
+            <motion.span 
+              animate={{ opacity: [0, 1, 0] }} 
+              transition={{ repeat: Infinity, duration: 0.9 }} 
+              className="inline-block w-2.5 md:w-3 h-[0.8em] bg-indigo-500 ml-2 align-baseline" 
+            />
+          </h1>
+
+          {/* Subtitle / Cyber Tagline */}
+          <p className="text-[9px] md:text-[11px] font-mono font-bold uppercase tracking-[0.3em] md:tracking-[0.4em] text-slate-500 mb-8 md:mb-12 text-center px-4">
+            Real-Time Activity Statistics
+          </p>
+
+          {/* ✅ DESKTOP: SEGMENTED TIME CONTROL (DESCENDER PROTECTED) */}
+          <div className="hidden md:flex w-full max-w-4xl px-2 overflow-visible justify-center pb-2 flex-wrap gap-y-2">
+            <div className={`p-1.5 flex items-center gap-1 rounded-full border transition-all flex-wrap justify-center ${
+              isDark ? 'bg-slate-900/50 border-slate-800' : 'bg-slate-100 border-slate-200'
+            }`}>
+              {Object.entries(TIME_RANGES).map(([key, range]) => (
+                <button 
+                  key={key} onClick={() => setSelectedTimeRange(key)} 
+                  className={`relative px-6 py-2.5 rounded-full text-[10px] md:text-[11px] font-black uppercase tracking-widest transition-all duration-300 flex-shrink-0 ${selectedTimeRange === key ? 'text-white' : (isDark ? 'text-slate-500 hover:text-slate-300' : 'text-slate-500 hover:text-slate-700')}`}
+                >
+                  {selectedTimeRange === key && (
+                    <motion.div layoutId="activeTimeRange" className="absolute inset-0 rounded-full shadow-lg bg-indigo-600" transition={{ type: 'spring', stiffness: 400, damping: 30 }} />
+                  )}
+                  {/* Py-0.5 span ensures the tail of letters aren't chopped off */}
+                  <span className="relative z-10 block py-0.5">{range.label}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* ✅ MOBILE: FILTER BUTTON (OPENS GLOBAL MODAL) */}
+          <div className="md:hidden relative mt-1 w-max mx-auto overflow-visible pb-2">
+            <button 
+              onClick={() => setShowTimeMenu(true)}
+              className={`flex items-center gap-2 px-6 py-3 rounded-full border shadow-lg transition-all ${isDark ? 'bg-slate-900 border-slate-700 text-white' : 'bg-white border-slate-300 text-slate-900'}`}
+            >
+              <ClockIcon className="w-4 h-4 text-indigo-500" />
+              <span className="text-[11px] font-black uppercase tracking-widest block py-0.5">
+                {TIME_RANGES[selectedTimeRange].label}
+              </span>
+            </button>
+          </div>
+
+          {/* MOBILE SYNC & EXPORT CONTROLS */}
+          <div className="flex md:hidden items-center justify-center gap-3 mt-6">
+            <div className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border ${theme.inner}`}>
+              <button onClick={() => setIsRealTimeEnabled(!isRealTimeEnabled)} className={`relative inline-flex h-4 w-7 items-center rounded-full transition-colors ${isRealTimeEnabled ? 'bg-indigo-500' : 'bg-slate-700'}`}>
+                <motion.span className={`inline-block h-2.5 w-2.5 transform rounded-full bg-white transition-transform ${isRealTimeEnabled ? 'translate-x-4' : 'translate-x-0.5'}`} layout />
+              </button>
+              <span className={`text-[9px] font-black uppercase tracking-widest ${isRealTimeEnabled ? 'text-emerald-400' : theme.muted}`}>
+                Live
+              </span>
+            </div>
+            <button onClick={exportAnalytics} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all ${isDark ? 'bg-slate-800 text-indigo-400 border border-slate-700 hover:bg-slate-700 hover:text-white' : 'bg-white text-indigo-600 border border-slate-200 hover:bg-slate-50 shadow-sm'}`}>
+              <ArrowDownTrayIcon className="w-3 h-3" /> Export
+            </button>
+          </div>
+
+          {/* DESKTOP SYNC & EXPORT CONTROLS */}
+          <div className="absolute right-0 top-0 hidden md:flex items-center gap-3">
             <div className={`flex items-center gap-3 px-4 py-2 rounded-xl border ${theme.inner}`}>
               <button onClick={() => setIsRealTimeEnabled(!isRealTimeEnabled)} className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${isRealTimeEnabled ? 'bg-indigo-500' : 'bg-slate-700'}`}>
                 <motion.span className={`inline-block h-3 w-3 transform rounded-full bg-white transition-transform ${isRealTimeEnabled ? 'translate-x-5' : 'translate-x-1'}`} layout />
@@ -213,18 +282,15 @@ const AnalyticsSection = ({ theme: globalTheme }) => {
               <ArrowDownTrayIcon className="w-4 h-4" /> Export Matrix
             </button>
           </div>
+
         </div>
+      </div>
 
-        {/* Time Controls */}
-        <motion.div variants={itemVariants} className="flex flex-wrap gap-2 mb-8">
-          {Object.entries(TIME_RANGES).map(([key, range]) => (
-            <button key={key} onClick={() => setSelectedTimeRange(key)} 
-                    className={`px-5 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${selectedTimeRange === key ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/20' : `${theme.inner} ${theme.textSecondary} hover:text-indigo-400 border border-transparent hover:border-indigo-500/30`}`}>
-              {range.label}
-            </button>
-          ))}
-        </motion.div>
-
+      {/* ========================================= */}
+      {/* 📊 MAIN CONTENT                           */}
+      {/* ========================================= */}
+      <div className="max-w-7xl mx-auto relative z-10 px-4 md:px-8 py-8 space-y-8">
+        
         {/* Top Stats */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {[
@@ -246,12 +312,12 @@ const AnalyticsSection = ({ theme: globalTheme }) => {
         </div>
 
         {/* Charts Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 mt-8">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
           
           {/* AREA CHART */}
           <motion.div variants={itemVariants} className={`lg:col-span-8 ${theme.card} rounded-2xl p-6 border flex flex-col`}>
             <div className="flex items-center justify-between mb-6">
-               <h3 className="text-sm font-black uppercase tracking-widest flex items-center gap-2"><CpuChipIcon className="w-5 h-5 text-indigo-500" /> Activity Heartbeat</h3>
+               <h3 className="text-sm font-black uppercase tracking-widest flex items-center gap-2"><CpuChipIcon className="w-5 h-5 text-indigo-500" /> Scan History</h3>
                <div className="w-2 h-2 rounded-full bg-indigo-500 animate-pulse"></div>
             </div>
             
@@ -285,15 +351,13 @@ const AnalyticsSection = ({ theme: globalTheme }) => {
             </div>
           </motion.div>
 
-          {/* DONUT CHART (Replaces Pie Chart) */}
+          {/* DONUT CHART */}
           <motion.div variants={itemVariants} className={`lg:col-span-4 ${theme.card} rounded-2xl p-6 border flex flex-col`}>
             <h3 className="text-sm font-black uppercase tracking-widest flex items-center gap-2 mb-2">
-              <ShieldCheckIcon className="w-5 h-5 text-indigo-500" /> Threat Vectors
+              <ShieldCheckIcon className="w-5 h-5 text-indigo-500" /> Detection Breakdown
             </h3>
             
             <div className="h-[380px] w-full relative"> 
-              {/* ❌ HTML center text div was removed from here */}
-
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
                   <Pie 
@@ -307,7 +371,6 @@ const AnalyticsSection = ({ theme: globalTheme }) => {
                      dataKey="value"
                      stroke="none"
                   >
-                    {/* ✅ NATIVE SVG LABEL - Binds permanently to the pie's center coordinates */}
                     <Label
                       content={({ viewBox: { cx, cy } }) => (
                         <text x={cx} y={cy} textAnchor="middle" dominantBaseline="central">
@@ -315,7 +378,7 @@ const AnalyticsSection = ({ theme: globalTheme }) => {
                             {analyticsData.totalAnalyses || 0}
                           </tspan>
                           <tspan x={cx} y={cy + 20} fontSize="10" fontWeight="900" letterSpacing="0.1em" fill={isDark ? "#64748b" : "#94a3b8"}>
-                            TOTAL VECTS
+                            TOTAL SCANS
                           </tspan>
                         </text>
                       )}
@@ -348,10 +411,10 @@ const AnalyticsSection = ({ theme: globalTheme }) => {
         </div>
 
         {/* Activity Feed */}
-        <motion.div variants={itemVariants} className={`${theme.card} rounded-2xl p-6 border mt-8`}>
+        <motion.div variants={itemVariants} className={`${theme.card} rounded-2xl p-6 border`}>
           <div className="flex items-center justify-between mb-6 pb-4 border-b border-slate-800/50">
              <h3 className="text-sm font-black uppercase tracking-widest flex items-center gap-2">
-               <DocumentTextIcon className="w-5 h-5 text-indigo-500" /> Recent Payload Dumps
+               <DocumentTextIcon className="w-5 h-5 text-indigo-500" /> Recent Scans
              </h3>
           </div>
           
@@ -382,7 +445,7 @@ const AnalyticsSection = ({ theme: globalTheme }) => {
               ))
             ) : (
               <div className={`py-12 text-center text-xs font-mono uppercase tracking-widest ${theme.muted}`}>
-                No intelligence telemetry found. Awaiting data injection.
+                No analytics data found. Run a scan to build your history.
               </div>
             )}
           </div>
@@ -390,6 +453,29 @@ const AnalyticsSection = ({ theme: globalTheme }) => {
 
       </div>
       <div className="h-24" />
+
+      {/* ========================================= */}
+      {/* 🎛️ GLOBAL TIME RANGE MODAL (MOBILE FIX)   */}
+      {/* ========================================= */}
+      <AnimatePresence>
+        {showTimeMenu && (
+          <div className="fixed inset-0 z-[99999] flex items-center justify-center p-4">
+            <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setShowTimeMenu(false)} />
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.9, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              className={`relative w-64 rounded-3xl shadow-2xl border overflow-hidden flex flex-col z-10 ${isDark ? 'bg-slate-900 border-slate-700' : 'bg-white border-slate-200'}`}
+            >
+              <div className={`p-4 border-b text-center text-xs font-black uppercase tracking-widest ${isDark ? 'border-slate-800 text-slate-400' : 'border-slate-100 text-slate-500'}`}>Select Time Range</div>
+              {Object.entries(TIME_RANGES).map(([key, range]) => (
+                <button key={key} onClick={() => { setSelectedTimeRange(key); setShowTimeMenu(false); }}
+                  className={`w-full text-center px-5 py-4 text-[11px] font-black uppercase tracking-widest transition-all ${selectedTimeRange === key ? 'bg-indigo-600 text-white' : (isDark ? 'text-slate-300 hover:bg-slate-800' : 'text-slate-600 hover:bg-slate-50')}`}
+                > {range.label} </button>
+              ))}
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
     </motion.div>
   );
 };

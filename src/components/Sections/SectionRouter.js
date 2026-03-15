@@ -14,6 +14,7 @@ const SectionRouter = ({
   currentSection, 
   setCurrentSection,
   user, 
+  login,
   userStats, 
   onUpdateStats,
   onAnalysisComplete,
@@ -81,6 +82,7 @@ const SectionRouter = ({
         return (
           <SettingsSection
             user={user}
+            login={login}
             userStats={userStats}
             logout={logout}
             isMobile={isMobile}
@@ -142,7 +144,12 @@ const SectionRouter = ({
     }
   };
 
-  return <div className="section-router">{renderSection()}</div>;
+  return (
+  <div className="section-router">
+    {/* Explicitly passing login here ensures it is captured from the main props */}
+    {renderSection(login)} 
+  </div>
+);
 };
 
 export default SectionRouter;

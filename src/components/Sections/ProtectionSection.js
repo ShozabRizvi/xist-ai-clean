@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
   ShieldCheckIcon, PhoneIcon, ShieldExclamationIcon, 
   CommandLineIcon, PaperAirplaneIcon, MagnifyingGlassIcon, 
@@ -141,7 +141,6 @@ const HELPLINE_DB = [
     ]
   }
 ];
-
 const PROTOCOLS = [
   { id: 'money', label: 'Financial Fraud', icon: BanknotesIcon, color: 'text-rose-500', glow: 'bg-rose-500/20', border: 'group-hover:border-rose-500', dot: 'bg-rose-500', prompt: 'I have been a victim of financial/UPI fraud. My money was stolen.' },
   { id: 'hack', label: 'Account & Identity', icon: IdentificationIcon, color: 'text-indigo-500', glow: 'bg-indigo-500/20', border: 'group-hover:border-indigo-500', dot: 'bg-indigo-500', prompt: 'My social media account is hacked or someone is impersonating me.' },
@@ -176,8 +175,9 @@ const theme = THEMES[themeMode];
   const [search, setSearch] = useState('');
   const [userInput, setUserInput] = useState('');
   const [isAiAnalyzing, setIsAiAnalyzing] = useState(false);
+  const [showProtocolMenu, setShowProtocolMenu] = useState(false);
   const [messages, setMessages] = useState([
-    { id: 1, role: 'ai', text: "NODE ACTIVE. Select a Protocol or describe your emergency for an immediate tactical solution." }
+    { id: 1, role: 'ai', text: "How can I help you today? Select a topic above or describe your issue for quick action steps." }
   ]);
 
   const filteredDB = HELPLINE_DB.map(group => ({
@@ -253,48 +253,43 @@ const handleGeminiTriage = async (input) => {
       {/* HEADER */}
       <motion.div variants={itemVariants} className="max-w-5xl mx-auto text-center mb-10 relative z-10">
         <ShieldExclamationIcon className="w-16 h-16 text-rose-500 mx-auto mb-4 opacity-80" />
-        <h1 className="text-4xl md:text-5xl font-black tracking-tight mb-3">
-            <span>{typingTitle}</span>
-            <motion.span animate={{ opacity: [0, 1, 0] }} transition={{ repeat: Infinity, duration: 0.8 }} className="w-1.5 h-8 bg-rose-500 inline-block ml-1" />
-        </h1>
+        <h1 className="text-4xl md:text-5xl lg:text-5xl font-black text-center mb-3 pb-4 leading-normal tracking-tight">
+                             <span>{typingTitle}</span>
+                             <motion.span 
+                               animate={{ opacity: [0, 1, 0] }} 
+                               transition={{ repeat: Infinity, duration: 0.9 }} 
+                               className="inline-block w-2.5 md:w-3 h-[0.8em] bg-indigo-500 ml-2 align-baseline" 
+                             />
+                           </h1>
         <p className={`${theme.muted} text-sm font-mono tracking-widest uppercase`}>
-  Forensic Crisis Mitigation Hub
+  Quick Action Steps & Emergency Contacts
 </p>
       </motion.div>
 
       <div className="max-w-7xl mx-auto relative z-10">
         
-        {/* CONSOLIDATED 4 PROTOCOLS */}
-        {/* ✅ FIX: Changed to grid-cols-1 for mobile, sm:grid-cols-2 for tablets, lg:grid-cols-4 for desktop */}
-        <motion.div variants={itemVariants} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4 mb-10">
+        {/* CONSOLIDATED 4 PROTOCOLS (DESKTOP ONLY) */}
+        <motion.div variants={itemVariants} className="hidden md:grid grid-cols-2 lg:grid-cols-4 gap-4 mb-10">
           {PROTOCOLS.map(p => (
             <button key={p.id} onClick={() => handleGeminiTriage(p.prompt)}
                     className={`${theme.card} p-3 md:p-4 rounded-tl-[1.5rem] rounded-br-[1.5rem] flex items-center justify-start gap-4 group hover:scale-[1.02] transition-all relative overflow-hidden`}>
               
               {/* ✅ ELITE TACTICAL ICON CONTAINER */}
               <div className="relative shrink-0">
-                {/* Outer Glow on Hover */}
                 <div className={`absolute -inset-1 ${p.glow} rounded-xl blur opacity-0 group-hover:opacity-100 transition duration-500`}></div>
-                
-                {/* Main Icon Box */}
-                <div className={`relative w-10 h-10 md:w-12 md:h-12 flex items-center justify-center rounded-xl border transition-all duration-300 
-                  ${globalTheme === 'dark' ? 'bg-slate-900 border-slate-700' : 'bg-white border-slate-200'} 
-                  shadow-inner ${p.border}`}>
-                  
+                <div className={`relative w-10 h-10 md:w-12 md:h-12 flex items-center justify-center rounded-xl border transition-all duration-300 ${globalTheme === 'dark' ? 'bg-slate-900 border-slate-700' : 'bg-white border-slate-200'} shadow-inner ${p.border}`}>
                   <p.icon className={`w-5 h-5 md:w-6 md:h-6 transition-colors duration-300 ${p.color}`} />
-                  
-                  {/* Corner Accent Node */}
                   <div className={`absolute top-1 right-1 w-1 h-1 rounded-full ${p.dot} opacity-40 group-hover:opacity-100 group-hover:animate-ping`}></div>
                 </div>
               </div>
 
-              {/* ✅ FIX: Text truncation and responsive text sizes */}
+              {/* ✅ TEXT & HOVER STATE */}
               <div className="flex flex-col items-start text-left w-full overflow-hidden">
                 <span className={`text-[10px] md:text-xs font-black uppercase tracking-tighter line-clamp-1 ${theme.textPrimary}`}>
                   {p.label}
                 </span>
                 <span className={`text-[8px] md:text-[9px] font-mono tracking-widest uppercase mt-0.5 opacity-0 group-hover:opacity-100 transition-opacity ${p.color}`}>
-                  Execute Protocol
+                  Select Topic
                 </span>
               </div>
               
@@ -302,6 +297,18 @@ const handleGeminiTriage = async (input) => {
           ))}
         </motion.div>
 
+        {/* ✅ MOBILE: TOPIC SELECTOR BUTTON (Opens Global Modal) */}
+        <motion.div variants={itemVariants} className="md:hidden relative w-max mx-auto overflow-visible mb-8 mt-4">
+          <button 
+            onClick={() => setShowProtocolMenu(true)}
+            className={`flex items-center gap-2 px-6 py-3 rounded-full border shadow-lg transition-all ${themeMode === 'dark' ? 'bg-slate-900 border-slate-700 text-white' : 'bg-white border-slate-300 text-slate-900'}`}
+          >
+            <ShieldCheckIcon className="w-4 h-4 text-indigo-500" />
+            <span className="text-[11px] font-black uppercase tracking-widest block py-0.5">
+              Select Support Topic
+            </span>
+          </button>
+        </motion.div>
         <motion.div variants={itemVariants} className="grid grid-cols-1 lg:grid-cols-12 gap-8">
           
           {/* THEME-ADAPTIVE TERMINAL */}
@@ -310,7 +317,7 @@ const handleGeminiTriage = async (input) => {
               <div className={`p-4 border-b flex items-center justify-between ${theme.inner}`}>
                 <div className="flex items-center gap-2">
                   <CommandLineIcon className="w-4 h-4 text-rose-500" />
-                  <span className="text-[10px] font-black text-rose-500 uppercase tracking-widest">Protocol_Terminal_X7</span>
+                  <span className="text-[10px] font-black text-rose-500 uppercase tracking-widest">Support Assistant</span>
                 </div>
                 <div className="w-2 h-2 rounded-full bg-rose-500 animate-pulse shadow-[0_0_8px_#f43f5e]"></div>
               </div>
@@ -326,7 +333,7 @@ const handleGeminiTriage = async (input) => {
                     </div>
                   </div>
                 ))}
-                {isAiAnalyzing && <div className="text-rose-500 animate-pulse font-black text-[10px]">EXTRACTING_TACTICAL_SOLUTION...</div>}
+                {isAiAnalyzing && <div className="text-rose-500 animate-pulse font-black text-[10px]">FINDING BEST SOLUTION...</div>}
               </div>
 
               <div className={`p-4 border-t flex gap-2 ${theme.inner}`}>
@@ -395,6 +402,35 @@ const handleGeminiTriage = async (input) => {
 
       </div>
       <div className="h-24" />
+      {/* ========================================= */}
+      {/* 🎛️ GLOBAL TOPIC MODAL (MOBILE FIX)        */}
+      {/* ========================================= */}
+      <AnimatePresence>
+        {showProtocolMenu && (
+          <div className="fixed inset-0 z-[99999] flex items-center justify-center p-4">
+            <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setShowProtocolMenu(false)} />
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.9, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              className={`relative w-72 rounded-3xl shadow-2xl border overflow-hidden flex flex-col z-10 ${themeMode === 'dark' ? 'bg-slate-900 border-slate-700' : 'bg-white border-slate-200'}`}
+            >
+              <div className={`p-4 border-b text-center text-xs font-black uppercase tracking-widest ${themeMode === 'dark' ? 'border-slate-800 text-slate-400' : 'border-slate-100 text-slate-500'}`}>
+                What do you need help with?
+              </div>
+              <div className="flex flex-col p-2">
+                {PROTOCOLS.map(p => (
+                  <button key={p.id} onClick={() => { handleGeminiTriage(p.prompt); setShowProtocolMenu(false); }}
+                    className={`w-full text-left px-5 py-4 text-[11px] font-black uppercase tracking-widest transition-all flex items-center gap-3 rounded-xl ${themeMode === 'dark' ? 'text-slate-300 hover:bg-slate-800' : 'text-slate-600 hover:bg-slate-50'}`}
+                  > 
+                    <p.icon className={`w-5 h-5 ${p.color}`} />
+                    {p.label} 
+                  </button>
+                ))}
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
       <Toaster position="top-right" containerStyle={{ top: 80 }} />
     </motion.div>
   );

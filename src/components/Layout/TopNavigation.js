@@ -1,10 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { createClient } from '@supabase/supabase-js';
+import { motion, AnimatePresence } from 'framer-motion';
 import { 
-  HomeIcon, ShieldCheckIcon, BookOpenIcon, UsersIcon, ChartBarIcon, 
-  ShieldExclamationIcon, CogIcon, QrCodeIcon, XMarkIcon, BoltIcon, 
-  SunIcon, MoonIcon, UserCircleIcon, ArrowRightOnRectangleIcon, WifiIcon,
-  Bars3Icon 
+  QrCodeIcon, SunIcon, MoonIcon, UserCircleIcon, XMarkIcon, Bars3Icon, ArrowRightEndOnRectangleIcon, ClockIcon, UserGroupIcon
 } from '@heroicons/react/24/outline';
 import { useResponsive } from '../../hooks/useResponsive';
 import { AVATAR_OPTIONS } from '../Sections/SettingsSection';
@@ -14,9 +12,6 @@ const supabaseUrl = process.env.REACT_APP_SUPABASE_URL;
 const supabaseAnonKey = process.env.REACT_APP_SUPABASE_ANON_KEY;
 const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
-// ==============================
-// TOP NAV AVATAR RENDERER
-// ==============================
 const TacticalAvatar = ({ url, tacticalId }) => {
   if (url && url.startsWith('http')) {
     return <img src={url} alt="Profile" className="w-full h-full object-cover" />;
@@ -29,42 +24,47 @@ const TacticalAvatar = ({ url, tacticalId }) => {
   return <UserCircleIcon className="w-5 h-5 text-indigo-400" />;
 };
 
-const TopNavigation = ({ user, identity, userStats, login, logout, theme, setTheme, currentSection, setCurrentSection, mobileMenuOpen, setMobileMenuOpen }) => {
+// ✅ ADDED "login" PROP BACK
+const TopNavigation = ({ user, identity, theme, setTheme, currentSection, setCurrentSection, setMobileMenuOpen, login }) => {
   const { screenSize } = useResponsive();
-  
-  const [isOnline, setIsOnline] = useState(navigator.onLine);
   const [showQRPopup, setShowQRPopup] = useState(false);
-  
-  // ✅ NEW: REAL-TIME SCAN TRACKING STATE
   const [liveScans, setLiveScans] = useState(0);
+  
+  // React State for Dropdown
+  const [showScanDetails, setShowScanDetails] = useState(false);
+  
+  // STATE FOR LOCAL RESET TIME
+  const [localResetTime, setLocalResetTime] = useState("12:00 AM (PT)");
 
+  // CALCULATE LOCAL TIME EQUIVALENT OF MIDNIGHT PT
   useEffect(() => {
-    const handleOnline = () => setIsOnline(true);
-    const handleOffline = () => setIsOnline(false);
-    window.addEventListener('online', handleOnline);
-    window.addEventListener('offline', handleOffline);
-    return () => {
-      window.removeEventListener('online', handleOnline);
-      window.removeEventListener('offline', handleOffline);
-    };
+    try {
+      const now = new Date();
+      const ptString = now.toLocaleString('en-US', { timeZone: 'America/Los_Angeles' });
+      const ptDate = new Date(ptString);
+      const diff = now.getTime() - ptDate.getTime();
+      ptDate.setHours(0, 0, 0, 0);
+      const absoluteMidnight = new Date(ptDate.getTime() + diff);
+      const timeString = absoluteMidnight.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      setLocalResetTime(`${timeString} Local Time`);
+    } catch (error) {
+      setLocalResetTime("12:00 AM (PT)");
+    }
   }, []);
 
-  // ✅ NEW: REAL-TIME SUPABASE LISTENER
   useEffect(() => {
     const fetchScans = async () => {
       const currentUserId = user?.id || user?.uid;
       if (!currentUserId) return;
 
-      // ✅ GET TODAY's DATE AT MIDNIGHT
       const startOfDay = new Date();
       startOfDay.setHours(0, 0, 0, 0);
 
-      // ✅ ONLY COUNT SCANS CREATED TODAY
       const { count, error } = await supabase
         .from('user_history')
         .select('*', { count: 'exact', head: true })
         .eq('user_id', currentUserId)
-        .gte('created_at', startOfDay.toISOString()); // <-- This is the magic line!
+        .gte('created_at', startOfDay.toISOString());
       
       if (!error) setLiveScans(count || 0);
     };
@@ -73,7 +73,6 @@ const TopNavigation = ({ user, identity, userStats, login, logout, theme, setThe
 
     const currentUserId = user?.id || user?.uid;
     if (currentUserId) {
-      // Unique channel name prevents collision with your Sidebar listener
       const uniqueChannelName = `topnav_scans_${Math.random().toString(36).substring(2, 10)}`;
       const channel = supabase
         .channel(uniqueChannelName)
@@ -87,12 +86,12 @@ const TopNavigation = ({ user, identity, userStats, login, logout, theme, setThe
   }, [user?.id, user?.uid]);
 
   const navigationItems = [
-    { id: 'home', icon: HomeIcon, label: 'Home' },
-    { id: 'verify', icon: ShieldCheckIcon, label: 'Verify' },
-    { id: 'education', icon: BookOpenIcon, label: 'Education' },
-    { id: 'community', icon: UsersIcon, label: 'Community' },
-    { id: 'analytics', icon: ChartBarIcon, label: 'Analytics' },
-    { id: 'protection', icon: ShieldExclamationIcon, label: 'Helpline 24/7' }
+    { id: 'home', label: 'Home' },
+    { id: 'verify', label: 'Verify' },
+    { id: 'education', label: 'Education' },
+    { id: 'community', label: 'Community' },
+    { id: 'analytics', label: 'Analytics' },
+    { id: 'protection', label: 'Helpline 24/7' }
   ];
 
   const toggleTheme = () => {
@@ -109,19 +108,21 @@ const TopNavigation = ({ user, identity, userStats, login, logout, theme, setThe
     }
   };
 
-  const ActiveIcon = AVATAR_OPTIONS?.find(a => a.id === identity?.avatar)?.icon || UserCircleIcon;
-  
-  // ✅ DYNAMIC MATH: 20 minus whatever the database says they have used
   const scansRemaining = Math.max(0, 20 - liveScans);
+
+  const handleProfileClick = () => {
+    window.location.hash = 'edit-profile';
+    setCurrentSection('settings');
+  };
 
   return (
     <>
       {showQRPopup && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[60] flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 max-w-sm w-full shadow-2xl">
+          <div className="bg-white dark:bg-gray-900 rounded-2xl p-6 max-w-sm w-full shadow-2xl border dark:border-slate-800">
             <div className="flex justify-between items-center mb-6">
               <h3 className="text-xl font-bold text-gray-900 dark:text-white">Share Xist AI</h3>
-              <button onClick={() => setShowQRPopup(false)} className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg">
+              <button onClick={() => setShowQRPopup(false)} className="p-2 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-full transition-colors">
                 <XMarkIcon className="w-5 h-5 text-gray-500" />
               </button>
             </div>
@@ -135,117 +136,177 @@ const TopNavigation = ({ user, identity, userStats, login, logout, theme, setThe
         </div>
       )}
 
-      <nav className="bg-gradient-to-r from-indigo-900 to-purple-900 border-b border-indigo-800 sticky top-0 z-50 backdrop-blur-md">
-        <div className="max-w-7xl mx-auto px-2 sm:px-4 lg:px-8">
+      {/* NAV BAR */}
+      <nav className="bg-gradient-to-r from-indigo-900 to-purple-900 border-b border-indigo-800 sticky top-0 z-50 backdrop-blur-md overflow-visible">
+        <div className="max-w-7xl mx-auto px-4 overflow-visible">
           
-          <div className="relative flex flex-wrap items-center justify-between min-h-[64px] py-2 gap-y-3">
+          <div className="relative flex items-center justify-between h-16 overflow-visible">
             
-            <div className="flex items-center flex-shrink-0 space-x-2 relative z-[100]"> 
+            {/* LEFT: Brand & Menu */}
+            <div className="flex items-center gap-3 shrink-0">
                <button 
-                 onClick={(e) => {
-                   e.stopPropagation(); 
-                   console.log("Menu Triggered");
-                   setMobileMenuOpen(true);
-                 }} 
-                 className="lg:hidden p-2 -ml-2 text-gray-300 hover:bg-indigo-800 rounded-md transition-colors relative z-[110] pointer-events-auto"
-                 aria-label="Open Menu"
+                 onClick={(e) => { e.stopPropagation(); setMobileMenuOpen(true); }} 
+                 className="lg:hidden p-1.5 text-gray-300 hover:bg-indigo-800 rounded-md transition-colors"
                >
                  <Bars3Icon className="w-6 h-6" />
                </button>
 
-               <div className="w-8 h-8 shrink-0">
-                  <img src="/logo.png" alt="Logo" className="w-full h-full object-contain" />
-               </div>
-               
-               <div>
-                 <h1 className="text-lg font-bold text-white tracking-tight whitespace-nowrap">Xist AI</h1>
+               <div className="flex items-center gap-2 cursor-pointer hover:scale-105 transition-transform duration-300" onClick={() => setCurrentSection('home')}>
+                  <img src="/logo.png" alt="Logo" className="w-7 h-7 sm:w-8 sm:h-8 object-contain" />
+                  <h1 className="hidden min-[360px]:block text-sm sm:text-lg font-black text-white tracking-tight">Xist AI</h1>
                </div>
             </div>
 
-            <div className="hidden lg:flex flex-wrap items-center justify-center flex-1 space-x-1 xl:space-x-2 px-2">
-              {navigationItems.map(({ id, icon: IconComponent, label }) => (
-                <button 
-                  key={id} 
-                  onClick={() => setCurrentSection(id)} 
-                  className={`flex items-center space-x-2 px-3 py-2 rounded-md font-medium transition-colors 
-                    ${currentSection === id 
-                      ? 'bg-indigo-700 text-white' 
-                      : 'text-gray-400 hover:text-white hover:bg-indigo-600'}`}
-                >
-                  <IconComponent className="w-4 h-4 shrink-0" /> 
-                  <span className="text-sm whitespace-nowrap">{label}</span>
-                </button>
-              ))}
+            {/* CENTER: DESKTOP ONLY NAVIGATION LINKS */}
+            <div className="hidden lg:flex absolute left-1/2 -translate-x-1/2 items-center gap-8 justify-center shrink-0">
+              {navigationItems.map((item) => {
+                const isActive = currentSection === item.id;
+                return (
+                  <button
+                    key={item.id}
+                    onClick={() => setCurrentSection(item.id)}
+                    className={`relative py-2 text-xs uppercase tracking-widest transition-all duration-300 hover:scale-105 ${
+                      isActive 
+                        ? 'text-white font-black drop-shadow-[0_0_8px_rgba(255,255,255,0.3)] scale-105' 
+                        : 'text-indigo-200/60 font-bold hover:text-indigo-100'
+                    }`}
+                  >
+                    {item.label}
+                    
+                    {/* Glowing Animated Underline for the Active Tab */}
+                    {isActive && (
+                      <motion.div
+                        layoutId="active-nav-indicator"
+                        className="absolute -bottom-1.5 left-0 right-0 h-[3px] bg-indigo-300 rounded-full shadow-[0_0_10px_rgba(165,180,252,0.8)]"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        transition={{ duration: 0.3 }}
+                      />
+                    )}
+                  </button>
+                );
+              })}
             </div>
 
-            <div className="flex items-center space-x-1 sm:space-x-2 shrink-0">
+            {/* RIGHT: Action Hub */}
+            <div className="flex items-center gap-2 sm:gap-4 shrink-0 overflow-visible">
               
-              {!isOnline && (
-                <div className="hidden sm:flex items-center mr-2 px-2 py-1 bg-red-500/20 rounded-md">
-                   <WifiIcon className="w-4 h-4 text-red-400 mr-1" />
-                   <span className="text-[10px] font-bold text-white uppercase">Offline</span>
-                </div>
-              )}
-
-              {/* ✅ DYNAMIC SCAN COUNTER */}
+              {/* SCANS BUTTON */}
               {user && (
-                <div className="flex flex-col items-center justify-center mr-1">
-                  <div className={`flex items-center space-x-1.5 px-2.5 py-1 rounded-lg border transition-all duration-300
-                    ${scansRemaining <= 5 ? 'bg-rose-500/20 border-rose-500/50 shadow-[0_0_10px_rgba(244,63,94,0.2)]' : 'bg-white/10 border-white/20'}`}>
-                    
-                    <BoltIcon className={`w-3.5 h-3.5 ${scansRemaining <= 5 ? 'text-rose-400 animate-pulse' : 'text-yellow-400'}`} />
-                    
-                    <div className="flex items-baseline gap-0.5">
-                      <span className="text-xs font-black text-white font-mono">
-                        {scansRemaining}
-                      </span>
-                      <span className="text-[8px] font-bold text-white/60 uppercase tracking-tighter">
-                        / 20
-                      </span>
-                    </div>
-                    
-                    <span className="hidden sm:inline text-[9px] font-black text-white/80 uppercase tracking-widest ml-1">
-                      Scans
-                    </span>
-                  </div>
+                <div 
+                  className="relative flex items-center justify-center h-16 cursor-pointer px-2 hover:scale-105 transition-transform duration-300"
+                  onMouseEnter={() => setShowScanDetails(true)}
+                  onMouseLeave={() => setShowScanDetails(false)}
+                  onClick={() => setShowScanDetails(!showScanDetails)}
+                >
+                  <span className={`text-[10px] sm:text-xs font-black uppercase tracking-widest transition-colors ${showScanDetails ? 'text-indigo-300' : 'text-white'}`}>
+                    SCANS
+                  </span>
                 </div>
               )}
 
-              <button onClick={() => setShowQRPopup(true)} className="p-2 rounded-md hover:bg-indigo-600 transition-colors">
-                <QrCodeIcon className="w-5 h-5 text-gray-300" />
+              {/* QR and Theme Buttons */}
+              <button onClick={() => setShowQRPopup(true)} className="p-1.5 rounded-full hover:bg-white/10 hover:scale-105 transition-all">
+                <QrCodeIcon className="w-5 h-5 text-indigo-100" />
               </button>
               
-              <button onClick={toggleTheme} className="p-2 rounded-md hover:bg-indigo-600 transition-colors">
-                {theme === 'dark' ? <SunIcon className="w-5 h-5 text-gray-300" /> : <MoonIcon className="w-5 h-5 text-gray-300" />}
+              <button onClick={toggleTheme} className="p-1.5 rounded-full hover:bg-white/10 hover:scale-105 transition-all">
+                {theme === 'dark' ? <SunIcon className="w-5 h-5 text-indigo-100" /> : <MoonIcon className="w-5 h-5 text-indigo-100" />}
               </button>
 
-              {user ? (
-                <div className="flex items-center space-x-2 sm:space-x-3 bg-white/5 px-2 sm:px-3 py-1.5 rounded-xl border border-white/10">
-                  
-                  <div className="text-right hidden lg:block">
-                    <p className="text-[9px] font-black uppercase tracking-widest text-indigo-300 mb-0.5">Operator Active</p>
-                    <p className="text-xs font-bold text-white uppercase font-mono truncate max-w-[100px]">{identity?.alias || 'Unknown'}</p>
-                  </div>
-                  
-                  <button onClick={() => setCurrentSection('settings')} className="w-9 h-9 rounded-lg bg-indigo-500/20 border border-indigo-500/30 flex items-center justify-center overflow-hidden shrink-0">
+              {/* PERFECT CIRCULAR PROFILE PICTURE (WHEN LOGGED IN) */}
+              {user && (
+                <div className="flex items-center pl-1 sm:pl-2 ml-1 border-l border-indigo-500/30">
+                  <button 
+                    onClick={handleProfileClick} 
+                    className="w-8 h-8 sm:w-9 sm:h-9 rounded-full border-2 border-indigo-400/50 flex items-center justify-center overflow-hidden hover:border-indigo-300 hover:scale-105 transition-all bg-slate-900 shrink-0"
+                  >
                     <TacticalAvatar url={user?.photoURL} tacticalId={identity?.avatar} />
                   </button>
-                  
-                  <div className="w-px h-6 bg-white/10 mx-1 hidden sm:block"></div>
-                  
-                  <button onClick={logout} className="p-1.5 rounded-md hover:bg-rose-500/20 hover:text-rose-400 transition-colors hidden sm:block">
-                    <ArrowRightOnRectangleIcon className="w-5 h-5 text-gray-300 hover:text-rose-400" />
+                </div>
+              )}
+
+             {/* SIGN IN BUTTON (PREMIUM GLASS STYLE) */}
+              {!user && (
+                <div className="flex items-center pl-1 sm:pl-2 ml-1 border-l border-indigo-500/30">
+                  <button 
+                    onClick={login} 
+                    className="flex items-center gap-2 px-5 py-2 rounded-full bg-white/10 hover:bg-white/20 text-white border border-white/30 backdrop-blur-md transition-all duration-300 hover:scale-105 active:scale-95 group shadow-lg"
+                  >
+                    <span className="text-[10px] sm:text-xs font-black uppercase tracking-[0.15em]">
+                      Sign In
+                    </span>
+                    <ArrowRightEndOnRectangleIcon className="w-4 h-4 text-indigo-300 group-hover:text-white transition-colors stroke-2" />
                   </button>
                 </div>
-              ) : (
-                <button onClick={login} className="bg-gradient-to-r from-purple-500 to-indigo-500 text-white px-4 py-2 rounded-md text-sm whitespace-nowrap">
-                  Sign In
-                </button>
               )}
+
             </div>
           </div>
         </div>
       </nav>
+
+      {/* MODERN GLASS-CARD SCAN DROPDOWN */}
+      <AnimatePresence>
+        {showScanDetails && user && (
+          <motion.div 
+            initial={{ opacity: 0, y: 12, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 8, scale: 0.95 }}
+            transition={{ duration: 0.2, ease: "easeOut" }}
+            onMouseEnter={() => setShowScanDetails(true)} 
+            onMouseLeave={() => setShowScanDetails(false)}
+            // 'fixed' positioning ensures it floats above the nav strip without cutting off
+            className={`fixed top-[70px] right-4 sm:right-8 lg:right-[12%] p-1 rounded-[1.5rem] shadow-[0_20px_50px_rgba(0,0,0,0.3)] z-[999999] overflow-hidden backdrop-blur-xl border ${
+              theme === 'dark' 
+                ? 'bg-slate-900/80 border-white/10' 
+                : 'bg-white/80 border-slate-200'
+            }`}
+          >
+            {/* Interior Content Container */}
+            <div className="px-5 py-4 min-w-[240px]">
+              <div className="flex items-center justify-between mb-3">
+                <span className={`text-[10px] font-black uppercase tracking-[0.15em] ${theme === 'dark' ? 'text-slate-500' : 'text-slate-400'}`}>
+                  Usage Balance
+                </span>
+                <div className={`px-2 py-0.5 rounded-full text-[10px] font-bold border ${
+                  scansRemaining <= 5 
+                    ? 'bg-rose-500/10 border-rose-500/20 text-rose-400' 
+                    : 'bg-indigo-500/10 border-indigo-500/20 text-indigo-400'
+                }`}>
+                  {scansRemaining} Available
+                </div>
+              </div>
+
+              {/* Progress Bar (Visual indicator of scans used) */}
+              <div className="w-full h-1.5 bg-slate-800/50 rounded-full mb-4 overflow-hidden">
+                <motion.div 
+                  initial={{ width: 0 }}
+                  animate={{ width: `${(scansRemaining / 20) * 100}%` }}
+                  className={`h-full rounded-full ${scansRemaining <= 5 ? 'bg-rose-500' : 'bg-indigo-500'}`}
+                />
+              </div>
+
+              <div className="flex items-center justify-between gap-6">
+                <div className="flex flex-col">
+                  <span className={`text-xl font-black ${theme === 'dark' ? 'text-white' : 'text-slate-900'}`}>
+                    {scansRemaining}<span className="text-sm font-medium opacity-40 ml-1">/ 20</span>
+                  </span>
+                  <span className="text-[9px] font-bold text-slate-500 uppercase tracking-tight">Total Scans</span>
+                </div>
+                
+                <div className="text-right flex flex-col items-end">
+                   <div className="flex items-center gap-1 text-indigo-400">
+                      <ClockIcon className="w-3 h-3" />
+                      <span className="text-[10px] font-black uppercase tracking-wider">Reset</span>
+                   </div>
+                   <span className="text-[10px] font-bold text-slate-500 mt-0.5">{localResetTime}</span>
+                </div>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </>
   );
 };

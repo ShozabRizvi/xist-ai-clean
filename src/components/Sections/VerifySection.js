@@ -105,11 +105,11 @@ const ForensicScanner = ({ theme }) => {
   const [activeStage, setActiveStage] = useState(0);
   
   const stages = [
-    { id: 0, text: "Initializing Omni-Engine..." },
-    { id: 1, text: "Extracting structural metadata & hidden payloads..." },
-    { id: 2, text: "Running adversarial pattern recognition..." },
-    { id: 3, text: "Cross-referencing Global Threat Matrix..." },
-    { id: 4, text: "Synthesizing forensic dossier..." }
+    { id: 0, text: "Starting Analysis Engine..." },
+    { id: 1, text: "Extracting content and hidden data..." },
+    { id: 2, text: "Checking for scams and deepfakes..." },
+    { id: 3, text: "Comparing against known threats..." },
+    { id: 4, text: "Generating final report..." }
   ];
 
   useEffect(() => {
@@ -196,14 +196,14 @@ const TypewriterTerminalText = ({ text }) => {
 const PrivateLedger = ({ entries, theme, onDelete, onDeleteAll, onLoad }) => (
   <div className="mt-8">
     <div className={`${theme.muted} text-xs uppercase tracking-widest mb-4 font-bold flex items-center justify-between`}>
-      <span>Secure Event Log</span>
+      <span>Your History</span>
       <div className="flex items-center gap-3">
         <span className="bg-slate-800 border border-slate-700 px-3 py-1 rounded-md text-slate-300 font-mono text-[10px] uppercase">
           {entries.length} Recent Scans
         </span>
         {entries.length > 0 && (
           <button onClick={onDeleteAll} className="text-rose-400 hover:text-rose-300 flex items-center gap-1 bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/20 px-3 py-1.5 rounded-md transition-colors cursor-pointer">
-            <TrashIcon className="w-3.5 h-3.5" /> Purge Logs
+            <TrashIcon className="w-3.5 h-3.5" /> Clear All
           </button>
         )}
       </div>
@@ -212,7 +212,7 @@ const PrivateLedger = ({ entries, theme, onDelete, onDeleteAll, onLoad }) => (
     <div className="space-y-3">
       {entries.length === 0 ? (
         <div className={`${theme.textSecondary} text-center py-12 bg-slate-900/50 rounded-xl border border-slate-800 font-mono text-sm`}>
-          No history found. Awaiting payload injection.
+          No history found. Awaiting input for analysis.
         </div>
       ) : (
         entries.map((e, i) => (
@@ -240,20 +240,21 @@ const PrivateLedger = ({ entries, theme, onDelete, onDeleteAll, onLoad }) => (
                 </span>
                 <span className={`${theme.muted} text-[10px] font-medium ml-auto tracking-widest uppercase`}>{timeAgo(e.created_at)}</span>
               </div>
-              <div className={`${theme.textPrimary} text-sm font-medium mb-1 truncate`}>
-                <span className="opacity-50 mr-2 text-[10px] uppercase tracking-widest font-mono">Payload:</span> 
-                {e.input || 'No input recorded'}
+              
+              {/* EXACT STEP 4 FIX: Bold Input, Normal Summary, No Labels */}
+              <div className={`${theme.textPrimary} text-sm font-bold mb-1 truncate`}>
+                {e.input || 'Media File'}
               </div>
               <div className={`${theme.textSecondary} text-xs line-clamp-1 group-hover:line-clamp-2 transition-all duration-300 mb-3`}>
-                <span className="opacity-50 mr-2 text-[10px] uppercase tracking-widest font-mono">Summary:</span> 
                 {e.summary}
               </div>
+              
               <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                 <button onClick={() => onLoad(e)} className="flex items-center gap-1 text-[10px] uppercase tracking-widest bg-indigo-500/10 text-indigo-400 hover:bg-indigo-500/20 border border-indigo-500/20 px-3 py-1.5 rounded transition-colors font-bold">
-                  <ArrowUpTrayIcon className="w-3.5 h-3.5" /> Load Payload
+                  <ArrowUpTrayIcon className="w-3.5 h-3.5" /> Load Input
                 </button>
                 <button onClick={() => onDelete(e.id)} className="flex items-center gap-1 text-[10px] uppercase tracking-widest bg-rose-500/10 text-rose-400 hover:bg-rose-500/20 border border-rose-500/20 px-3 py-1.5 rounded transition-colors font-bold">
-                  <TrashIcon className="w-3.5 h-3.5" /> Redact
+                  <TrashIcon className="w-3.5 h-3.5" /> Delete
                 </button>
               </div>
             </div>
@@ -295,10 +296,18 @@ const theme = THEMES[themeMode];
   useEffect(() => { fetchLedger(); }, []);
 
   const fetchLedger = async () => {
+    const currentUserId = user?.id || user?.uid;
+    if (!currentUserId) return;
     try {
-      const { data, error } = await supabase.from('user_history').select('*').order('created_at', { ascending: false }).limit(5);
+      // ✅ FIX: Added .eq() to only fetch this specific user's private history
+      const { data, error } = await supabase.from('user_history').select('*')
+        .eq('user_id', currentUserId)
+        .order('created_at', { ascending: false }).limit(10);
+      
       if (!error && data) setLedger(data);
-    } catch (err) { console.error('Ledger fetch error:', err); }
+    } catch (err) { 
+      console.error('Ledger fetch error:', err); 
+    }
   };
 
   const persistHistory = async (record) => {
@@ -311,7 +320,7 @@ const theme = THEMES[themeMode];
       const currentUserId = user?.id || user?.uid;
       if (currentUserId) payload.user_id = currentUserId;
       const { error } = await supabase.from('user_history').insert(payload); 
-      if (!error) { toast.success('💾 Saved to Secure Event Log'); fetchLedger(); }
+      if (!error) { toast.success('💾 Saved to History'); fetchLedger(); }
     } catch (error) { console.error('Save error:', error); }
   };
 
@@ -320,7 +329,7 @@ const theme = THEMES[themeMode];
       const { error } = await supabase.from('user_history').delete().eq('id', id);
       if (error) throw error;
       setLedger(prev => prev.filter(item => item.id !== id));
-      toast.success('History redacted.');
+      toast.success('History deleted.');
     } catch (err) { toast.error('Failed to redact entry.'); }
   };
 
@@ -332,7 +341,7 @@ const theme = THEMES[themeMode];
       const { error } = await supabase.from('user_history').delete().eq('user_id', currentUserId);
       if (error) throw error;
       setLedger([]);
-      toast.success('Logs purged.');
+      toast.success('History cleared.');
     } catch (err) { toast.error('Failed to purge logs.'); }
   };
 
@@ -341,8 +350,8 @@ const theme = THEMES[themeMode];
     setInputValue(entry.input || '');
     window.scrollTo({ top: 0, behavior: 'smooth' });
     if (['image', 'video', 'voice', 'document'].includes(entry.mode)) {
-       toast('Media mode selected. Please re-inject payload.', { icon: '📁' });
-    } else { toast.success('Payload loaded.'); }
+       toast('Media mode selected. Please re-upload the file.', { icon: '📁' });
+    } else { toast.success('Input loaded.'); }
   };
   
   const shareToCommunity = async (record) => {
@@ -377,7 +386,7 @@ const theme = THEMES[themeMode];
       
       const { error } = await supabase.from('community_threats').insert(postData);
       if (error) throw error;
-      toast.success('🌍 Broadcasted to Threat Matrix!');
+      toast.success('🌍 Shared to Community!');
     } catch (error) { 
       toast.error('Broadcast failed.'); 
       console.error(error);
@@ -400,10 +409,10 @@ const theme = THEMES[themeMode];
   const stopRecording = () => { if (mediaRecorderRef.current) { mediaRecorderRef.current.stop(); setIsRecording(false); } };
 
   const runAnalysis = async (autoShare = false) => {
-    if (running) return toast('System locked. Parse in progress.', { icon: '⚠️' });
+    if (running) return toast('System busy. Analysis in progress.', { icon: '⚠️' });
     if (mode === 'voice' && !audioBlob) return toast.error('Initiate audio capture first.');
-    if (['image', 'video', 'document'].includes(mode) && !file) return toast.error(`Please provide a ${mode} payload.`);
-    if (['text', 'url'].includes(mode) && !inputValue.trim()) return toast.error('Provide text/URL payload first.');
+    if (['image', 'video', 'document'].includes(mode) && !file) return toast.error(`Please provide a ${mode} to analyze.`);
+    if (['text', 'url'].includes(mode) && !inputValue.trim()) return toast.error('Provide text/URL to analyze first.');
 
     setRunning(true); setScore(0); setCurrentMediaUrl(null);
     try {
@@ -436,7 +445,7 @@ const theme = THEMES[themeMode];
       setScore(analysis.credibility_score); setVerdictLevel(analysis.overall_verdict);
       setMetrics(analysis.linguistic_patterns || DEFAULT_METRICS);
       setSummary(analysis.final_explanation_for_user); setSources(analysis.validation_sources || []); 
-      toast.success(`Forensic Scan Complete`);
+      toast.success(`Analysis Complete`);
 
       const record = {
         mode, input: mode === 'voice' ? 'Voice Recording' : (inputValue || file?.name),
@@ -487,13 +496,29 @@ const theme = THEMES[themeMode];
 
       <Toaster position="top-right" containerStyle={{ top: 80 }} />
 
-      <div className="max-w-5xl mx-auto text-center mb-10 relative z-10">
+      <div className="max-w-5xl mx-auto text-center mb-10 relative z-10 px-4">
         <ShieldCheckIcon className="w-16 h-16 text-indigo-500 mx-auto mb-4 opacity-80" />
-        <h1 className="text-4xl md:text-5xl font-black tracking-tight mb-3">
-            <span>{typingTitle}</span>
-            <motion.span animate={{ opacity: [0, 1, 0] }} transition={{ repeat: Infinity, duration: 0.8 }} className="w-1.5 h-8 bg-indigo-500 inline-block ml-1" />
+        
+        {/* ✅ THE FINAL FIX: 
+            1. Changed 'flex' to 'block' so the container grows vertically.
+            2. Removed 'whitespace-nowrap' to allow line breaks on small screens.
+            3. Removed 'overflow-hidden' so the tail of the 'y' can never be clipped.
+            4. Added 'min-h-[1.5em]' and 'pb-4' to give the text breathing room.
+        */}
+        <h1 className="block w-full text-4xl sm:text-5xl md:text-6xl font-black tracking-tight mb-3 py-4 leading-tight min-h-[1.2em]">
+            <span className="inline">
+                {useTypewriter("Xist Analysis", 80, 200)}
+            </span>
+            <motion.span 
+                animate={{ opacity: [0, 1, 0] }} 
+                transition={{ repeat: Infinity, duration: 0.8 }} 
+                className="inline-block w-1.5 h-8 md:h-12 bg-indigo-500 ml-2 align-baseline" 
+            />
         </h1>
-        <p className={`${theme.muted} text-sm font-mono tracking-widest uppercase`}>Multi-Modal Intelligence Analysis</p>
+        
+        <p className={`${theme.muted} text-sm font-mono tracking-widest uppercase mt-4`}>
+          Verify news, links, and media
+        </p>
         <ModeSelector mode={mode} setMode={setMode} theme={theme} />
       </div>
 
@@ -503,20 +528,20 @@ const theme = THEMES[themeMode];
           <div className={`${theme.card} rounded-2xl p-6 flex flex-col h-full relative overflow-hidden group`}>
             <div className="flex items-center justify-between mb-4 border-b border-slate-800 pb-4 relative z-10">
               <h2 className="text-sm font-bold uppercase tracking-widest text-indigo-400 flex items-center gap-2">
-                <ShieldCheckIcon className="w-4 h-4" /> Target Payload
+                <ShieldCheckIcon className="w-4 h-4" /> Input Source
               </h2>
               <button onClick={clearAll} disabled={running} className="text-slate-500 hover:text-rose-400 flex items-center gap-1 text-xs font-bold transition-colors">
-                <TrashIcon className="w-3.5 h-3.5" /> Purge
+                <TrashIcon className="w-3.5 h-3.5" /> Clear
               </button>
             </div>
 
             {mode === 'text' && (
-              <textarea value={inputValue} onChange={(e) => setInputValue(e.target.value)} disabled={running} placeholder="Inject raw text payload here..." 
+              <textarea value={inputValue} onChange={(e) => setInputValue(e.target.value)} disabled={running} placeholder="Paste text here to analyze..." 
                         className={`w-full flex-grow min-h-[250px] p-4 rounded-lg text-sm border focus:border-indigo-500 outline-none font-mono resize-none transition-all relative z-10 shadow-inner custom-scrollbar ${theme.inner} ${theme.textPrimary}`} />
             )}
             
             {mode === 'url' && (
-              <input type="url" value={inputValue} onChange={(e) => setInputValue(e.target.value)} disabled={running} placeholder="Enter Target URL..." 
+              <input type="url" value={inputValue} onChange={(e) => setInputValue(e.target.value)} disabled={running} placeholder="Enter URL..." 
                      className={`w-full p-4 rounded-lg text-sm border focus:border-indigo-500 outline-none font-mono transition-all relative z-10 shadow-inner ${theme.inner} ${theme.textPrimary}`} />
             )}
 
@@ -533,7 +558,7 @@ const theme = THEMES[themeMode];
                 ) : (
                   <div className="cursor-pointer group flex flex-col items-center justify-center w-full h-full p-8" onClick={() => document.getElementById('file-upload').click()}>
                     <div className="w-16 h-16 rounded-full bg-slate-900 border border-slate-800 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform"><PhotoIcon className="w-8 h-8 text-slate-500" /></div>
-                    <p className={`text-sm font-bold uppercase tracking-widest ${theme.textSecondary}`}>Inject {mode}</p>
+                    <p className={`text-sm font-bold uppercase tracking-widest ${theme.textSecondary}`}>Upload {mode}</p>
                     <input id="file-upload" type="file" className="hidden" onChange={(e) => { setFile(e.target.files?.[0]); setInputValue(e.target.files?.[0]?.name); }} />
                   </div>
                 )}
@@ -548,8 +573,8 @@ const theme = THEMES[themeMode];
             )}
             
             <div className="grid grid-cols-2 gap-3 mt-6 relative z-10">
-              <button onClick={() => runAnalysis(false)} disabled={running} className="py-3 rounded-lg text-sm font-bold tracking-wider uppercase bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg">Execute Parse</button>
-              <button onClick={() => runAnalysis(true)} disabled={running} className={`py-3 rounded-lg text-sm font-bold tracking-wider uppercase border border-indigo-500/30 bg-indigo-500/10 text-indigo-300`}>Parse + Share</button>
+              <button onClick={() => runAnalysis(false)} disabled={running} className="py-3 rounded-lg text-sm font-bold tracking-wider uppercase bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg">Analyze</button>
+              <button onClick={() => runAnalysis(true)} disabled={running} className={`py-3 rounded-lg text-sm font-bold tracking-wider uppercase border border-indigo-500/30 bg-indigo-500/10 text-indigo-300`}>Analyze & Share</button>
             </div>
           </div>
         </motion.div>
@@ -561,8 +586,8 @@ const theme = THEMES[themeMode];
           ) : summary ? (                                 // ✅ CHANGED THIS LINE
             <div className="flex flex-col gap-4 h-full">
               <div className={`${theme.card} p-4 rounded-2xl flex items-center justify-between`}>
-                 <h2 className={`text-sm font-bold uppercase tracking-widest ${theme.textSecondary}`}>Forensic Dossier</h2>
-                 <button onClick={handleManualShareClick} className="text-[10px] font-black uppercase text-indigo-400 bg-indigo-500/10 px-3 py-1.5 rounded-lg border border-indigo-500/20 flex items-center gap-2"><ShareIcon className="w-3.5 h-3.5" /> Export Matrix</button>
+                 <h2 className={`text-sm font-bold uppercase tracking-widest ${theme.textSecondary}`}>Analysis Report</h2>
+                 <button onClick={handleManualShareClick} className="text-[10px] font-black uppercase text-indigo-400 bg-indigo-500/10 px-3 py-1.5 rounded-lg border border-indigo-500/20 flex items-center gap-2"><ShareIcon className="w-3.5 h-3.5" /> Share to Community</button>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
                 <div className={`md:col-span-4 ${theme.card} p-6 rounded-2xl flex flex-col items-center justify-center`}>
@@ -578,10 +603,27 @@ const theme = THEMES[themeMode];
                 </div>
 
                 <div className={`md:col-span-8 ${theme.inner} p-5 rounded-2xl shadow-inner flex flex-col h-48 md:h-auto`}>
-                   <div className="flex items-center gap-2 mb-3 opacity-50"><SparklesIcon className="w-3.5 h-3.5 text-indigo-400" /><span className="text-[10px] font-mono font-bold tracking-widest uppercase">AI_DIAGNOSTICS_LEDGER</span></div>
+                   <div className="flex items-center gap-2 mb-3 opacity-50"><SparklesIcon className="w-3.5 h-3.5 text-indigo-400" /><span className="text-[10px] font-mono font-bold tracking-widest uppercase">AI_ANALYSIS_SUMMARY</span></div>
                    <div className="text-xs font-mono leading-relaxed overflow-y-auto custom-scrollbar flex-grow"><TypewriterTerminalText text={summary} /></div>
                 </div>
               </div>
+              
+              {/* EXACT STEP 3 FIX: THE NEW SOURCES SECTION */}
+              {sources && sources.length > 0 && (
+                <div className={`${theme.card} p-5 rounded-2xl border flex flex-col`}>
+                  <h3 className="text-xs font-bold uppercase tracking-widest text-indigo-400 flex items-center gap-2 mb-3">
+                    <ClipboardDocumentCheckIcon className="w-4 h-4" /> Validation Sources
+                  </h3>
+                  <div className="space-y-3">
+                    {sources.map((src, idx) => (
+                      <div key={idx} className={`border-l-2 border-indigo-500 pl-3 py-1 ${theme.inner} rounded-r-lg pr-3`}>
+                        <div className={`text-sm font-bold ${theme.textPrimary}`}>{src.source_name || src.name}</div>
+                        <div className={`text-xs mt-1 ${theme.textSecondary}`}>{src.why_relevant || src.relevance}</div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               {Object.values(metrics).some(v => v > 0) && (
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
@@ -600,7 +642,7 @@ const theme = THEMES[themeMode];
              <div className={`${theme.card} rounded-2xl p-16 border flex flex-col items-center justify-center text-center h-full min-h-[500px]`}>
                 <ShieldCheckIcon className={`w-16 h-16 mb-4 ${themeMode === 'dark' ? 'text-slate-800' : 'text-slate-200'}`} />
                 <h3 className={`text-base font-bold uppercase tracking-widest ${theme.muted}`}>System Standby</h3>
-                <p className={`text-sm mt-2 max-w-xs ${theme.muted}`}>Awaiting payload injection for forensic analysis.</p>
+  <p className={`text-sm mt-2 max-w-xs ${theme.muted}`}>Awaiting input for analysis.</p>
              </div>
           )}
         </motion.div>

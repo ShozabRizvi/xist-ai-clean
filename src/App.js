@@ -312,6 +312,8 @@ useEffect(() => {
                   setTheme={setTheme}
                   isMobile={isMobile}
                   isTablet={isTablet}
+                  logout={logout}
+                  login={login}
                 />
              </div>
              
@@ -328,17 +330,40 @@ useEffect(() => {
             <VoiceControlPanel isOpen={showVoiceControl} onClose={() => setShowVoiceControl(false)} onSectionChange={setCurrentSection} theme={theme} user={user} />
           )}
 
-          <Toaster
+         <Toaster
             position="top-right"
             toastOptions={{
               duration: 4000,
               style: {
-                background: theme === 'dark' ? '#1e293b' : '#ffffff',
+                // Glassmorphism Styles
+                background: theme === 'dark' ? 'rgba(30, 41, 59, 0.7)' : 'rgba(255, 255, 255, 0.8)',
+                backdropFilter: 'blur(12px)',
+                WebkitBackdropFilter: 'blur(12px)',
                 color: theme === 'dark' ? '#f1f5f9' : '#0f172a',
-                border: `1px solid ${theme === 'dark' ? '#334155' : '#e2e8f0'}`,
-                fontSize: '14px', fontWeight: '500', borderRadius: '8px',
-                boxShadow: theme === 'dark' ? '0 10px 25px rgba(0, 0, 0, 0.3)' : '0 10px 25px rgba(0, 0, 0, 0.1)',
-              }
+                border: `1px solid ${theme === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)'}`,
+                
+                // Modern Shape & Typography
+                fontSize: '13px',
+                fontWeight: '700',
+                borderRadius: '16px',
+                padding: '12px 20px',
+                letterSpacing: '0.025em',
+                boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.2), 0 10px 10px -5px rgba(0, 0, 0, 0.1)',
+                maxWidth: '350px'
+              },
+              // Premium icons styling
+              success: {
+                iconTheme: {
+                  primary: '#10b981',
+                  secondary: '#fff',
+                },
+              },
+              error: {
+                iconTheme: {
+                  primary: '#ef4444',
+                  secondary: '#fff',
+                },
+              },
             }}
           />
         </div>

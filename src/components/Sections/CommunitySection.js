@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'react-hot-toast';
 import {
@@ -7,21 +7,17 @@ import {
   UserCircleIcon, ChartBarIcon, FunnelIcon, MicrophoneIcon,
   VideoCameraIcon, PhotoIcon, SpeakerWaveIcon, SunIcon, MoonIcon,
   PaperAirplaneIcon, PlusCircleIcon, DocumentPlusIcon,
-  UserGroupIcon, CpuChipIcon, FingerPrintIcon, EyeIcon, FireIcon, CodeBracketIcon,XMarkIcon
-} from '@heroicons/react/24/outline'; 
+  UserGroupIcon, CpuChipIcon, FingerPrintIcon, EyeIcon, FireIcon, 
+  CodeBracketIcon, XMarkIcon, EyeSlashIcon, MegaphoneIcon, ArrowUturnLeftIcon
+} from '@heroicons/react/24/outline';
 import { supabase } from '../../lib/supabase';
 
 // ==============================
-// TACTICAL AVATAR MAP
+// AVATAR MAP
 // ==============================
 const AVATAR_MAP = {
-  ghost: UserCircleIcon,
-  shield: ShieldCheckIcon,
-  chip: CpuChipIcon,
-  fingerprint: FingerPrintIcon,
-  eye: EyeIcon,
-  fire: FireIcon,
-  code: CodeBracketIcon
+  ghost: UserCircleIcon, shield: ShieldCheckIcon, chip: CpuChipIcon,
+  fingerprint: FingerPrintIcon, eye: EyeIcon, fire: FireIcon, code: CodeBracketIcon
 };
 
 const TacticalAvatar = ({ identifier }) => {
@@ -29,206 +25,230 @@ const TacticalAvatar = ({ identifier }) => {
     const Icon = AVATAR_MAP[identifier];
     return <Icon className="w-full h-full p-1 text-indigo-400" />;
   }
-  if (identifier && identifier.startsWith('http')) {
-    return <img src={identifier} className="w-full h-full object-cover" alt="Operative" />;
+  if (identifier && typeof identifier === 'string' && identifier.startsWith('http')) {
+    return <img src={identifier} className="w-full h-full object-cover" alt="User" />;
   }
-  return <UserCircleIcon className="w-5 h-5 text-slate-500" />;
+  return <UserCircleIcon className="w-full h-full p-1 text-slate-500" />;
 };
 
 // ==============================
-// UTILITY FUNCTIONS
+// UTILITY FUNCTIONS & EFFECTS
 // ==============================
 const timeAgo = (utcDateStr) => {
   if (!utcDateStr) return 'Just now';
-  const safeStr = utcDateStr.endsWith('Z') || utcDateStr.includes('+') ? utcDateStr : `${utcDateStr}Z`;
+  const safeStr = String(utcDateStr).endsWith('Z') || String(utcDateStr).includes('+') ? utcDateStr : `${utcDateStr}Z`;
   const date = new Date(safeStr);
   const now = new Date();
   const seconds = Math.max(0, Math.round((now - date) / 1000));
-  const minutes = Math.round(seconds / 60);
-  const hours = Math.round(minutes / 60);
   if (seconds < 60) return 'Just now';
-  if (minutes < 60) return `${minutes}m ago`;
-  if (hours < 24) return `${hours}h ago`;
-  return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+  if (seconds < 3600) return `${Math.round(seconds / 60)}m ago`;
+  if (seconds < 86400) return `${Math.round(seconds / 3600)}h ago`;
+  return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
 };
 
-// ==============================
-// UTILITY FUNCTIONS
-// ==============================
-
-// Your existing typewriter effect (used for the top header)
-const useTypewriter = (text, speed = 80, delay = 200) => {
+const useTypewriter = (text, speed = 100, delay = 200) => {
   const [displayedText, setDisplayedText] = useState("");
   const [started, setStarted] = useState(false);
-  useEffect(() => {
-    const timeout = setTimeout(() => setStarted(true), delay);
-    return () => clearTimeout(timeout);
-  }, [delay]);
+  useEffect(() => { const t = setTimeout(() => setStarted(true), delay); return () => clearTimeout(t); }, [delay]);
   useEffect(() => {
     if (!started) return;
     if (displayedText.length < text.length) {
-      const timeout = setTimeout(() => {
-        setDisplayedText(text.slice(0, displayedText.length + 1));
-      }, speed);
-      return () => clearTimeout(timeout);
+      const t = setTimeout(() => setDisplayedText(text.slice(0, displayedText.length + 1)), speed);
+      return () => clearTimeout(t);
     }
   }, [displayedText, text, speed, started]);
   return displayedText;
 };
 
-// ✅ NEW: 2026 CYBER DECODING ANIMATION (used for modal titles & classifications)
 const DecodedText = ({ text }) => {
-  const [display, setDisplay] = useState(text);
-  
+  const [display, setDisplay] = useState(text || '');
   useEffect(() => {
+    if (!text) return;
     let iteration = 0;
     const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*";
-    
     const interval = setInterval(() => {
       setDisplay(text.split("").map((char, index) => {
         if (index < iteration) return text[index];
         return letters[Math.floor(Math.random() * 42)];
       }).join(""));
-      
       if (iteration >= text.length) clearInterval(interval);
-      
-      // The speed of the reveal. Change to 1/2 for faster, 1/4 for slower.
       iteration += 1 / 3; 
     }, 30);
-    
     return () => clearInterval(interval);
   }, [text]);
-
   return <span>{display}</span>;
 };
 
-// ==============================
-// THEMES
-// ==============================
 const THEMES = {
-  dark: {
-    background: 'bg-slate-950',
-    headerBg: 'bg-[#020617]',
-    card: 'bg-slate-900 border-slate-800 shadow-2xl',
-    inner: 'bg-slate-950 border-slate-800',
-    textPrimary: 'text-slate-100',
-    textSecondary: 'text-slate-400',
-    muted: 'text-slate-500',
-    input: 'bg-slate-950 border-slate-800 text-white placeholder-slate-600 focus:border-indigo-500 shadow-[0_0_10px_rgba(99,102,241,0.05)]'
-  },
-  light: {
-    background: 'bg-slate-50',
-    headerBg: 'bg-white/90 backdrop-blur-md',
-    card: 'bg-white border-slate-200 shadow-xl',
-    inner: 'bg-slate-100 border-slate-200',
-    textPrimary: 'text-slate-900',
-    textSecondary: 'text-slate-600',
-    muted: 'text-slate-400',
-    input: 'bg-white border-slate-200 text-slate-900 placeholder-slate-400 focus:border-indigo-500 shadow-sm'
-  }
+  dark: { background: 'bg-[#020617]', headerBg: 'bg-[#020617]/90 backdrop-blur-md', card: 'bg-slate-900 border border-slate-800 shadow-xl', inner: 'bg-slate-950 border-slate-800', textPrimary: 'text-slate-100', textSecondary: 'text-slate-400', muted: 'text-slate-500' },
+  light: { background: 'bg-slate-50', headerBg: 'bg-white/90 backdrop-blur-md', card: 'bg-white border border-slate-200 shadow-lg', inner: 'bg-slate-100 border-slate-200', textPrimary: 'text-slate-900', textSecondary: 'text-slate-600', muted: 'text-slate-400' }
 };
 
-const CommunitySection = ({ user, theme: globalTheme }) => {
- const isDark = globalTheme === 'dark';
+export default function CommunitySection({ user, theme: globalTheme }) {
+  const isDark = globalTheme === 'dark';
   const theme = THEMES[isDark ? 'dark' : 'light'];
-  const typingTitle = useTypewriter("Global Threat Matrix", 80, 200);
+  
+  const typingTitle = useTypewriter("Community Feed", 80, 200);
+  const endOfFeedRef = useRef(null);
+  const inputRef = useRef(null);
 
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isPublishing, setIsPublishing] = useState(false);
-  const [newPost, setNewPost] = useState({ title: '', description: '', threat_type: 'deepfake' });
-  const [filter, setFilter] = useState('all');
+  const [filter, setFilter] = useState('All');
   const [selectedThreat, setSelectedThreat] = useState(null); 
   const [profileData, setProfileData] = useState(null); 
 
-  // ✅ LOAD LOCAL IDENTITY STATE
-  const [localIdentity, setLocalIdentity] = useState({ alias: 'UNKNOWN_OPERATOR', avatar: 'ghost' });
+  // ✅ CUSTOM MENU STATES
+  const [showHeaderMenu, setShowHeaderMenu] = useState(false);
+  const [showCategoryMenu, setShowCategoryMenu] = useState(false);
+
+  const [localIdentity, setLocalIdentity] = useState({ alias: 'USER', avatar: 'ghost' });
+  const currentUserId = user?.id || user?.uid;
+  const DEVELOPER_UUID = 'PASTE_YOUR_COPIED_UUID_HERE'; 
+  const isDeveloperNode = (user?.email && user.email.toLowerCase() === 'rshozab64@gmail.com') || currentUserId === DEVELOPER_UUID;
+
+  const [isAuthority, setIsAuthority] = useState(false);
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const [authForm, setAuthForm] = useState({ name: '', agency: '', code: '' });
   
+  const [postText, setPostText] = useState('');
+  const [postCategory, setPostCategory] = useState('Web Scam');
+  const [authControls, setAuthControls] = useState({ isPinned: false, isBuzzer: false });
+  const [replyTo, setReplyTo] = useState(null);
+
   useEffect(() => {
-    const saved = localStorage.getItem('xist_operator_identity');
-    if (saved) {
-      setLocalIdentity(JSON.parse(saved));
+    // Only logging to verify state is changing smoothly
+    // console.log("Menu State Sync -> Header:", showHeaderMenu, "| Category:", showCategoryMenu);
+  }, [showHeaderMenu, showCategoryMenu]);
+
+  // SSR Safe Audio
+  const playBuzzerSound = () => {
+    if (typeof window === 'undefined') return;
+    try {
+      const AudioCtx = window.AudioContext || window.webkitAudioContext;
+      if (!AudioCtx) return;
+      const audioCtx = new AudioCtx();
+      const oscillator = audioCtx.createOscillator();
+      const gainNode = audioCtx.createGain();
+      oscillator.type = 'sawtooth';
+      oscillator.frequency.setValueAtTime(440, audioCtx.currentTime); 
+      gainNode.gain.setValueAtTime(0.05, audioCtx.currentTime);
+      gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.4);
+      oscillator.connect(gainNode);
+      gainNode.connect(audioCtx.destination);
+      oscillator.start();
+      oscillator.stop(audioCtx.currentTime + 0.4);
+    } catch (e) { console.log("Audio required interaction."); }
+  };
+
+  useEffect(() => {
+    const savedUser = localStorage.getItem('xist_operator_identity');
+    if (savedUser) setLocalIdentity(JSON.parse(savedUser));
+    
+    const savedAuth = localStorage.getItem('xist_authority_session');
+    if (savedAuth) {
+      setIsAuthority(true);
+      setAuthForm(JSON.parse(savedAuth));
     }
   }, []);
-
-  // ✅ Tactical Authorization Check
-  // ✅ Tactical Authorization Check
-  const currentUserId = user?.id || user?.uid;
-  
-  // Replace the placeholder below with your actual Supabase UUID copied from the dashboard
-  const DEVELOPER_UUID = 'PASTE_YOUR_COPIED_UUID_HERE'; 
-  
-  const isDeveloperNode = 
-    (user?.email && user.email.toLowerCase() === 'rshozab64@gmail.com') || 
-    currentUserId === DEVELOPER_UUID;
 
   const loadPosts = useCallback(async () => {
     setLoading(true);
     try {
-      const { data: threatsData, error } = await supabase
-        .from('community_threats')
+      const { data, error } = await supabase.from('community_threats')
         .select(`*, threat_likes(user_id), profiles(username, avatar_url)`)
-        .order('created_at', { ascending: false });
+        .eq('is_hidden', false).order('created_at', { ascending: false });
 
       if (error) throw error;
-      const formattedData = threatsData.map(threat => ({
-        ...threat,
-        likes_count: threat.threat_likes?.length || 0,
-        user_liked: threat.threat_likes?.some(like => like.user_id === currentUserId) 
+      
+      let formatted = data.map(p => ({
+        ...p,
+        likes_count: p.threat_likes?.length || 0,
+        user_liked: p.threat_likes?.some(like => like.user_id === currentUserId) 
       }));
-      setPosts(formattedData || []);
-    } catch (error) { toast.error('Intelligence sync error'); } finally { setLoading(false); }
+
+      const now = new Date();
+      formatted.sort((a, b) => {
+        const aPinned = a.is_pinned && (now - new Date(a.pinned_at)) < 86400000;
+        const bPinned = b.is_pinned && (now - new Date(b.pinned_at)) < 86400000;
+        if (aPinned && !bPinned) return -1;
+        if (!aPinned && bPinned) return 1;
+        return 0;
+      });
+
+      if (formatted.some(p => p.is_buzzer)) playBuzzerSound();
+      setPosts(formatted || []);
+    } catch (error) { toast.error('Feed sync error'); } finally { setLoading(false); }
   }, [currentUserId]);
 
   useEffect(() => {
     loadPosts();
-    const channel = supabase.channel('community_realtime').on('postgres_changes', { event: '*', schema: 'public', table: 'community_threats' }, loadPosts).subscribe();
+    const channel = supabase.channel('feed_realtime').on('postgres_changes', { event: '*', schema: 'public', table: 'community_threats' }, loadPosts).subscribe();
     return () => supabase.removeChannel(channel);
   }, [loadPosts]);
 
-  const handlePost = async () => {
-    if (!newPost.title.trim() || !newPost.description.trim()) return toast.error('Dossier incomplete');
-    
+  const handleSendPost = async () => {
+    if (!postText.trim()) return toast.error('Please type a message');
     setIsPublishing(true);
     try {
-      // 1. SYNC IDENTITY TO SUPABASE SO OTHERS SEE IT
       if (currentUserId) {
-        await supabase.from('profiles').upsert({
-          id: currentUserId,
-          username: localIdentity.alias,
-          avatar_url: localIdentity.avatar,
-          updated_at: new Date().toISOString()
-        });
+        await supabase.from('profiles').upsert({ id: currentUserId, username: localIdentity.alias, avatar_url: localIdentity.avatar });
       }
-
-      // 2. BROADCAST THREAT
-      const { error } = await supabase.from('community_threats').insert({
-        user_id: currentUserId, title: newPost.title, description: newPost.description,
-        threat_type: newPost.threat_type, location: 'Global AI Network'
-      });
-      if (error) throw error;
       
-      setNewPost({ title: '', description: '', threat_type: 'deepfake' });
-      toast.success('Dossier Broadcasted');
+      const payload = {
+        user_id: currentUserId, 
+        title: isAuthority ? 'Official Alert' : (replyTo ? `Reply to ${replyTo.username}` : 'Community Update'), 
+        description: postText,
+        threat_type: postCategory, 
+        location: isAuthority ? 'Official Broadcast' : 'Global',
+        is_pinned: isAuthority ? authControls.isPinned : false,
+        is_buzzer: isAuthority ? authControls.isBuzzer : false,
+        pinned_at: (isAuthority && authControls.isPinned) ? new Date().toISOString() : null,
+        parent_id: replyTo ? replyTo.id : null
+      };
+
+      const { error } = await supabase.from('community_threats').insert(payload);
+      if (error) {
+         if (error.message.includes('parent_id')) {
+            delete payload.parent_id;
+            payload.description = replyTo ? `[Reply to ${replyTo.username}] ${postText}` : postText;
+            await supabase.from('community_threats').insert(payload);
+         } else { throw error; }
+      }
+      
+      setPostText(''); setReplyTo(null); setAuthControls({ isPinned: false, isBuzzer: false });
+      toast.success(isAuthority ? 'Official Alert Sent' : 'Message Posted'); 
       loadPosts();
-    } catch (error) { toast.error('Broadcast failed'); } finally { setIsPublishing(false); }
+      setTimeout(() => endOfFeedRef.current?.scrollIntoView({ behavior: 'smooth' }), 500);
+    } catch (error) { toast.error('Post failed'); } finally { setIsPublishing(false); }
   };
 
-  // ✅ REDACTION PROTOCOL (Delete logic)
-  const handleDeletePost = async (threatId, e) => {
+  const handleDeletePost = async (id, e) => {
     if (e) e.stopPropagation();
-    if (!window.confirm("Are you sure you want to permanently redact this dossier?")) return;
-
+    if (!window.confirm("Delete this post permanently?")) return;
     try {
-      const { error } = await supabase.from('community_threats').delete().eq('id', threatId);
-      if (error) throw error;
-      
-      toast.success('Dossier Redacted');
-      if (selectedThreat?.id === threatId) setSelectedThreat(null);
-      loadPosts();
-    } catch (error) {
-      toast.error('Failed to redact dossier.');
-    }
+      await supabase.from('community_threats').delete().eq('id', id);
+      toast.success('Deleted'); if (selectedThreat?.id === id) setSelectedThreat(null); loadPosts();
+    } catch (error) { toast.error('Failed to delete.'); }
+  };
+
+  const handleHidePost = async (id, e) => {
+    if (e) e.stopPropagation();
+    if (!window.confirm("Authority Action: Hide this post from the public?")) return;
+    try {
+      await supabase.from('community_threats').update({ is_hidden: true }).eq('id', id);
+      toast.success('Post hidden.'); loadPosts();
+    } catch (error) { toast.error('Failed to hide.'); }
+  };
+
+  const handleLike = async (id, e) => {
+    if (e) e.stopPropagation();
+    if (!currentUserId) return toast.error('Authentication required');
+    const { data: existing } = await supabase.from('threat_likes').select('*').eq('threat_id', id).eq('user_id', currentUserId).maybeSingle(); 
+    if (existing) await supabase.from('threat_likes').delete().eq('threat_id', id).eq('user_id', currentUserId);
+    else await supabase.from('threat_likes').insert({ threat_id: id, user_id: currentUserId });
+    loadPosts();
   };
 
   const openUserProfile = async (targetUserId, targetProfile, e) => {
@@ -238,479 +258,517 @@ const CommunitySection = ({ user, theme: globalTheme }) => {
       const { data: userPosts } = await supabase.from('community_threats').select('*, threat_likes(user_id)').eq('user_id', targetUserId);
       const totalLikes = userPosts.reduce((sum, post) => sum + (post.threat_likes?.length || 0), 0);
       setProfileData({
-        userId: targetUserId, username: targetProfile?.username || `Agent-${targetUserId?.substring(0,4).toUpperCase()}`,
+        userId: targetUserId, username: targetProfile?.username || `User-${targetUserId?.substring(0,4).toUpperCase()}`,
         avatarUrl: targetProfile?.avatar_url, totalLikes, postCount: userPosts.length, loading: false
       });
     } catch (err) { setProfileData(null); }
   };
 
-  // ✅ FIX: Keeps the modal UI instantly synced when you click 'Like'
-  useEffect(() => {
-    if (selectedThreat) {
-      const freshData = posts.find(p => p.id === selectedThreat.id);
-      if (freshData) setSelectedThreat(freshData);
-    }
-  }, [posts]);
-  
-  const handleLike = async (threatId, e) => {
+  const initiateReply = (post, e) => {
+    if(e) e.stopPropagation();
+    const username = post.profiles?.username || 'User';
+    setReplyTo({ id: post.id, username });
+    inputRef.current?.focus();
+  };
+
+  const handleShare = async (threat, e) => {
     if (e) e.stopPropagation();
-    if (!currentUserId) return toast.error('Authentication required');
-    const { data: existing } = await supabase.from('threat_likes').select('*').eq('threat_id', threatId).eq('user_id', currentUserId).maybeSingle(); 
-    if (existing) {
-      await supabase.from('threat_likes').delete().eq('threat_id', threatId).eq('user_id', currentUserId);
-    } else {
-      await supabase.from('threat_likes').insert({ threat_id: threatId, user_id: currentUserId });
-    }
-    loadPosts();
+    const shareData = { title: `Alert: ${threat.title}`, text: `Read this on Xist: "${threat.title}"`, url: window.location.href };
+    if (navigator.share && navigator.canShare(shareData)) {
+      try { await navigator.share(shareData); } catch (err) { if (err.name !== 'AbortError') navigator.clipboard.writeText(shareData.url); }
+    } else { navigator.clipboard.writeText(shareData.url); toast.success('Link copied'); }
+  };
+
+  const handleAuthorityLogin = () => {
+    if (!authForm.name || !authForm.agency || !authForm.code) return toast.error('Fill all fields');
+    if (authForm.code === 'ADMIN2026') {
+      setIsAuthority(true); setShowAuthModal(false); 
+      localStorage.setItem('xist_authority_session', JSON.stringify({ name: authForm.name, agency: authForm.agency, code: authForm.code }));
+      toast.success(`Welcome, ${authForm.name}`);
+    } else { toast.error('Invalid ID Code'); }
   };
 
   const RenderForensicMedia = ({ url, className = "" }) => {
-    if (!url) return null;
+    if (!url || typeof url !== 'string') return null;
     const isImage = url.match(/\.(jpeg|jpg|gif|png|webp)$/i);
     const isVideo = url.match(/\.(mp4|webm|ogg|mov)$/i);
     if (isImage) return <img src={url} className={`w-full object-contain ${className}`} alt="Evidence" />;
     if (isVideo) return <video src={url} className={`w-full ${className}`} controls autoPlay muted loop />;
-    return (
-      <div className="w-full p-8 flex flex-col items-center justify-center bg-slate-950/50 rounded-xl border border-white/5">
-        <MicrophoneIcon className="w-12 h-12 text-indigo-400 mb-4 animate-pulse" />
-        <audio src={url} controls className="w-full max-w-xs" />
-      </div>
-    );
+    return <div className="w-full p-8 flex flex-col items-center justify-center bg-slate-950/50 rounded-xl"><MicrophoneIcon className="w-8 h-8 text-indigo-400 animate-pulse" /></div>;
   };
 
-  // ✅ NATIVE SHARE PROTOCOL
-  const handleShare = async (threat, e) => {
-    if (e) e.stopPropagation();
-
-    const shareData = {
-      title: `XIST Alert: ${threat.threat_type.toUpperCase()}`,
-      text: `Review this threat dossier: "${threat.title}" on the Global Threat Matrix.`,
-      url: window.location.href, // Shares the current app URL
-    };
-
-    if (navigator.share && navigator.canShare(shareData)) {
-      try {
-        await navigator.share(shareData);
-      } catch (err) {
-        // Ignore AbortError (this happens when a user opens the share menu but cancels)
-        if (err.name !== 'AbortError') {
-          fallbackCopy(shareData.url);
-        }
-      }
-    } else {
-      // Fallback for desktop or unsupported environments
-      fallbackCopy(shareData.url);
-    }
-  };
-
-  const fallbackCopy = (text) => {
-    navigator.clipboard.writeText(text)
-      .then(() => toast.success('Link copied to clipboard'))
-      .catch(() => toast.error('Failed to copy link'));
-  };
-
-  const containerVariants = { hidden: { opacity: 0 }, visible: { opacity: 1, transition: { staggerChildren: 0.1 } } };
-  const itemVariants = { hidden: { y: 20, opacity: 0 }, visible: { y: 0, opacity: 1, transition: { type: 'spring', stiffness: 100 } } };
-
+  // ✅ UPDATED FILTER LOGIC
   const filteredPosts = posts.filter(post => {
-    if (filter === 'all') return true;
-    if (filter === 'verified') return post.is_verified === true;
-    return post.threat_type === filter;
+    if (filter === 'All') return true;
+    if (filter === 'Verified') return post.is_verified === true;
+    
+    // Official Filter Logic
+    if (filter === 'Official') {
+      return post.location?.includes('Official') || post.is_buzzer || post.is_pinned;
+    }
+
+    const safeType = (post.threat_type || '').toLowerCase();
+    if (filter === 'Media Fakes') return safeType.includes('media') || safeType.includes('deepfake');
+    if (filter === 'Web Scams') return safeType.includes('web') || safeType.includes('scam') || safeType.includes('malware');
+    
+    return true;
   });
 
+  const topLevelPosts = filteredPosts.filter(p => !p.parent_id);
+
   return (
-    <motion.div initial="hidden" animate="visible" variants={containerVariants}
-                className={`w-full min-h-screen transition-colors duration-500 ${theme.background} ${theme.textPrimary} relative overflow-x-hidden`}
-                style={{ marginLeft: '280px', marginTop: '64px', fontFamily: 'Inter, system-ui, sans-serif' }}>
+    <div className={`w-full min-h-screen transition-colors duration-500 ${theme.background} ${theme.textPrimary} relative overflow-x-hidden md:ml-[280px] ml-0`}
+         style={{ marginTop: '64px', fontFamily: 'Inter, system-ui, sans-serif' }}>
       
-      {/* ADAPTIVE GRID BACKGROUND */}
-      <div className={`absolute inset-0 pointer-events-none opacity-[0.03] ${isDark ? '' : 'invert'}`} 
+      {/* GRID BACKGROUND */}
+      <div className={`absolute inset-0 pointer-events-none opacity-[0.03] ${isDark ? '' : 'invert'} z-0`} 
            style={{ backgroundImage: 'linear-gradient(to right, #ffffff 1px, transparent 1px), linear-gradient(to bottom, #ffffff 1px, transparent 1px)', backgroundSize: '40px 40px' }}></div>
 
-      {/* HEADER SECTION */}
-      <div className={`border-b sticky top-0 z-30 px-8 py-6 transition-all ${theme.headerBg} ${isDark ? 'border-slate-800' : 'border-slate-200'}`}>
-        <div className="max-w-7xl mx-auto flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div>
-            <h1 className="text-2xl font-black tracking-tight flex items-center gap-2">
-              <UserGroupIcon className="w-7 h-7 text-indigo-500" /> 
-              <span>{typingTitle}</span>
-              <motion.span animate={{ opacity: [0, 1, 0] }} transition={{ repeat: Infinity, duration: 0.8 }} className="w-1.5 h-7 bg-indigo-500 inline-block ml-1" />
-            </h1>
-            <p className={`${theme.muted} text-xs uppercase tracking-widest font-bold mt-1`}>OSINT Intelligence Feed</p>
-          </div>
-          {/* ========================================= */}
-          {/* 📱 SURGICAL FILTER REPLACEMENT START        */}
-          {/* ========================================= */}
-          <div className="w-full sm:w-auto">
-            
-            {/* 🖥️ DESKTOP VIEW: Full Button Row (Hidden on mobile) */}
-            <div className="hidden md:flex items-center gap-2 overflow-x-auto hide-scrollbar pb-1">
-              {['all', 'deepfake', 'misinfo', 'scam', 'malware', 'cyber_attack', 'verified'].map(f => (
-                  <button key={f} onClick={() => setFilter(f)} 
-                          className={`px-4 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap flex-shrink-0 ${
-                            filter === f ? 'bg-indigo-600 text-white shadow-lg' : `${theme.inner} ${theme.textSecondary} hover:text-indigo-400`
-                          }`}>
-                    {f.replace('_', ' ')}
-                  </button>
+      {/* ========================================= */}
+      {/* 🚀 HERO HEADER (XIST ANALYSIS STYLE)      */}
+      {/* ========================================= */}
+      <div className={`sticky top-0 z-30 px-4 py-8 md:py-12 transition-all overflow-hidden ${theme.headerBg}`}>
+        
+        {/* 🔥 TACTICAL GRID FOR HEADER 🔥 */}
+        <div className={`absolute inset-0 pointer-events-none opacity-[0.05] md:opacity-[0.03] ${isDark ? '' : 'invert'} z-0`} 
+             style={{ backgroundImage: 'linear-gradient(to right, #ffffff 1px, transparent 1px), linear-gradient(to bottom, #ffffff 1px, transparent 1px)', backgroundSize: '24px 24px' }}></div>
+
+        <div className="max-w-4xl mx-auto flex flex-col items-center justify-center relative z-10">
+          
+          {/* Top Shield Icon */}
+          <UserGroupIcon className="w-10 h-10 md:w-14 md:h-14 text-indigo-500 mb-5 stroke-[1.5]" />
+          
+         <h1 className="text-4xl md:text-5xl lg:text-6xl font-black text-center mb-2 pb-4 leading-normal tracking-tight">
+                     <span>{typingTitle}</span>
+                     <motion.span 
+                       animate={{ opacity: [0, 1, 0] }} 
+                       transition={{ repeat: Infinity, duration: 0.9 }} 
+                       className="inline-block w-2.5 md:w-3 h-[0.8em] bg-indigo-500 ml-2 align-baseline" 
+                     />
+                   </h1>
+
+          {/* Subtitle / Cyber Tagline */}
+          <p className="text-[9px] md:text-[11px] font-mono font-bold uppercase tracking-[0.3em] md:tracking-[0.4em] text-slate-500 mb-8 md:mb-12 text-center px-4">
+            Live Threat Intelligence & Community Reports
+          </p>
+          
+          {/* ✅ DESKTOP: SEGMENTED CONTROL */}
+          <div className="hidden md:flex w-full max-w-2xl px-2 overflow-hidden justify-center">
+            <div className={`p-1 flex items-center gap-1 rounded-full border transition-all ${
+              isDark ? 'bg-slate-900/50 border-slate-800' : 'bg-slate-100 border-slate-200'
+            }`}>
+              {['All', 'Web Scams', 'Media Fakes', 'Verified', 'Official'].map(f => (
+                <button 
+                  key={f} onClick={() => setFilter(f)} 
+                  className={`relative px-6 py-2 rounded-full text-[10px] md:text-[11px] font-black uppercase tracking-widest transition-all duration-300 flex-shrink-0 ${filter === f ? 'text-white' : (isDark ? 'text-slate-500 hover:text-slate-300' : 'text-slate-500 hover:text-slate-700')}`}
+                >
+                  {filter === f && (
+                    <motion.div layoutId="activeFilter" className={`absolute inset-0 rounded-full shadow-lg ${f === 'Verified' ? 'bg-emerald-600' : f === 'Web Scams' ? 'bg-orange-600' : f === 'Media Fakes' ? 'bg-purple-600' : f === 'Official' ? 'bg-red-600' : 'bg-indigo-600'}`} transition={{ type: 'spring', stiffness: 400, damping: 30 }} />
+                  )}
+                  <span className="relative z-10">{f}</span>
+                </button>
               ))}
             </div>
-
-            {/* 📱 MOBILE VIEW: Compact Native Dropdown (Hidden on desktop) */}
-            <div className="flex md:hidden items-center justify-end w-full">
-              <div className="relative w-full sm:w-auto">
-                <select 
-                  value={filter} 
-                  onChange={(e) => setFilter(e.target.value)}
-                  className={`w-full appearance-none pl-4 pr-10 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest outline-none border shadow-sm transition-all cursor-pointer ${
-                    isDark ? 'bg-slate-900 border-slate-700 text-white' : 'bg-white border-slate-200 text-slate-900'
-                  } focus:border-indigo-500`}
-                >
-                  <option value="all">Filter: All Threats</option>
-                  <option value="deepfake">Deepfake Media</option>
-                  <option value="misinfo">Disinformation</option>
-                  <option value="scam">Social Engineering</option>
-                  <option value="malware">Malware Package</option>
-                  <option value="cyber_attack">Network Intrusion</option>
-                  <option value="verified">Verified Only</option>
-                </select>
-                <FunnelIcon className="w-4 h-4 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-indigo-500" />
-              </div>
-            </div>
-
           </div>
-          {/* ========================================= */}
-          {/* 📱 SURGICAL FILTER REPLACEMENT END          */}
-          {/* ========================================= */}
+
+          {/* ✅ MOBILE HEADER FILTER: Button Only */}
+          <div className="md:hidden relative mt-1 w-max mx-auto">
+            <button 
+              onClick={() => setShowHeaderMenu(true)}
+              className={`flex items-center gap-2 px-6 py-2.5 rounded-full border shadow-lg transition-all ${isDark ? 'bg-slate-900 border-slate-700 text-white' : 'bg-white border-slate-300 text-slate-900'}`}
+            >
+              <FunnelIcon className={`w-4 h-4 ${filter === 'All' ? 'text-indigo-500' : filter === 'Verified' ? 'text-emerald-500' : filter === 'Official' ? 'text-red-500' : filter === 'Web Scams' ? 'text-orange-500' : 'text-purple-500'}`} />
+              <span className="text-[11px] font-black uppercase tracking-widest">{filter}</span>
+            </button>
+          </div>
+
+          {/* AUTHORITY STATUS / LOGIN */}
+          <div className="absolute right-0 top-0 hidden md:flex items-center gap-3">
+            {!isAuthority ? (
+              <button onClick={() => setShowAuthModal(true)} className={`text-[10px] uppercase tracking-widest px-4 py-2 rounded-lg font-bold border transition-all ${isDark ? 'bg-slate-800 text-slate-300 border-slate-700 hover:text-white hover:border-slate-500' : 'bg-white text-slate-600 border-slate-300 hover:border-slate-400'}`}>Authority Login</button>
+            ) : (
+              <div className="flex items-center gap-2 bg-red-500/10 border border-red-500/20 px-3 py-1.5 rounded-xl">
+                <UserGroupIcon className="w-4 h-4 text-red-500"/>
+                <div className="flex flex-col items-start px-1 mr-2">
+                  <span className="text-[9px] text-red-500 font-black tracking-widest uppercase">Gov ID Active</span>
+                  <span className="text-[8px] font-bold text-slate-500 uppercase">{authForm.name}</span>
+                </div>
+                <button onClick={() => { setIsAuthority(false); setAuthForm({ name: '', agency: '', code: '' }); localStorage.removeItem('xist_authority_session'); toast.success("Deauthorized"); }} className="p-1 rounded-md hover:bg-red-500/20 text-red-400 transition-all"><XMarkIcon className="w-4 h-4" /></button>
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto p-8 grid grid-cols-1 lg:grid-cols-12 gap-8 relative z-10">
-        
-        {/* 🚀 UPGRADED BROADCAST FORM (TACTICAL SUBMISSION TERMINAL) */}
-        <motion.div variants={itemVariants} className="lg:col-span-4 space-y-6">
-          <div className={`${theme.card} p-6 rounded-2xl relative overflow-hidden group/form`}>
-            {/* Tactical Corner accents */}
-            <div className="absolute top-0 left-0 w-2 h-2 border-t border-l border-indigo-500/50"></div>
-            <div className="absolute top-0 right-0 w-2 h-2 border-t border-r border-indigo-500/50"></div>
+      {/* ========================================= */}
+      {/* 🚀 HYBRID FEED (LEFT/RIGHT ALIGNED)       */}
+      {/* ========================================= */}
+      <div className="max-w-4xl mx-auto p-4 md:p-8 relative z-10 pb-40">
+        {loading ? ( <div className="flex justify-center py-24"><ArrowPathIcon className="w-8 h-8 text-indigo-500 animate-spin" /></div> ) : (
+          <div className="flex flex-col gap-6">
             
-            <div className="flex items-center justify-between mb-8">
-              <h3 className={`text-[10px] font-black uppercase tracking-[0.3em] flex items-center gap-2 ${theme.textPrimary}`}>
-                <DocumentPlusIcon className="w-4 h-4 text-indigo-500" /> Dossier_Injection
-              </h3>
-              <div className="flex gap-1">
-                <div className="w-1 h-1 rounded-full bg-indigo-500 animate-ping"></div>
-                <div className="w-1 h-1 rounded-full bg-indigo-500/50"></div>
-              </div>
-            </div>
+            {topLevelPosts.map((threat) => {
+              // Strict checking for Authority posts
+              const isOfficial = threat.location?.includes('Official') || threat.is_buzzer || threat.is_pinned;
+              
+              const isBuzzer = threat.is_buzzer;
+              const safeType = threat.threat_type || 'Unknown';
+              const isMedia = safeType.toLowerCase().includes('media') || safeType.toLowerCase().includes('deepfake');
+              
+              // Alignment: self-start (Left) for users, self-end (Right) for Authorities
+              const alignmentClass = isOfficial ? 'self-end border-r-4 border-r-red-500' : 'self-start border-l-4 border-l-indigo-500';
+              const widthClass = 'w-[95%] md:w-[80%]';
+              
+              // Glow Logic
+              let glowClass = '';
+              if (isBuzzer) glowClass = 'shadow-[0_0_20px_rgba(239,68,68,0.2)] border border-red-500 bg-red-500/5 animate-pulse';
+              else if (isOfficial) glowClass = 'shadow-[0_0_15px_rgba(239,68,68,0.05)] border border-slate-800';
+              else if (isMedia) glowClass = 'hover:border-purple-500/30';
+              else glowClass = 'hover:border-indigo-500/30';
 
-            <div className="space-y-5">
-              <motion.div initial={{ x: -10, opacity: 0 }} animate={{ x: 0, opacity: 1 }} transition={{ delay: 0.4 }}>
-                <label className="text-[9px] font-bold uppercase text-slate-500 mb-1.5 block ml-1 tracking-widest">Case_Title</label>
-                <input value={newPost.title} onChange={(e) => setNewPost({ ...newPost, title: e.target.value })}
-                  placeholder="System Subject Identifier..." className={`w-full px-4 py-3 rounded-xl text-sm outline-none font-mono transition-all border-2 border-transparent ${theme.input} focus:border-indigo-500/30`} />
-              </motion.div>
+              const replies = filteredPosts.filter(p => p.parent_id === threat.id);
 
-              <motion.div initial={{ x: -10, opacity: 0 }} animate={{ x: 0, opacity: 1 }} transition={{ delay: 0.5 }}>
-                <label className="text-[9px] font-bold uppercase text-slate-500 mb-1.5 block ml-1 tracking-widest">Forensic_Body</label>
-                <textarea value={newPost.description} onChange={(e) => setNewPost({ ...newPost, description: e.target.value })}
-                  placeholder="Analyze and describe the threat vector..." rows={5} className={`w-full px-4 py-3 rounded-xl text-sm resize-none outline-none font-medium transition-all border-2 border-transparent ${theme.input} focus:border-indigo-500/30`} />
-              </motion.div>
-
-              <motion.div initial={{ x: -10, opacity: 0 }} animate={{ x: 0, opacity: 1 }} transition={{ delay: 0.6 }}>
-                <label className="text-[9px] font-bold uppercase text-slate-500 mb-1.5 block ml-1 tracking-widest">Threat_Classification</label>
-                <div className="relative">
-                  <select value={newPost.threat_type} onChange={(e) => setNewPost({ ...newPost, threat_type: e.target.value })}
-                    className={`w-full px-4 py-3 rounded-xl text-xs outline-none font-black uppercase tracking-widest appearance-none border-2 border-transparent ${theme.input} focus:border-indigo-500/30 cursor-pointer`}>
-                    <option value="deepfake">Deepfake_Media</option>
-                    <option value="misinfo">Disinformation</option>
-                    <option value="scam">Social_Engineering</option>
-                    <option value="malware">Malware_Package</option>
-                    <option value="cyber_attack">Network_Intrusion</option>
-                  </select>
-                  <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none opacity-50"><FunnelIcon className="w-3 h-3" /></div>
-                </div>
-              </motion.div>
-            </div>
-
-            <button onClick={handlePost} disabled={isPublishing} className="w-full mt-8 group/btn relative overflow-hidden bg-indigo-600 hover:bg-indigo-500 py-4 rounded-xl transition-all shadow-xl shadow-indigo-500/20 active:scale-[0.98]">
-              <AnimatePresence mode="wait">
-                {isPublishing ? (
-                  <motion.div initial={{ y: 10 }} animate={{ y: 0 }} exit={{ y: -10 }} className="flex items-center justify-center gap-2">
-                    <ArrowPathIcon className="w-4 h-4 animate-spin text-white" />
-                    <span className="text-[10px] font-black text-white uppercase tracking-[0.2em]">Uploading...</span>
-                  </motion.div>
-                ) : (
-                  <motion.div initial={{ y: 10 }} animate={{ y: 0 }} exit={{ y: -10 }} className="flex items-center justify-center gap-2">
-                    <PaperAirplaneIcon className="w-4 h-4 text-white group-hover/btn:translate-x-1 group-hover/btn:-translate-y-1 transition-transform" />
-                    <span className="text-[10px] font-black text-white uppercase tracking-[0.2em]">Engage Broadcast</span>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </button>
-            <div className="mt-4 text-center">
-              <span className="text-[8px] font-mono text-slate-600 uppercase tracking-widest">Protocol 7-X // Secure Node Transmission</span>
-            </div>
-          </div>
-        </motion.div>
-
-        {/* RIGHT COLUMN: FEED */}
-        <motion.div variants={itemVariants} className="lg:col-span-8">
-          {loading ? ( <div className="flex justify-center py-24"><ArrowPathIcon className="w-8 h-8 text-indigo-500 animate-spin" /></div> ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {filteredPosts.map((threat) => (
-                <motion.div key={threat.id} layout onClick={() => setSelectedThreat(threat)}
-                     className={`${theme.card} p-6 cursor-pointer group flex flex-col h-72 relative overflow-hidden transition-all hover:border-indigo-500/50 rounded-2xl`}>
+              return (
+              <motion.div key={threat.id} layout className={`flex flex-col gap-3 ${widthClass} ${alignmentClass}`}>
+                <div onClick={() => setSelectedThreat(threat)} className={`${theme.card} p-5 cursor-pointer group relative overflow-hidden transition-all rounded-2xl ${glowClass}`}>
                   
-                  {/* DYNAMIC MEDIA PREVIEW ON HOVER */}
+                  {/* Hover Media */}
                   {threat.media_url && (
-                    <div className="absolute inset-0 z-0 opacity-0 group-hover:opacity-[0.12] transition-opacity duration-500 pointer-events-none">
+                    <div className="absolute inset-0 z-0 opacity-0 group-hover:opacity-[0.15] transition-opacity duration-500 pointer-events-none">
                       <RenderForensicMedia url={threat.media_url} className="h-full object-cover grayscale" />
                     </div>
                   )}
 
-                  <div className="flex items-start justify-between mb-4 z-10">
-  <div onClick={(e) => openUserProfile(threat.user_id, threat.profiles, e)} className="flex items-center gap-2 group-hover:bg-indigo-500/10 p-1.5 -ml-1.5 rounded-xl transition-all">
-    
-    {/* ✅ FIX: Centered container for tactical icons */}
-    <div className="w-7 h-7 rounded-full overflow-hidden shrink-0 border border-slate-700 bg-slate-800 flex items-center justify-center">
-      <TacticalAvatar identifier={threat.user_id === currentUserId ? localIdentity.avatar : threat.profiles?.avatar_url} />
-    </div>
-    
-    {/* ✅ FIX: Show local alias if it's the current user, otherwise show database name */}
-    <span className="text-[10px] font-black text-slate-400 group-hover:text-indigo-400 uppercase tracking-tighter">
-      {threat.user_id === currentUserId 
-        ? localIdentity.alias 
-        : (threat.profiles?.username || `AGENT-${threat.user_id?.substring(0,4).toUpperCase()}`)}
-    </span>
+                  {/* Badges */}
+                  {isBuzzer && <div className="absolute -left-2 -top-2 bg-red-600 text-white p-2 rounded-full animate-bounce shadow-xl z-20"><SpeakerWaveIcon className="w-4 h-4"/></div>}
 
-  </div>
-  <span className="text-[10px] text-slate-500 font-mono font-bold tracking-tighter">{timeAgo(threat.created_at)}</span>
-</div>
-
-                  <div className="z-10 flex-grow">
-                    <div className="flex items-center gap-2 mb-3">
-                      <span className={`px-2.5 py-1 rounded text-[9px] font-black uppercase tracking-widest border ${
-                        threat.threat_type === 'deepfake' ? 'bg-purple-500/10 text-purple-400 border-purple-500/20' :
-                        threat.threat_type === 'scam' ? 'bg-rose-500/10 text-rose-400 border-rose-500/20' : 
-                        'bg-yellow-500/10 text-yellow-400 border-yellow-500/20'}`}>
-                        {threat.threat_type}
-                      </span>
-                      {threat.is_verified && <span className="flex items-center gap-1 text-emerald-400 text-[9px] font-black uppercase tracking-widest bg-emerald-500/10 px-2 py-1 rounded border border-emerald-500/20"><CheckCircleIcon className="w-3 h-3" /> VERIFIED</span>}
+                  <div className="flex items-start justify-between mb-3 z-10 relative">
+                    <div onClick={(e) => openUserProfile(threat.user_id, threat.profiles, e)} className="flex items-center gap-2 group-hover:bg-indigo-500/10 p-1.5 -ml-1.5 rounded-xl transition-all">
+                      <div className={`w-8 h-8 rounded-full overflow-hidden shrink-0 border flex items-center justify-center ${isOfficial ? 'border-red-500/50 bg-red-500/10' : 'border-slate-700 bg-slate-800'}`}>
+                        <TacticalAvatar identifier={threat.user_id === currentUserId ? localIdentity.avatar : threat.profiles?.avatar_url} />
+                      </div>
+                      <div className="flex flex-col">
+                        <span className={`text-[10px] font-black uppercase tracking-tighter flex items-center gap-1 ${isOfficial ? 'text-red-400' : 'text-slate-400 group-hover:text-indigo-400'}`}>
+                          {threat.user_id === currentUserId ? localIdentity.alias : (threat.profiles?.username || 'User')}
+                          {isOfficial && <ShieldCheckIcon className="w-3 h-3" />}
+                        </span>
+                        <span className="text-[8px] text-slate-500 font-mono font-bold">{timeAgo(threat.created_at)}</span>
+                      </div>
                     </div>
-                    <h3 className={`text-base font-black mb-2 line-clamp-2 leading-tight ${theme.textPrimary}`}>{threat.title}</h3>
-                    <p className={`text-xs line-clamp-3 leading-relaxed font-medium ${theme.textSecondary}`}>{threat.description}</p>
+                    
+                    <span className={`px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-widest border ${isOfficial ? 'bg-red-500/10 text-red-400 border-red-500/20' : 'bg-slate-800 text-slate-400 border-slate-700'}`}>
+                      {safeType}
+                    </span>
                   </div>
 
-                  <div className="flex items-center justify-between pt-4 border-t z-10 border-slate-800/50 mt-2">
+                  <div className="z-10 relative pl-1">
+                    <h3 className={`text-base font-black mb-1.5 leading-tight ${isBuzzer ? 'text-red-400' : theme.textPrimary}`}>{threat.title}</h3>
+                    <p className={`text-sm leading-relaxed whitespace-pre-wrap font-medium ${theme.textSecondary}`}>{threat.description}</p>
+                    {threat.media_url && <div className="mt-3 text-[9px] font-black uppercase text-indigo-500 tracking-widest flex items-center gap-1"><PhotoIcon className="w-3.5 h-3.5" /> Media Attached</div>}
+                  </div>
+
+                  <div className="flex items-center justify-between pt-4 border-t z-10 relative mt-4 border-slate-800/50">
                     <div className="flex items-center gap-4">
                       <button onClick={(e) => handleLike(threat.id, e)} className={`flex items-center gap-1.5 text-[10px] font-black transition-all ${threat.user_liked ? 'text-rose-500' : 'text-slate-500 hover:text-rose-400'}`}>
                         <HeartIcon className={`w-4 h-4 ${threat.user_liked ? 'fill-rose-500' : ''}`} /> {threat.likes_count}
                       </button>
-                      <button 
-    onClick={(e) => handleShare(threat, e)} 
-    className="text-slate-500 hover:text-indigo-400 transition-colors"
-    title="Share Dossier"
-  >
-    <ShareIcon className="w-4 h-4" />
-  </button>
+                      <button onClick={(e) => initiateReply(threat, e)} className="flex items-center gap-1.5 text-[10px] font-black text-slate-500 hover:text-indigo-400 transition-all">
+                        <ChatBubbleLeftRightIcon className="w-4 h-4" /> {replies.length}
+                      </button>
+                      <button onClick={(e) => handleShare(threat, e)} className="text-slate-500 hover:text-indigo-400 transition-colors">
+                        <ShareIcon className="w-4 h-4" />
+                      </button>
                       
-                      {/* ✅ DELETE BUTTON FOR AUTHOR OR DEVELOPER */}
                       {(threat.user_id === currentUserId || isDeveloperNode) && (
-                         <button 
-                           onClick={(e) => handleDeletePost(threat.id, e)} 
-                           className="text-slate-500 hover:text-rose-500 transition-colors"
-                           title={isDeveloperNode && threat.user_id !== currentUserId ? "Developer Override" : "Redact Dossier"}
-                         >
+                         <button onClick={(e) => handleDeletePost(threat.id, e)} className="text-slate-500 hover:text-rose-500 transition-colors">
                            <TrashIcon className="w-4 h-4" />
                          </button>
                       )}
+                      {isAuthority && threat.user_id !== currentUserId && !isDeveloperNode && (
+                        <button onClick={(e) => handleHidePost(threat.id, e)} className="text-slate-500 hover:text-red-500 transition-colors">
+                          <EyeSlashIcon className="w-4 h-4" />
+                        </button>
+                      )}
                     </div>
-
-                    {threat.media_url && <div className="text-[9px] font-black uppercase text-indigo-500 tracking-widest flex items-center gap-1"><ChartBarIcon className="w-3 h-3" /> EVIDENCE_LOCKED</div>}
                   </div>
-                </motion.div>
-              ))}
-            </div>
-          )}
-        </motion.div>
+                </div>
+
+                {/* NESTED REPLIES */}
+                {replies.length > 0 && (
+                  <div className={`mt-2 flex flex-col gap-2 ${isOfficial ? 'mr-4 pr-4 border-r-2 border-slate-800' : 'ml-4 pl-4 border-l-2 border-slate-800'}`}>
+                    {replies.map(reply => (
+                      <div key={reply.id} className={`${theme.inner} p-3 rounded-xl border ${isDark ? 'border-slate-800' : 'border-slate-200'} relative group`}>
+                         <div className="flex items-center gap-2 mb-1.5">
+                           <div className="w-5 h-5 rounded-full overflow-hidden bg-slate-800 border border-slate-700">
+                             <TacticalAvatar identifier={reply.profiles?.avatar_url} />
+                           </div>
+                           <span className={`text-[9px] font-black uppercase ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
+                             {reply.profiles?.username || 'User'}
+                           </span>
+                           <span className="text-[8px] text-slate-500">{timeAgo(reply.created_at)}</span>
+                           {(reply.user_id === currentUserId || isDeveloperNode) && (
+                             <button onClick={(e) => handleDeletePost(reply.id, e)} className="ml-auto opacity-0 group-hover:opacity-100 text-slate-500 hover:text-rose-500 transition-all">
+                               <TrashIcon className="w-3 h-3"/>
+                             </button>
+                           )}
+                         </div>
+                         <p className={`text-xs pl-7 leading-relaxed ${isDark ? 'text-slate-300' : 'text-slate-700 font-medium'}`}>
+                           {reply.description.replace(/\[Reply to.*?\]\s*/, '')}
+                         </p>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </motion.div>
+            )})}
+            <div ref={endOfFeedRef} className="h-10"></div>
+          </div>
+        )}
       </div>
 
       {/* ========================================= */}
-      {/* 🚀 ELITE 2026 CYBER MODAL W/ ANIMATIONS     */}
+      {/* 🚀 STICKY GEMINI-STYLE INPUT BAR          */}
+      {/* ========================================= */}
+      {/* ✅ FIXED: bottom-20 clears mobile nav */}
+      <div className={`fixed bottom-20 md:bottom-0 right-0 left-0 md:left-[280px] z-40 pb-4 pt-10 bg-gradient-to-t ${isDark ? 'from-[#020617] via-[#020617]/80' : 'from-slate-50 via-slate-50/90'} to-transparent transition-all duration-300 pointer-events-none`}>
+        <div className="max-w-3xl mx-auto px-4 pointer-events-auto w-full">
+          
+          {replyTo && (
+            <div className="bg-indigo-600 text-white text-[9px] md:text-[10px] font-black uppercase tracking-widest px-3 py-1.5 rounded-t-xl w-max ml-4 flex items-center gap-2 shadow-lg">
+              <ArrowUturnLeftIcon className="w-3 h-3" /> {replyTo.username}
+              <button onClick={() => setReplyTo(null)} className="ml-1"><XMarkIcon className="w-3 h-3" /></button>
+            </div>
+          )}
+
+          <div className={`relative flex items-center p-1.5 md:p-2 rounded-full shadow-2xl backdrop-blur-xl border ${
+              isAuthority 
+              ? (isDark ? 'bg-red-950/80 border-red-500/50' : 'bg-red-50/90 border-red-300') 
+              : (isDark ? 'bg-slate-900/90 border-slate-700' : 'bg-white border-slate-300')
+            } ${replyTo ? 'rounded-tl-none' : ''}`}>
+            
+            <button 
+              onClick={() => document.getElementById('file-upload').click()}
+              className={`p-2 rounded-full transition-all flex-shrink-0 ${isAuthority ? 'text-red-400 hover:bg-red-500/10' : 'text-indigo-500 hover:bg-indigo-500/10'}`}
+            >
+              <PlusCircleIcon className="w-5 h-5 md:w-6 md:h-6" />
+            </button>
+            
+            {/* The Input with enforced transparency */}
+            <input 
+              ref={inputRef}
+              value={postText} 
+              onChange={(e) => setPostText(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && handleSendPost()}
+              placeholder={replyTo ? "Write a reply..." : (isAuthority ? "Broadcast alert..." : "Share update...")}
+              className={`flex-1 bg-transparent bg-none appearance-none border-none outline-none text-xs md:text-sm px-2 font-medium w-full shadow-none focus:ring-0 focus:outline-none focus:shadow-none ${
+                isDark ? 'text-white placeholder-slate-500' : 'text-slate-900 placeholder-slate-400'
+              }`}
+              style={{ backgroundColor: 'transparent', boxShadow: 'none', WebkitAppearance: 'none' }}
+            />
+
+{/* ✅ BOTTOM INPUT CATEGORY: Button Only */}
+            {!replyTo && (
+              <div className="relative flex items-center justify-center border-l border-slate-700/50 ml-1 pl-2">
+                <button 
+                  onClick={() => setShowCategoryMenu(true)}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full transition-all shadow-md ${
+                    postCategory === 'Web Scam' ? 'bg-orange-500 text-white' : 
+                    postCategory === 'Deepfake Media' ? 'bg-purple-600 text-white' : 
+                    'bg-red-600 text-white'
+                  }`}
+                >
+                  <FunnelIcon className="w-3.5 h-3.5" />
+                  <span className="hidden sm:block text-[9px] font-black uppercase tracking-widest">{postCategory.split(' ')[0]}</span>
+                </button>
+              </div>
+            )}
+
+            {/* Authority Inner Toggles */}
+            {isAuthority && !replyTo && (
+              <div className="hidden sm:flex items-center gap-1 px-2 border-l border-red-500/30 ml-1">
+                <button onClick={() => setAuthControls({...authControls, isPinned: !authControls.isPinned})} className={`p-1.5 rounded-full transition-all ${authControls.isPinned ? 'bg-red-500 text-white' : 'text-red-500 hover:bg-red-500/10'}`}><ChartBarIcon className="w-4 h-4"/></button>
+                <button onClick={() => setAuthControls({...authControls, isBuzzer: !authControls.isBuzzer})} className={`p-1.5 rounded-full transition-all ${authControls.isBuzzer ? 'bg-red-500 text-white animate-pulse' : 'text-red-500 hover:bg-red-500/10'}`}><SpeakerWaveIcon className="w-4 h-4"/></button>
+              </div>
+            )}
+
+            <button 
+              onClick={handleSendPost}
+              disabled={isPublishing || !postText.trim()}
+              className={`p-2 md:p-2.5 rounded-full transition-all ml-1 flex-shrink-0 ${
+                !postText.trim() ? (isDark ? 'opacity-50 cursor-not-allowed bg-slate-800 text-slate-500' : 'opacity-50 cursor-not-allowed bg-slate-200 text-slate-400') : isAuthority ? 'bg-red-600 text-white shadow-[0_0_15px_rgba(220,38,38,0.5)]' : 'bg-indigo-600 text-white shadow-[0_0_15px_rgba(79,70,229,0.5)]'
+              }`}
+            >
+              {isPublishing ? <ArrowPathIcon className="w-5 h-5 animate-spin" /> : <PaperAirplaneIcon className="w-5 h-5" />}
+            </button>
+          </div>
+        </div>
+        
+        {/* Functional Hidden File Input */}
+        <input 
+          id="file-upload" 
+          type="file" 
+          className="hidden" 
+          accept="image/*,video/*" 
+          onChange={(e) => { 
+            const file = e.target.files[0]; 
+            if (file) { toast.success(`Selected: ${file.name}`, { icon: '📁' }); } 
+          }} 
+        />
+      </div>
+
+      {/* ========================================= */}
+      {/* ELITE MODAL W/ DECODED TEXT               */}
       {/* ========================================= */}
       <AnimatePresence>
         {selectedThreat && (
-          <div className="fixed inset-0 z-[60] flex items-center justify-center p-3 sm:p-4">
+          <motion.div key="threat-modal" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[60] flex items-center justify-center p-3 sm:p-4">
+            <div className={`absolute inset-0 ${isDark ? 'bg-[#020617]/80' : 'bg-slate-900/40'} backdrop-blur-sm`} onClick={() => setSelectedThreat(null)} />
             
-            {/* Smooth Backdrop Fade */}
-            <motion.div 
-              initial={{ opacity: 0, backdropFilter: "blur(0px)" }} 
-              animate={{ opacity: 1, backdropFilter: "blur(12px)" }} 
-              exit={{ opacity: 0, backdropFilter: "blur(0px)" }} 
-              transition={{ duration: 0.3 }}
-              onClick={() => setSelectedThreat(null)} 
-              className={`absolute inset-0 ${isDark ? 'bg-[#020617]/80' : 'bg-slate-900/40'}`} 
-            />
-            
-            {/* Snappy Spring-Loaded Modal Container */}
-            <motion.div 
-              initial={{ opacity: 0, scale: 0.9, y: 40, rotateX: 5 }} 
-              animate={{ opacity: 1, scale: 1, y: 0, rotateX: 0 }} 
-              exit={{ opacity: 0, scale: 0.95, y: 20 }} 
-              transition={{ type: 'spring', damping: 20, stiffness: 350, mass: 0.8 }} 
-              className={`relative w-full max-w-xl max-h-[85vh] md:max-h-[80vh] flex flex-col z-10 rounded-2xl shadow-2xl overflow-hidden border ${isDark ? 'bg-slate-950 border-slate-700/50 shadow-[0_0_50px_rgba(99,102,241,0.15)]' : 'bg-white border-slate-200 shadow-[0_0_40px_rgba(0,0,0,0.1)]'}`}
-            >
+            <motion.div initial={{ scale: 0.9, y: 40 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.95, y: 20 }} className={`relative w-full max-w-xl max-h-[85vh] flex flex-col z-10 rounded-2xl shadow-2xl overflow-hidden border ${isDark ? 'bg-slate-950 border-slate-700/50 shadow-[0_0_50px_rgba(99,102,241,0.15)]' : 'bg-white border-slate-200 shadow-xl'}`}>
               <div className={`absolute inset-0 pointer-events-none opacity-[0.02] ${isDark ? '' : 'invert'}`} style={{ backgroundImage: 'linear-gradient(to right, #ffffff 1px, transparent 1px), linear-gradient(to bottom, #ffffff 1px, transparent 1px)', backgroundSize: '24px 24px' }}></div>
               
-              {/* Header */}
-              <div className={`px-4 py-3 md:px-5 md:py-3.5 border-b flex justify-between items-center sticky top-0 z-20 backdrop-blur-2xl ${isDark ? 'bg-slate-950/80 border-slate-800/80' : 'bg-white/80 border-slate-100'}`}>
-                 <div className="flex items-center gap-2.5 cursor-pointer group" onClick={(e) => openUserProfile(selectedThreat.user_id, selectedThreat.profiles, e)}>
-                   <div className="w-8 h-8 md:w-9 md:h-9 rounded-full overflow-hidden shrink-0 border border-slate-700 bg-slate-800 flex items-center justify-center transition-all group-hover:border-indigo-500 shadow-inner">
+              <div className={`px-4 py-3 md:px-5 md:py-4 border-b flex justify-between items-center sticky top-0 z-20 backdrop-blur-2xl ${isDark ? 'bg-slate-950/80 border-slate-800' : 'bg-white/80 border-slate-200'}`}>
+                 <div className="flex items-center gap-3 cursor-pointer group" onClick={(e) => {setSelectedThreat(null); openUserProfile(selectedThreat.user_id, selectedThreat.profiles, e);}}>
+                   <div className="w-10 h-10 rounded-full overflow-hidden shrink-0 border border-slate-700 bg-slate-800 flex items-center justify-center">
                      <TacticalAvatar identifier={selectedThreat.user_id === currentUserId ? localIdentity.avatar : selectedThreat.profiles?.avatar_url} />
                    </div>
                    <div>
-                     <div className="text-[8px] font-black uppercase tracking-[0.2em] text-indigo-500 flex items-center gap-1.5 mb-0.5">
-                        {/* ✅ ACTIVE NODE PULSE ANIMATION */}
-                        <div className="relative flex h-1.5 w-1.5">
-                          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75"></span>
-                          <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-indigo-500"></span>
-                        </div>
-                        Network Node
-                     </div>
-                     <div className={`text-xs md:text-sm font-black tracking-tight group-hover:text-indigo-400 transition-colors line-clamp-1 ${theme.textPrimary}`}>
-                       {selectedThreat.user_id === currentUserId ? localIdentity.alias : (selectedThreat.profiles?.username || `AGENT-${selectedThreat.user_id?.substring(0,4).toUpperCase()}`)}
+                     <div className="text-[9px] font-black uppercase tracking-[0.2em] text-indigo-500 mb-0.5">Reported By</div>
+                     <div className={`text-sm font-black tracking-tight group-hover:text-indigo-400 transition-colors line-clamp-1 ${theme.textPrimary}`}>
+                       {selectedThreat.user_id === currentUserId ? localIdentity.alias : (selectedThreat.profiles?.username || `USER-${selectedThreat.user_id?.substring(0,4).toUpperCase()}`)}
                      </div>
                    </div>
                  </div>
-
-                 <div className="flex items-center gap-1.5">
-                    {(selectedThreat.user_id === currentUserId || isDeveloperNode) && (
-                       <button onClick={(e) => handleDeletePost(selectedThreat.id, e)} className="p-1.5 bg-rose-500/10 text-rose-500 hover:bg-rose-500 hover:text-white rounded-lg transition-all" title="Redact">
-                         <TrashIcon className="w-4 h-4" />
-                       </button>
-                    )}
-                    <button onClick={() => setSelectedThreat(null)} className={`p-1.5 rounded-lg transition-all ${isDark ? 'bg-slate-800 text-slate-400 hover:bg-slate-700 hover:text-white' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'}`}>
-                      <XMarkIcon className="w-4 h-4 md:w-5 md:h-5" />
-                    </button>
-                 </div>
+                 <button onClick={() => setSelectedThreat(null)} className={`p-2 rounded-lg transition-all ${isDark ? 'bg-slate-800 text-slate-400 hover:text-white' : 'bg-slate-100 text-slate-500 hover:text-slate-900'}`}><XMarkIcon className="w-5 h-5" /></button>
               </div>
 
-              {/* Console Body */}
               <div className="flex-grow overflow-y-auto p-4 md:p-6 custom-scrollbar relative z-10">
-                
-                {/* ✅ DECODING ANIMATION ON TITLE */}
-                <h2 className={`text-lg md:text-xl font-black mb-4 leading-tight tracking-tighter ${theme.textPrimary}`}>
+                <h2 className={`text-xl font-black mb-4 leading-tight tracking-tighter ${theme.textPrimary}`}>
                   <DecodedText text={selectedThreat.title} />
                 </h2>
-
-                <div className="flex flex-wrap md:flex-nowrap gap-2 mb-5">
-                   <div className={`flex-1 min-w-[90px] p-2.5 rounded-xl border flex flex-col items-start relative overflow-hidden ${isDark ? 'bg-slate-900/50 border-slate-800/80 shadow-inner' : 'bg-slate-50 border-slate-200 shadow-sm'}`}>
-                      <div className="absolute top-0 right-0 w-6 h-6 bg-rose-500/10 rounded-bl-full"></div>
-                      <span className="text-[7px] md:text-[8px] font-black text-slate-500 uppercase tracking-widest mb-1">Class</span>
-                      {/* ✅ DECODING ANIMATION ON CLASSIFICATION */}
-                      <span className={`text-[9px] md:text-[10px] font-mono font-bold uppercase line-clamp-1 ${selectedThreat.threat_type === 'safe' ? 'text-emerald-500' : 'text-rose-500'}`}>
-                         <DecodedText text={selectedThreat.threat_type.replace('_', ' ').toUpperCase()} />
-                      </span>
-                   </div>
-                   <div className={`flex-1 min-w-[90px] p-2.5 rounded-xl border flex flex-col items-start relative overflow-hidden ${isDark ? 'bg-slate-900/50 border-slate-800/80 shadow-inner' : 'bg-slate-50 border-slate-200 shadow-sm'}`}>
-                      <div className="absolute top-0 right-0 w-6 h-6 bg-indigo-500/10 rounded-bl-full"></div>
-                      <span className="text-[7px] md:text-[8px] font-black text-slate-500 uppercase tracking-widest mb-1">Timestamp</span>
-                      <span className={`text-[9px] md:text-[10px] font-mono font-bold uppercase line-clamp-1 ${theme.textPrimary}`}>{timeAgo(selectedThreat.created_at)}</span>
-                   </div>
-                   <div className={`flex-1 min-w-[90px] p-2.5 rounded-xl border flex flex-col items-start relative overflow-hidden ${isDark ? 'bg-slate-900/50 border-slate-800/80 shadow-inner' : 'bg-slate-50 border-slate-200 shadow-sm'}`}>
-                      <div className="absolute top-0 right-0 w-6 h-6 bg-emerald-500/10 rounded-bl-full"></div>
-                      <span className="text-[7px] md:text-[8px] font-black text-slate-500 uppercase tracking-widest mb-1">Integrity</span>
-                      {selectedThreat.is_verified ? (
-                         <span className="text-[9px] md:text-[10px] font-mono font-bold uppercase text-emerald-500 flex items-center gap-1"><CheckCircleIcon className="w-3 h-3"/> Verified</span>
-                      ) : (
-                         <span className="text-[9px] md:text-[10px] font-mono font-bold uppercase text-yellow-500 flex items-center gap-1"><ArrowPathIcon className="w-3 h-3 animate-spin-slow"/> Scanning</span>
-                      )}
-                   </div>
-                </div>
                 
                 {selectedThreat.media_url && (
                   <div className="mb-5 rounded-xl overflow-hidden border border-slate-800 bg-black flex items-center justify-center shadow-lg relative">
-                    <div className="absolute top-2 right-2 px-1.5 py-0.5 bg-black/60 backdrop-blur-md rounded text-[7px] font-mono text-white tracking-widest border border-white/10 z-10">EVIDENCE</div>
-                    <RenderForensicMedia url={selectedThreat.media_url} className="max-h-[160px] md:max-h-[220px] object-contain opacity-90 hover:opacity-100 transition-opacity" />
+                    <RenderForensicMedia url={selectedThreat.media_url} className="max-h-[220px] object-contain" />
                   </div>
                 )}
                 
-                <div className="relative">
-                  <div className="absolute left-0 top-0 bottom-0 w-1 bg-indigo-500 rounded-l-lg"></div>
-                  <div className={`pl-4 pr-3 py-3 md:pl-5 md:pr-4 md:py-4 rounded-r-lg md:rounded-r-xl text-xs leading-relaxed whitespace-pre-wrap font-medium shadow-inner ${isDark ? 'bg-slate-900/80 text-slate-300 border border-slate-800 border-l-0' : 'bg-slate-50 text-slate-700 border border-slate-200 border-l-0'}`}>
-                    <div className="text-[8px] md:text-[9px] font-black uppercase text-indigo-500 mb-2 tracking-widest flex items-center gap-1.5 pb-1.5">
-                      <DocumentPlusIcon className="w-3 h-3" /> Final Analysis Dump
-                    </div>
-                    {selectedThreat.description}
-                  </div>
+                <div className={`p-5 rounded-xl text-sm leading-relaxed whitespace-pre-wrap font-medium shadow-inner ${isDark ? 'bg-slate-900/80 text-slate-300 border border-slate-800' : 'bg-slate-50 text-slate-700 border border-slate-200'}`}>
+                  {selectedThreat.description}
                 </div>
-
-                <div className={`mt-5 pt-4 flex flex-wrap gap-2 items-center justify-between border-t ${isDark ? 'border-slate-800/80' : 'border-slate-200'}`}>
-                   <button onClick={(e) => handleLike(selectedThreat.id, e)} className={`flex items-center gap-1.5 px-3 py-2 md:px-4 md:py-2.5 rounded-lg text-[10px] md:text-xs font-black uppercase tracking-widest transition-all ${selectedThreat.user_liked ? 'bg-rose-500 text-white shadow-[0_0_15px_rgba(225,29,72,0.4)]' : isDark ? 'bg-slate-800 text-slate-400 hover:bg-slate-700 hover:text-rose-400' : 'bg-slate-100 text-slate-600 hover:bg-rose-50 hover:text-rose-500'}`}>
-                     <HeartIcon className={`w-3 h-3 md:w-4 md:h-4 ${selectedThreat.user_liked ? 'fill-white' : ''}`} /> 
-                     {selectedThreat.likes_count} Impact
-                   </button>
-                   
-                   <button onClick={(e) => handleShare(selectedThreat, e)} className={`flex items-center gap-1.5 px-3 py-2 md:px-4 md:py-2.5 rounded-lg text-[10px] md:text-xs font-black uppercase tracking-widest transition-all ${isDark ? 'bg-indigo-500/10 text-indigo-400 border border-indigo-500/30 hover:bg-indigo-500 hover:text-white hover:shadow-[0_0_15px_rgba(99,102,241,0.4)]' : 'bg-indigo-50 text-indigo-600 border border-indigo-200 hover:bg-indigo-600 hover:text-white'}`}>
-                     <ShareIcon className="w-3 h-3 md:w-4 md:h-4" /> Distribute
-                   </button>
-                </div>
-
               </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* ========================================= */}
+      {/* 👤 PROFILE MODAL                            */}
+      {/* ========================================= */}
+      <AnimatePresence>
+        {profileData && (
+          <motion.div key="profile-modal" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[999999] flex items-center justify-center p-4">
+             <div className={`absolute inset-0 backdrop-blur-md ${isDark ? 'bg-slate-950/70' : 'bg-slate-900/40'}`} onClick={() => setProfileData(null)} />
+             
+             <motion.div initial={{ scale: 0.9, y: 20 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.9, y: 20 }} className={`${theme.card} p-8 max-w-sm w-full text-center relative z-10 rounded-[2rem] shadow-2xl`}>
+              <button onClick={() => setProfileData(null)} className={`absolute top-4 right-4 p-2 rounded-full transition-all ${isDark ? 'bg-slate-800 text-slate-400 hover:text-white' : 'bg-slate-100 text-slate-500 hover:text-slate-900'}`}><XMarkIcon className="w-4 h-4" /></button>
+              
+              <div className="w-24 h-24 mx-auto rounded-full overflow-hidden border-4 border-indigo-500/20 mb-5 flex items-center justify-center bg-slate-800/50">
+                <TacticalAvatar identifier={profileData.avatarUrl} />
+              </div>
+              
+              <h2 className={`text-2xl font-black tracking-tight mb-1 ${theme.textPrimary}`}>{profileData.username}</h2>
+              <div onClick={() => { navigator.clipboard.writeText(profileData.userId); toast.success("ID Copied"); }} className="cursor-pointer text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-indigo-400 mb-6">ID: {profileData.userId.substring(0, 8)}...</div>
+              
+              <div className="grid grid-cols-2 gap-4">
+                <div className={`${theme.inner} p-4 rounded-2xl border flex flex-col items-center justify-center`}>
+                  <div className={`text-3xl font-black ${theme.textPrimary}`}>{profileData.postCount}</div>
+                  <div className="text-[9px] text-slate-500 font-black uppercase tracking-widest mt-1">Posts</div>
+                </div>
+                <div className={`${theme.inner} p-4 rounded-2xl border flex flex-col items-center justify-center`}>
+                  <div className={`text-3xl font-black ${theme.textPrimary}`}>{profileData.totalLikes}</div>
+                  <div className="text-[9px] text-slate-500 font-black uppercase tracking-widest mt-1">Impact</div>
+                </div>
+              </div>
+             </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+{/* ========================================= */}
+      {/* 🎛️ GLOBAL FLOATING MENUS (CSS TRAP FIX)  */}
+      {/* ========================================= */}
+      <AnimatePresence>
+        {/* HEADER FILTER MODAL */}
+        {showHeaderMenu && (
+          <div className="fixed inset-0 z-[99999] flex items-center justify-center p-4">
+            <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setShowHeaderMenu(false)} />
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.9, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              className={`relative w-64 rounded-3xl shadow-2xl border overflow-hidden flex flex-col z-10 ${isDark ? 'bg-slate-900 border-slate-700' : 'bg-white border-slate-200'}`}
+            >
+              <div className={`p-4 border-b text-center text-xs font-black uppercase tracking-widest ${isDark ? 'border-slate-800 text-slate-400' : 'border-slate-100 text-slate-500'}`}>Select Filter</div>
+              {['All', 'Web Scams', 'Media Fakes', 'Verified', 'Official'].map(f => (
+                <button key={f} onClick={() => { setFilter(f); setShowHeaderMenu(false); }}
+                  className={`w-full text-center px-5 py-4 text-[11px] font-black uppercase tracking-widest transition-all ${filter === f ? 'bg-indigo-600 text-white' : (isDark ? 'text-slate-300 hover:bg-slate-800' : 'text-slate-600 hover:bg-slate-50')}`}
+                > {f} </button>
+              ))}
+            </motion.div>
+          </div>
+        )}
+
+        {/* INPUT CATEGORY MODAL */}
+        {showCategoryMenu && (
+          <div className="fixed inset-0 z-[99999] flex items-center justify-center p-4">
+            <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setShowCategoryMenu(false)} />
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.9, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              className={`relative w-64 rounded-3xl shadow-2xl border overflow-hidden flex flex-col z-10 ${isDark ? 'bg-slate-900 border-slate-700' : 'bg-white border-slate-200'}`}
+            >
+              <div className={`p-4 border-b text-center text-xs font-black uppercase tracking-widest ${isDark ? 'border-slate-800 text-slate-400' : 'border-slate-100 text-slate-500'}`}>Select Threat Type</div>
+              {[
+                { id: 'Web Scam', label: 'Web Scam', color: 'bg-orange-500' },
+                { id: 'Deepfake Media', label: 'Media Fake', color: 'bg-purple-500' },
+                { id: 'General Alert', label: 'General Alert', color: 'bg-red-500' }
+              ].map(cat => (
+                <button key={cat.id} onClick={() => { setPostCategory(cat.id); setShowCategoryMenu(false); }}
+                  className={`w-full flex items-center justify-center gap-2 px-5 py-4 text-[11px] font-black uppercase tracking-widest transition-all ${postCategory === cat.id ? 'bg-indigo-600 text-white' : (isDark ? 'text-slate-300 hover:bg-slate-800' : 'text-slate-600 hover:bg-slate-50')}`}
+                > 
+                  <span className={`w-2 h-2 rounded-full ${cat.color}`} /> {cat.label} 
+                </button>
+              ))}
             </motion.div>
           </div>
         )}
       </AnimatePresence>
 
       {/* ========================================= */}
-      {/* 👤 MODERN OSINT PROFILE MODAL               */}
+      {/* 🔐 AUTHORITY LOGIN MODAL                    */}
       {/* ========================================= */}
       <AnimatePresence>
-        {profileData && (
-          <div className="fixed inset-0 z-[999999] flex items-center justify-center p-4">
-             {/* Backdrop */}
-             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setProfileData(null)} className={`absolute inset-0 backdrop-blur-md ${isDark ? 'bg-slate-950/70' : 'bg-slate-900/40'}`} />
-             
-             {/* Center Card */}
-             <motion.div 
-               initial={{ opacity: 0, scale: 0.9, y: 20 }} 
-               animate={{ opacity: 1, scale: 1, y: 0 }} 
-               exit={{ opacity: 0, scale: 0.9, y: 20 }}
-               transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-               className={`${theme.card} p-8 max-w-sm w-full text-center relative z-10 rounded-[2rem] shadow-2xl overflow-hidden`}
-             >
-              {/* Close Button */}
-              <button onClick={() => setProfileData(null)} className={`absolute top-4 right-4 p-2 rounded-full transition-all ${isDark ? 'bg-slate-800 text-slate-400 hover:text-white' : 'bg-slate-100 text-slate-500 hover:text-slate-900'}`}>
-                <XMarkIcon className="w-4 h-4" />
-              </button>
-
-              {/* Profile Content */}
-              <div className="w-24 h-24 mx-auto rounded-full overflow-hidden border-4 border-indigo-500/20 mb-5 flex items-center justify-center bg-slate-800/50 shadow-inner">
-                {/* ✅ TacticalAvatar now properly handles icons vs images here too */}
-                <TacticalAvatar identifier={profileData.avatarUrl} />
+        {showAuthModal && (
+          <motion.div key="auth-modal" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-[100] p-4">
+            <div className="absolute inset-0" onClick={() => setShowAuthModal(false)} />
+            <motion.div initial={{ scale: 0.9 }} animate={{ scale: 1 }} exit={{ scale: 0.9 }} className="bg-slate-900 p-8 rounded-3xl w-full max-w-sm border border-slate-700 shadow-2xl relative overflow-hidden z-10">
+              <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-red-600 to-indigo-600"></div>
+              <h3 className="text-xl font-black text-white mb-1 flex items-center gap-2"><ShieldCheckIcon className="w-6 h-6 text-red-500"/> Authority Gateway</h3>
+              <p className="text-[10px] text-slate-400 mb-6 uppercase tracking-widest font-bold">Secure Official Access</p>
+              
+              <div className="space-y-3 mb-6 text-left">
+                <div><label className="text-[9px] uppercase tracking-widest font-bold text-slate-500 ml-1">Officer Name</label><input type="text" value={authForm.name} onChange={e=>setAuthForm({...authForm, name: e.target.value})} className="w-full p-3 bg-slate-950 border border-slate-800 text-white rounded-xl text-sm font-bold outline-none focus:border-red-500" placeholder="e.g. Insp. Sharma" /></div>
+                <div><label className="text-[9px] uppercase tracking-widest font-bold text-slate-500 ml-1">Agency / Department</label><input type="text" value={authForm.agency} onChange={e=>setAuthForm({...authForm, agency: e.target.value})} className="w-full p-3 bg-slate-950 border border-slate-800 text-white rounded-xl text-sm font-bold outline-none focus:border-red-500" placeholder="e.g. Cyber Cell" /></div>
+                <div><label className="text-[9px] uppercase tracking-widest font-bold text-slate-500 ml-1">Access Code</label><input type="password" value={authForm.code} onChange={e=>setAuthForm({...authForm, code: e.target.value})} onKeyDown={e => e.key === 'Enter' && handleAuthorityLogin()} className="w-full p-3 bg-slate-950 border border-slate-800 text-rose-400 rounded-xl font-mono text-center tracking-widest outline-none focus:border-red-500" placeholder="••••••••" /></div>
               </div>
               
-              <h2 className={`text-2xl font-black tracking-tight mb-1 ${theme.textPrimary}`}>{profileData.username}</h2>
-              <div className="text-[10px] font-black uppercase tracking-widest text-indigo-500 mb-8 flex items-center justify-center gap-1.5 bg-indigo-500/10 w-max mx-auto px-3 py-1 rounded-full border border-indigo-500/20">
-                <ShieldCheckIcon className="w-3.5 h-3.5" /> Trusted Operative
+              <div className="flex gap-3">
+                <button onClick={handleAuthorityLogin} className="flex-1 bg-red-600 hover:bg-red-500 text-white py-3 rounded-xl font-black uppercase tracking-widest text-xs shadow-lg shadow-red-600/20">Verify</button>
+                <button onClick={()=>setShowAuthModal(false)} className="flex-1 bg-slate-800 hover:bg-slate-700 text-white py-3 rounded-xl font-black uppercase tracking-widest text-xs">Cancel</button>
               </div>
-              
-              <div className="grid grid-cols-2 gap-4">
-                <div className={`${theme.inner} p-4 rounded-2xl border flex flex-col items-center justify-center transition-all hover:border-indigo-500/30`}>
-                  <div className={`text-3xl font-black ${theme.textPrimary}`}>{profileData.postCount}</div>
-                  <div className="text-[9px] text-slate-500 font-black uppercase tracking-widest mt-1">Dossiers</div>
-                </div>
-                <div className={`${theme.inner} p-4 rounded-2xl border flex flex-col items-center justify-center transition-all hover:border-indigo-500/30`}>
-                  <div className={`text-3xl font-black ${theme.textPrimary}`}>{profileData.totalLikes}</div>
-                  <div className="text-[9px] text-slate-500 font-black uppercase tracking-widest mt-1">Impact</div>
-                </div>
-              </div>
-             </motion.div>
-          </div>
+            </motion.div>
+          </motion.div>
         )}
       </AnimatePresence>
-    </motion.div>
-  );
-};
 
-export default CommunitySection;
+    </div>
+  );
+}

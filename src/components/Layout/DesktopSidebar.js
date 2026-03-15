@@ -70,16 +70,16 @@ const DesktopSidebar = ({ currentSection, setCurrentSection, user, identity, col
   }, [user?.id, user?.uid]);
 
   const navigationItems = [
-    { id: 'home', icon: HomeIcon, label: 'Home', description: 'Dashboard & Overview' },
-    { id: 'verify', icon: ShieldCheckIcon, label: 'Threat Analysis', description: 'AI Forensic Scanner' },
-    { id: 'education', icon: BookOpenIcon, label: 'Academy', description: 'Security Training' },
-    { id: 'community', icon: UsersIcon, label: 'Community Hub', description: 'Global Network' },
-    { id: 'protection', icon: ShieldExclamationIcon, label: 'Helpline 24/7', description: 'Emergency Resources' },
-    { id: 'analytics', icon: ChartBarIcon, label: 'Analytics', description: 'Your Ledger Stats' },
-    { id: 'contact', icon: PhoneIcon, label: 'Contact', description: 'Reach the Team' },
-    { id: 'support', icon: QuestionMarkCircleIcon, label: 'Support', description: 'Help Center' },
-    { id: 'about', icon: InformationCircleIcon, label: 'About Xist AI', description: 'Mission & Vision' },
-    { id: 'settings', icon: Cog6ToothIcon, label: 'Settings', description: 'Node Preferences' },
+    { id: 'home', icon: HomeIcon, label: 'Dashboard', description: 'Activity overview' },
+    { id: 'verify', icon: ShieldCheckIcon, label: 'Check Content', description: 'AI safety scanner' },
+    { id: 'education', icon: BookOpenIcon, label: 'Safety Academy', description: 'Learn to stay safe' },
+    { id: 'community', icon: UsersIcon, label: 'Community', description: 'Connect with others' },
+    { id: 'protection', icon: ShieldExclamationIcon, label: 'Get Help 24/7', description: 'Emergency resources' },
+    { id: 'analytics', icon: ChartBarIcon, label: 'My Stats', description: 'Your activity history' },
+    { id: 'contact', icon: PhoneIcon, label: 'Contact Us', description: 'Reach our team' },
+    { id: 'support', icon: QuestionMarkCircleIcon, label: 'Support', description: 'Help center' },
+    { id: 'about', icon: InformationCircleIcon, label: 'About Us', description: 'Our mission' },
+    { id: 'settings', icon: Cog6ToothIcon, label: 'Settings', description: 'App preferences' },
   ];
 
   const ActiveIcon = AVATAR_OPTIONS?.find(a => a.id === identity?.avatar)?.icon || UserCircleIcon;
@@ -188,11 +188,11 @@ const DesktopSidebar = ({ currentSection, setCurrentSection, user, identity, col
                   exit={{ opacity: 0, width: 0 }}
                   className="overflow-hidden whitespace-nowrap"
                 >
-                  <div className="text-sm font-bold font-mono uppercase text-gray-900 dark:text-white truncate max-w-[160px]">
-                    {identity?.alias || 'Unknown Node'}
+                  <div className="text-sm font-bold text-gray-900 dark:text-white truncate max-w-[160px]">
+                    {identity?.alias || 'Guest User'}
                   </div>
-                  <div className="text-[10px] text-purple-600 dark:text-cyan-400 uppercase tracking-widest flex items-center gap-1 mt-0.5">
-                    <div className="w-1.5 h-1.5 rounded-full bg-purple-600 dark:bg-cyan-400 animate-pulse" /> Active Shield
+                  <div className="text-[10px] text-purple-600 dark:text-cyan-400 uppercase tracking-widest flex items-center gap-1 mt-0.5 font-bold">
+                    <div className="w-1.5 h-1.5 rounded-full bg-purple-600 dark:bg-cyan-400 animate-pulse" /> Active Protection
                   </div>
                 </motion.div>
               )}
