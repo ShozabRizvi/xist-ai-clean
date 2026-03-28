@@ -2,24 +2,27 @@ import os
 import time
 import json
 import tempfile
+import datetime
 import requests
 from bs4 import BeautifulSoup
 from flask import Flask, request, jsonify
 from flask_cors import CORS, cross_origin
 from dotenv import load_dotenv
 from werkzeug.utils import secure_filename
-import google.generativeai as genai
 import PyPDF2
+
+# ✅ THE NEW, OFFICIAL SDK IMPORTS (No more deprecation warning!)
+from google import genai
+from google.genai import types
 
 load_dotenv()
 app = Flask(__name__)
 CORS(app)
 
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
-genai.configure(api_key=GEMINI_API_KEY)
 
-# Force JSON output format
-llm_model = genai.GenerativeModel('gemini-2.5-flash', generation_config={"response_mime_type": "application/json"})
+# ✅ NEW SDK CLIENT INITIALIZATION
+client = genai.Client(api_key=GEMINI_API_KEY)
 
 def scrape_url(url):
     """Helper function to extract text from a webpage"""
@@ -96,11 +99,10 @@ def analyze_content():
                 return jsonify({"error": "Failed to extract text from document."}), 500
             
         # Handle Media Modes (Image, Video, Voice)
-        # Handle Media Modes (Image, Video, Voice)
         elif mode in ['image', 'video', 'voice'] and uploaded_file:
             print(f"📁 Processing uploaded {mode} file...")
             
-            # 🚨 FIX: Ensure Voice notes have an audio extension for Gemini API
+            # Ensure Voice notes have an audio extension for Gemini API
             original_filename = secure_filename(uploaded_file.filename)
             if mode == 'voice' and not original_filename.lower().endswith(('.webm', '.wav', '.mp3')):
                 filename = f"voice_capture_{int(time.time())}.webm"
@@ -111,86 +113,98 @@ def analyze_content():
             temp_file_path = os.path.join(temp_dir, filename)
             uploaded_file.save(temp_file_path)
 
-            # Upload the file securely to Gemini's File API
-            # Explicitly setting the mime_type helps Gemini skip the guessing stage
             mime_type = "audio/webm" if mode == 'voice' else None
-            media_file_for_gemini = genai.upload_file(path=temp_file_path, mime_type=mime_type)
+            
+            # ✅ NEW SDK FILE UPLOAD LOGIC
+            upload_config = {'mime_type': mime_type} if mime_type else None
+            media_file_for_gemini = client.files.upload(file=temp_file_path, config=upload_config)
             
             print(f"⏳ Waiting for Gemini to process the {mode}...")
             
-            # THE FINAL FIX: UPDATING THE FILE OBJECT
             while media_file_for_gemini.state.name == 'PROCESSING':
                 print(".", end="", flush=True)
                 time.sleep(2)
-                # Overwrite the old file object with the newly updated one
-                media_file_for_gemini = genai.get_file(media_file_for_gemini.name)
+                # ✅ NEW SDK GET FILE LOGIC
+                media_file_for_gemini = client.files.get(name=media_file_for_gemini.name)
                 
             if media_file_for_gemini.state.name == 'FAILED':
-                # 🚨 DEBUG: Print why it failed in the console
                 print(f"\n❌ Media processing failed in Gemini. State: {media_file_for_gemini.state}")
                 return jsonify({"error": f"Gemini failed to process the {mode} file."}), 500
                 
             print("\n✅ Media is ACTIVE and ready!")
             analysis_input = "Please analyze the attached media file."
 
+        # Get the exact current time to prevent the AI from giving outdated news
+        live_date = datetime.datetime.now().strftime("%B %d, %Y")
+
         # 3. BUILD THE MULTIMODAL PROMPT
-       # 3. BUILD THE MULTIMODAL PROMPT
         if mode in ['image', 'video', 'voice']:
             prompt_instructions = f"""
-            You are a helpful and direct truth-checking expert for 'Xist AI'. 
-            Look at this {mode} and tell me if it is a real capture or if it was made/changed by AI.
+            SYSTEM ROLE: Senior Forensic Intelligence Analyst for Xist AI.
+            TASK: Conduct a forensic analysis of the provided {mode}.
             
-            SIMPLE LANGUAGE RULES:
-            1. Use very simple words. Do NOT use technical words like 'metadata', 'artifacts', or 'forensics'.
-            2. If there is a question like "Is this a deepfake?", start your answer with "True.", "False.", "Scam.", or "Authentic." 
-            3. Cite your proof in the explanation text using numbers like [1] or [2].
-            4. Be direct and emotionless. No "I think" or "Based on my analysis."
-            
+            STRICT OUTPUT PROTOCOL:
+            1. VERDICT: Start the 'explanation' field EXACTLY with "[ VERDICT ] - YES. This media is authentic.", "[ VERDICT ] - NO. This media is AI-generated/manipulated.", or "[ VERDICT ] - CAUTION. This media is suspicious."
+            2. SIMPLE LANGUAGE: You MUST use very simple, everyday words. Explain your visual/audio findings clearly so anyone can understand. NO technical jargon.
+            3. CITATIONS & SOURCES: Include as many specific visual/audio observations as needed in your 'sources' array. If you find real web sources debunking this specific media, include their actual URLs. Embed markers like [1] in your explanation text.
+            4. LANGUAGE: Respond in the exact same language as the user's input, but keep technical headers in English.
+            5. DEPTH: Provide a detailed 2-3 paragraph EXECUTIVE BRIEFING.
+
             Return ONLY a JSON object matching this exact structure:
             {{
-                "credibility_score": <integer 0-100: 100=Real, 0=AI Fake>,
-                "overall_verdict": <string: "SAFE", "QUESTIONABLE", or "CRITICAL">,
-                "threat_category": <string: "Deepfake", "Manipulated Media", or "Safe">,
-                "emotional_intensity": <integer 0-100>,
-                "bias_score": <integer 0-100>,
-                "logical_consistency": <integer 0-100>,
-                "explanation": "False. The person's eyes do not blink naturally [1]. The background lines are blurry and bent [2].",
+                "credibility_score": <int 0-100: 100=Real, 0=AI Fake>,
+                "overall_verdict": <"SAFE" (if score > 60), "QUESTIONABLE" (if score is 40-60), or "CRITICAL" (if score < 40)>,
+                "threat_category": <string: "Deepfake", "Manipulated Media", or "Authentic">,
+                "emotional_intensity": <int 0-100>,
+                "bias_score": <int 0-100>,
+                "logical_consistency": <int 0-100>,
+                "explanation": "[ VERDICT ] - NO. This media is AI-generated. \\n\\nEXECUTIVE BRIEFING: \\nThe person's eyes do not blink naturally [1]. The background lines are blurry and bent in a way real cameras do not capture [2].",
                 "sources": [
                     {{
                         "id": 1,
-                        "source_name": "Visual Check",
+                        "source_name": "Visual Forensic Scan",
                         "url": "Observation",
-                        "why_relevant": "Explain what looks wrong in simple words."
+                        "why_relevant": "Unnatural eye movement detected."
                     }}
                 ]
             }}
             """
         else:
             prompt_instructions = f"""
-            You are a helpful and direct truth-checking expert for 'Xist AI'. 
-            Check this {mode} for lies, scams, or AI-written patterns.
+            SYSTEM ROLE: Senior Forensic Intelligence Analyst for Xist AI.
+            CURRENT SYSTEM DATE: {live_date}
             
-            SIMPLE LANGUAGE RULES:
-            1. Use very simple words. Do NOT use buzzwords like 'delve', 'complex', or 'tapestry'. 
-            2. If the user asks a question, start your answer with "True.", "False.", "Scam.", or "Authentic." 
-            3. Cite your proof in the explanation text using numbers like [1] or [2].
-            4. Be direct and emotionless.
+            TASK: FACT-CHECK the following {mode} claim against real-world events.
             
+            STRICT FORENSIC PROTOCOLS (EVIDENCE-FIRST):
+            1. LIVE-OR-SILENT (ZERO-INFERENCE): You are a RESEARCHER, not a writer. Do not rely on internal memory. If your search tools do not return active, dated news from reputable sources confirming or debunking the event, you MUST set the verdict to "[ VERDICT ] - CAUTION. Unverified." and explain that the live search found no proof.
+            2. DATE VALIDATION: Check the publication date of every source. If the user asks about a current event, and you find a source from a past year, ignore it for the verdict and explicitly state it is OLD news.
+            3. SOURCE HIERARCHY & CONTRADICTIONS: Prioritize official news bureaus (Reuters, AP, BBC). If reputable sources contradict each other, report the conflict and set the verdict to CAUTION. If only social media is reporting a major event, the verdict MUST remain CAUTION.
+            4. VERDICT FORMAT: Start the 'explanation' field EXACTLY with one of the following:
+               - "[ VERDICT ] - YES. This information is correct."
+               - "[ VERDICT ] - NO. This information is false."
+               - "[ VERDICT ] - CAUTION. Unverified / Conflicting Reports."
+            5. DEPTH & LENGTH: Your EXECUTIVE BRIEFING must be detailed (2-3 paragraphs). Explain the current reality and provide specific proof based ONLY on the live sources you retrieved.
+            6. SURVIVAL PLAN (IF DANGER): ONLY trigger a 3-step tactical survival plan if the user is in immediate personal danger from a scam, hack, or phishing link. Do NOT trigger this for general news, rumors, or geopolitical misinformation.
+            7. MULTILINGUAL SUPPORT: You MUST detect the language of the user's input. Write the entire explanation in that EXACT SAME LANGUAGE. (However, keep the "[ VERDICT ]" and "EXECUTIVE BRIEFING" headers in English for system formatting).
+            8. CITATIONS (CLEAN URLS ONLY): Cite real sources using markers like [1]. CRITICAL: You are FORBIDDEN from using massive 'vertexaisearch' or 'grounding-api-redirect' URLs. You must extract and provide the clean, original article URL. If you cannot find the clean URL, just provide the domain name (e.g., 'https://www.reuters.com').
+            9. JSON SAFETY (CRITICAL): You are writing raw JSON. Inside the 'explanation' field, you are FORBIDDEN from using double quotes ("). If you need to quote something, use single quotes ('). Do not use actual line breaks, use literal \\n\\n for paragraphs. 
+
             Return ONLY a JSON object matching this exact structure:
             {{
-                "credibility_score": <integer 0-100: 100=True, 0=Scam/Fake>,
-                "overall_verdict": <string: "SAFE", "QUESTIONABLE", or "CRITICAL">,
-                "threat_category": <string: "Misinformation", "Scam", "Malware Risk", or "Safe">,
-                "emotional_intensity": <integer 0-100>,
-                "bias_score": <integer 0-100>,
-                "logical_consistency": <integer 0-100>,
-                "explanation": "Scam. Real banks will never ask for your password over a text message [1]. This is a common trick used to steal money [2].",
+                "credibility_score": <int 0-100: 100 means the user's claim is a TRUE FACT, 0 means the claim is FALSE/FAKE NEWS>,
+                "overall_verdict": <"SAFE" (if score > 60), "QUESTIONABLE" (if score is 40-60), or "CRITICAL" (if score < 40)>,
+                "threat_category": <string: "Misinformation", "Scam", "Authentic News", "Unverified">,
+                "emotional_intensity": <int 0-100>,
+                "bias_score": <int 0-100>,
+                "logical_consistency": <int 0-100>,
+                "explanation": "[ VERDICT ] - <INSERT VERDICT HERE>. \\n\\nEXECUTIVE BRIEFING: \\n<Write your 2-3 paragraph explanation here based ONLY on the live search results. Remember: NO DOUBLE QUOTES ALLOWED IN THIS TEXT. Use single quotes instead.>",
                 "sources": [
                     {{
                         "id": 1,
-                        "source_name": "Official Bank Security Rules",
-                        "url": "bank-security-portal.com",
-                        "why_relevant": "This source shows the real rules for bank messages."
+                        "source_name": "Source Name",
+                        "url": "URL",
+                        "why_relevant": "Brief reason."
                     }}
                 ]
             }}
@@ -203,9 +217,43 @@ def analyze_content():
             gemini_payload = [prompt_instructions, f"INPUT TEXT: {analysis_input}"]
 
         # 4. CALL GEMINI
-        print(f"🤖 Sending {mode} data to Gemini...")
-        gemini_response = llm_model.generate_content(gemini_payload)
-        ai_data = json.loads(gemini_response.text)
+        print(f"🤖 Sending {mode} data to Gemini with Live Search...")
+        
+        gemini_response = client.models.generate_content(
+            model='gemini-2.5-flash',
+            contents=gemini_payload,
+            config=types.GenerateContentConfig(
+                tools=[{"google_search": {}}], # Keep the internet on!
+                max_output_tokens=8192 # Prevents the AI from cutting off large JSONs
+            )
+        )
+        
+        # Clean up the text in case Gemini wraps it in markdown (```json ... ```)
+        raw_text = gemini_response.text.strip()
+        if raw_text.startswith("```json"):
+            raw_text = raw_text[7:]
+        elif raw_text.startswith("```"):
+            raw_text = raw_text[3:]
+            
+        if raw_text.endswith("```"):
+            raw_text = raw_text[:-3]
+            
+        raw_text = raw_text.strip()
+        
+        # BULLETPROOF JSON PARSING
+        try:
+            ai_data = json.loads(raw_text)
+        except json.JSONDecodeError as e:
+            print(f"⚠️ JSON PARSE ERROR: {str(e)}")
+            print(f"RAW OUTPUT WAS: {raw_text}")
+            # If the AI breaks the JSON, fallback to a safe response so the server doesn't crash!
+            ai_data = {
+                "credibility_score": 50,
+                "overall_verdict": "QUESTIONABLE",
+                "threat_category": "Formatting Error",
+                "explanation": f"[ VERDICT ] - CAUTION. Data retrieved but poorly formatted.\\n\\nEXECUTIVE BRIEFING:\\nOur forensic AI found live data but encountered a formatting error while building the report. Please try running the scan again.",
+                "sources": []
+            }
 
         # 5. FORMAT RESPONSE FOR REACT
         prob_real = ai_data.get("credibility_score", 50)
@@ -249,8 +297,6 @@ def analyze_content():
         # 6. CLEANUP: Delete the temporary file from your server to save hard drive space!
         if temp_file_path and os.path.exists(temp_file_path):
             os.remove(temp_file_path)
-            
-            # --- ADD THIS NEW ROUTE BELOW THE /api/analyze FUNCTION ---
 
 @app.route('/api/triage', methods=['POST'])
 @cross_origin()
@@ -266,8 +312,6 @@ def emergency_triage():
         if not user_issue:
             return jsonify({'error': 'No issue provided'}), 400
 
-        # Dedicated "Responder" prompt overrides the forensic style of /api/analyze
-        # We use a plain string here instead of forcing JSON to ensure simplicity and speed
         triage_prompt = f"""
         ACT AS: A senior, clinical Emergency Cyber-Responder for XIST AI.
         USER ISSUE: {user_issue}
@@ -281,15 +325,16 @@ def emergency_triage():
         6. FORMAT: A simple numbered list.
         """
 
-        response = llm_model.generate_content(triage_prompt)
+        # ✅ NEW SDK GENERATION (No JSON constraint needed here)
+        response = client.models.generate_content(
+            model='gemini-2.5-flash',
+            contents=triage_prompt
+        )
         
         try:
-            # Since your model is FORCED to JSON, we must parse it
             ai_data = json.loads(response.text)
-            # We look for common keys Gemini might use, or the whole string
             solution_text = ai_data.get('explanation', ai_data.get('solution', response.text))
         except:
-            # Fallback if it returns plain text despite the config
             solution_text = response.text
 
         return jsonify({"solution": solution_text})

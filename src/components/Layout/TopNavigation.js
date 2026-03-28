@@ -36,55 +36,67 @@ const TopNavigation = ({ user, identity, theme, setTheme, currentSection, setCur
   // STATE FOR LOCAL RESET TIME
   const [localResetTime, setLocalResetTime] = useState("12:00 AM (PT)");
 
-  // CALCULATE LOCAL TIME EQUIVALENT OF MIDNIGHT PT
+  // ==========================================
+  // 🌎 GLOBAL SCANS & PT RESET TIME LOGIC
+  // ==========================================
   useEffect(() => {
-    try {
+    // 1. CALCULATE PACIFIC TIME (PT) MIDNIGHTS (Flawless Timezone Math)
+    const calculatePTMidnights = () => {
       const now = new Date();
+      
+      // Get current date/time in Los Angeles
       const ptString = now.toLocaleString('en-US', { timeZone: 'America/Los_Angeles' });
-      const ptDate = new Date(ptString);
-      const diff = now.getTime() - ptDate.getTime();
-      ptDate.setHours(0, 0, 0, 0);
-      const absoluteMidnight = new Date(ptDate.getTime() + diff);
-      const timeString = absoluteMidnight.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      const localOfPt = new Date(ptString);
+      
+      // Find the exact millisecond difference between Local and PT
+      const diff = now.getTime() - localOfPt.getTime();
+      
+      // Create absolute timestamp for LAST Midnight PT
+      const lastMidnightLocal = new Date(localOfPt);
+      lastMidnightLocal.setHours(0, 0, 0, 0);
+      const lastMidnightPT = new Date(lastMidnightLocal.getTime() + diff);
+      
+      // Create absolute timestamp for NEXT Midnight PT
+      const nextMidnightLocal = new Date(localOfPt);
+      nextMidnightLocal.setHours(24, 0, 0, 0);
+      const nextMidnightPT = new Date(nextMidnightLocal.getTime() + diff);
+
+      return { lastMidnightPT, nextMidnightPT };
+    };
+
+    const { lastMidnightPT, nextMidnightPT } = calculatePTMidnights();
+
+    // 2. SET THE LOCAL RESET TIME DISPLAY
+    try {
+      const timeString = nextMidnightPT.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
       setLocalResetTime(`${timeString} Local Time`);
     } catch (error) {
       setLocalResetTime("12:00 AM (PT)");
     }
-  }, []);
 
-  useEffect(() => {
-    const fetchScans = async () => {
-      const currentUserId = user?.id || user?.uid;
-      if (!currentUserId) return;
-
-      const startOfDay = new Date();
-      startOfDay.setHours(0, 0, 0, 0);
-
+    // 3. FETCH GLOBAL SCANS (Total scans in the world since last PT Midnight)
+    const fetchGlobalScans = async () => {
       const { count, error } = await supabase
         .from('user_history')
         .select('*', { count: 'exact', head: true })
-        .eq('user_id', currentUserId)
-        .gte('created_at', startOfDay.toISOString());
+        .gte('created_at', lastMidnightPT.toISOString()); // 🌎 GLOBAL: Removed the user_id filter!
       
       if (!error) setLiveScans(count || 0);
     };
 
-    fetchScans();
+    fetchGlobalScans();
 
-    const currentUserId = user?.id || user?.uid;
-    if (currentUserId) {
-      const uniqueChannelName = `topnav_scans_${Math.random().toString(36).substring(2, 10)}`;
-      const channel = supabase
-        .channel(uniqueChannelName)
-        .on('postgres_changes', 
-            { event: 'INSERT', schema: 'public', table: 'user_history', filter: `user_id=eq.${currentUserId}` }, 
-            () => fetchScans()
-        ).subscribe();
+    // 4. GLOBAL REALTIME SYNC: Update instantly when ANY user in the world scans
+    const uniqueChannelName = `global_scans_${Math.random().toString(36).substring(2, 10)}`;
+    const channel = supabase
+      .channel(uniqueChannelName)
+      .on('postgres_changes', 
+          { event: 'INSERT', schema: 'public', table: 'user_history' }, // 🌎 GLOBAL: Removed the user_id filter!
+          () => fetchGlobalScans()
+      ).subscribe();
 
-      return () => supabase.removeChannel(channel);
-    }
-  }, [user?.id, user?.uid]);
-
+    return () => supabase.removeChannel(channel);
+  }, []); // Runs once on mount, no longer depends on user.id
   const navigationItems = [
     { id: 'home', label: 'Home' },
     { id: 'verify', label: 'Verify' },
@@ -267,14 +279,14 @@ const TopNavigation = ({ user, identity, theme, setTheme, currentSection, setCur
             <div className="px-5 py-4 min-w-[240px]">
               <div className="flex items-center justify-between mb-3">
                 <span className={`text-[10px] font-black uppercase tracking-[0.15em] ${theme === 'dark' ? 'text-slate-500' : 'text-slate-400'}`}>
-                  Usage Balance
+                  Global API Limit
                 </span>
                 <div className={`px-2 py-0.5 rounded-full text-[10px] font-bold border ${
                   scansRemaining <= 5 
                     ? 'bg-rose-500/10 border-rose-500/20 text-rose-400' 
                     : 'bg-indigo-500/10 border-indigo-500/20 text-indigo-400'
                 }`}>
-                  {scansRemaining} Available
+                  {scansRemaining} Global Left
                 </div>
               </div>
 

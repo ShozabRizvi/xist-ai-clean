@@ -7,6 +7,7 @@ import {
   MapPinIcon, GlobeAsiaAustraliaIcon, IdentificationIcon
 } from '@heroicons/react/24/outline';
 import { toast, Toaster } from 'react-hot-toast';
+import { supabase } from '../../lib/supabase';
 
 // ==============================
 // 100% ADAPTIVE THEME MATRIX
@@ -215,6 +216,20 @@ const handleGeminiTriage = async (input) => {
         role: 'ai', 
         text: data.solution 
       }]);
+
+      // ✅ PATH B FIX: Log this action to Supabase so the Global Counter ticks down!
+      const currentUserId = user?.id || user?.uid;
+      if (currentUserId) {
+        await supabase.from('user_history').insert({
+          user_id: currentUserId,
+          mode: 'triage',
+          input: input.substring(0, 200), // Save a snippet of what they asked
+          verdict: 'EMERGENCY',
+          score: 50, 
+          level: 'URGENT',
+          summary: 'Emergency tactical survival plan generated.'
+        });
+      }
 
     } catch (err) {
       // Fallback for reliability

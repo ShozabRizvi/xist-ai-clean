@@ -430,18 +430,18 @@ export default function CommunitySection({ user, theme: globalTheme }) {
 
               return (
               <motion.div key={threat.id} layout className={`flex flex-col gap-3 ${widthClass} ${alignmentClass}`}>
+                
+                {/* Put overflow-hidden back to keep the card clean */}
                 <div onClick={() => setSelectedThreat(threat)} className={`${theme.card} p-5 cursor-pointer group relative overflow-hidden transition-all rounded-2xl ${glowClass}`}>
                   
                   {/* Hover Media */}
                   {threat.media_url && (
                     <div className="absolute inset-0 z-0 opacity-0 group-hover:opacity-[0.15] transition-opacity duration-500 pointer-events-none">
-                      <RenderForensicMedia url={threat.media_url} className="h-full object-cover grayscale" />
+                      <RenderForensicMedia url={threat.media_url} className="w-full h-full object-cover grayscale" />
                     </div>
                   )}
 
-                  {/* Badges */}
-                  {isBuzzer && <div className="absolute -left-2 -top-2 bg-red-600 text-white p-2 rounded-full animate-bounce shadow-xl z-20"><SpeakerWaveIcon className="w-4 h-4"/></div>}
-
+                  {/* Top Row (Avatar + Badges) */}
                   <div className="flex items-start justify-between mb-3 z-10 relative">
                     <div onClick={(e) => openUserProfile(threat.user_id, threat.profiles, e)} className="flex items-center gap-2 group-hover:bg-indigo-500/10 p-1.5 -ml-1.5 rounded-xl transition-all">
                       <div className={`w-8 h-8 rounded-full overflow-hidden shrink-0 border flex items-center justify-center ${isOfficial ? 'border-red-500/50 bg-red-500/10' : 'border-slate-700 bg-slate-800'}`}>
@@ -456,9 +456,18 @@ export default function CommunitySection({ user, theme: globalTheme }) {
                       </div>
                     </div>
                     
-                    <span className={`px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-widest border ${isOfficial ? 'bg-red-500/10 text-red-400 border-red-500/20' : 'bg-slate-800 text-slate-400 border-slate-700'}`}>
-                      {safeType}
-                    </span>
+                    {/* ✅ FIX: Static, non-moving Buzzer neatly tucked in the corner */}
+                    <div className="flex items-center gap-2">
+                      {isBuzzer && (
+                        <span className="flex items-center gap-1 px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-widest bg-red-600 text-white">
+                          <SpeakerWaveIcon className="w-3 h-3" />
+                          Alert
+                        </span>
+                      )}
+                      <span className={`px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-widest border ${isOfficial ? 'bg-red-500/10 text-red-400 border-red-500/20' : 'bg-slate-800 text-slate-400 border-slate-700'}`}>
+                        {safeType}
+                      </span>
+                    </div>
                   </div>
 
                   <div className="z-10 relative pl-1">

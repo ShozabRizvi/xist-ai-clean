@@ -23,6 +23,9 @@ import { useResponsive } from './hooks/useResponsive';
 // UI Components
 import { NotificationProvider } from './components/UI/NotificationToast';
 
+// ✅ SUPABASE CONNECTION
+import { supabase } from './lib/supabase';
+
 const APP_VERSION = process.env.REACT_APP_BUILD_TIME || '1.1.0'; // 🚀 Bumped to 1.1.0 to trigger the cache wipe
 
 const checkForUpdates = () => {
@@ -50,9 +53,80 @@ const App = () => {
   // Auth and user management
   const { user, userStats, loading, login, logout, updateUserStats } = useAuth();
   const { screenSize } = useResponsive();
-useEffect(() => {
+  
+  useEffect(() => {
     checkForUpdates();
   }, []);
+
+  // ==========================================
+  // ✅ REAL-TIME OPERATOR STATISTICS ENGINE
+  // ==========================================
+  const [operatorStats, setOperatorStats] = useState({
+    totalScans: 0,
+    threatsFound: 0,
+    communityShares: 0,
+    trustScore: 100
+  });
+
+  useEffect(() => {
+    const fetchOperatorStats = async () => {
+      const currentUserId = user?.id || user?.uid;
+      if (!currentUserId) return; 
+
+      try {
+        // 1. Total Scans (Count all rows in user_history)
+        const { count: totalScans } = await supabase
+          .from('user_history')
+          .select('*', { count: 'exact', head: true })
+          .eq('user_id', currentUserId);
+
+        // 2. Threats Found (Count scans where AI score was < 70)
+        const { count: threatsFound } = await supabase
+          .from('user_history')
+          .select('*', { count: 'exact', head: true })
+          .eq('user_id', currentUserId)
+          .lt('score', 70); 
+
+        // 3. Intel Shared (Count all posts in community_threats)
+        const { count: communityShares } = await supabase
+          .from('community_threats')
+          .select('*', { count: 'exact', head: true })
+          .eq('user_id', currentUserId);
+
+        // 4. Trust Score Algorithm 
+        // Starts at 100%. Drops to 85% after first scan. Earns +2% per intel shared. Max 99%.
+        let calculatedTrust = 100; 
+        if (totalScans > 0) {
+           calculatedTrust = Math.min(99, 85 + ((communityShares || 0) * 2));
+        }
+
+        setOperatorStats({
+          totalScans: totalScans || 0,
+          threatsFound: threatsFound || 0,
+          communityShares: communityShares || 0,
+          trustScore: calculatedTrust
+        });
+      } catch (error) {
+        console.error("Failed to fetch operator stats:", error);
+      }
+    };
+
+    fetchOperatorStats();
+
+    // 📡 LIVE SYNC: Instantly updates stats when user scans or shares!
+    const currentUserId = user?.id || user?.uid;
+    if (currentUserId) {
+      const channel = supabase
+        .channel('operator_stats_sync')
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'user_history', filter: `user_id=eq.${currentUserId}` }, () => fetchOperatorStats())
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'community_threats', filter: `user_id=eq.${currentUserId}` }, () => fetchOperatorStats())
+        .subscribe();
+      return () => supabase.removeChannel(channel);
+    }
+  }, [user]);
+
+  // Merge the standard auth stats with our live database stats
+  const activeUserStats = { ...userStats, ...operatorStats };
   // ==========================================
   // GLOBAL SETTINGS & IDENTITY STATE (FIXED)
   // ==========================================
@@ -262,7 +336,7 @@ useEffect(() => {
           <TopNavigation
             user={user}
             identity={globalSettings.identity} // ✅ Passed Identity Prop
-            userStats={userStats}
+            userStats={activeUserStats}
             currentSection={currentSection}
             setCurrentSection={setCurrentSection}
             mobileMenuOpen={mobileMenuOpen}
@@ -281,7 +355,7 @@ useEffect(() => {
               <DesktopSidebar
                 user={user}
                 identity={globalSettings.identity} // ✅ Passed Identity Prop
-                userStats={userStats}
+                userStats={activeUserStats}
                 currentSection={currentSection}
                 setCurrentSection={setCurrentSection}
                 collapsed={sidebarCollapsed}
@@ -301,7 +375,7 @@ useEffect(() => {
                   currentSection={currentSection}
                   setCurrentSection={setCurrentSection}
                   user={user}
-                  userStats={userStats}
+                  userStats={activeUserStats}
                   updateUserStats={handleUpdateUserStats}
                   analysisHistory={analysisHistory}
                   analysisResult={analysisResult}

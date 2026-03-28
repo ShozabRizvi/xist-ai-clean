@@ -1,88 +1,67 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { createClient } from '@supabase/supabase-js';
 import { 
   HomeIcon, ShieldCheckIcon, BookOpenIcon, UsersIcon, ChartBarIcon, 
   ShieldExclamationIcon, Cog6ToothIcon, InformationCircleIcon, PhoneIcon, 
-  QuestionMarkCircleIcon, ChevronLeftIcon, ChevronRightIcon, UserCircleIcon
+  QuestionMarkCircleIcon, ChevronLeftIcon, ChevronRightIcon
 } from '@heroicons/react/24/outline';
-import { AVATAR_OPTIONS } from '../Sections/SettingsSection';
 
-const supabaseUrl = process.env.REACT_APP_SUPABASE_URL;
-const supabaseAnonKey = process.env.REACT_APP_SUPABASE_ANON_KEY;
-const supabase = createClient(supabaseUrl, supabaseAnonKey);
-
-const DesktopSidebar = ({ currentSection, setCurrentSection, user, identity, collapsed, setCollapsed }) => {
-  const [realStats, setRealStats] = useState({ scans: 0, threats: 0, points: 0 });
-
-  useEffect(() => {
-    const fetchSidebarStats = async () => {
-      const currentUserId = user?.id || user?.uid;
-      
-      // 1. Check if the Sidebar is actually receiving the user prop
-      console.log("🛡️ SIDEBAR MOUNTED. Received User ID:", currentUserId);
-
-      if (!currentUserId) {
-        console.warn("⚠️ NO USER DETECTED IN SIDEBAR! (Check your main Layout file to make sure user={user} is being passed to this specific instance of the sidebar)");
-        return;
-      }
-
-      try {
-        const { data: userRecords, error } = await supabase
-          .from('user_history')
-          .select('*')
-          .eq('user_id', currentUserId);
-
-        // 2. Check what Supabase is actually returning
-        console.log("📊 SUPABASE FETCH RESULT:", { recordsFound: userRecords?.length, error });
-
-        if (error) {
-           console.error("❌ SUPABASE ERROR:", error.message);
-           return;
-        }
-
-        if (userRecords) {
-          const totalScans = userRecords.length;
-          const totalThreats = userRecords.filter(r => {
-            const status = (r.verdict || r.threat_level || r.severity || '').toLowerCase();
-            return status.includes('high') || status.includes('medium') || status.includes('critical') || status.includes('threat') || status.includes('danger');
-          }).length;
-          
-          setRealStats({ scans: totalScans, threats: totalThreats, points: totalScans * 15 });
-        }
-      } catch (err) {
-        console.error("🚨 Sidebar code execution error:", err);
-      }
-    };
-
-    fetchSidebarStats();
-
-    const currentUserId = user?.id || user?.uid;
-    if (currentUserId) {
-      const uniqueChannelName = `sidebar_ledger_${Math.random().toString(36).substring(2, 10)}`;
-      const historyChannel = supabase
-        .channel(uniqueChannelName)
-        .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'user_history', filter: `user_id=eq.${currentUserId}` }, 
-          () => fetchSidebarStats()
-        ).subscribe();
-      return () => { supabase.removeChannel(historyChannel); };
-    }
-  }, [user?.id, user?.uid]);
-
-  const navigationItems = [
-    { id: 'home', icon: HomeIcon, label: 'Dashboard', description: 'Activity overview' },
-    { id: 'verify', icon: ShieldCheckIcon, label: 'Check Content', description: 'AI safety scanner' },
-    { id: 'education', icon: BookOpenIcon, label: 'Safety Academy', description: 'Learn to stay safe' },
-    { id: 'community', icon: UsersIcon, label: 'Community', description: 'Connect with others' },
-    { id: 'protection', icon: ShieldExclamationIcon, label: 'Get Help 24/7', description: 'Emergency resources' },
-    { id: 'analytics', icon: ChartBarIcon, label: 'My Stats', description: 'Your activity history' },
-    { id: 'contact', icon: PhoneIcon, label: 'Contact Us', description: 'Reach our team' },
-    { id: 'support', icon: QuestionMarkCircleIcon, label: 'Support', description: 'Help center' },
-    { id: 'about', icon: InformationCircleIcon, label: 'About Us', description: 'Our mission' },
-    { id: 'settings', icon: Cog6ToothIcon, label: 'Settings', description: 'App preferences' },
+const DesktopSidebar = ({ currentSection, setCurrentSection, collapsed, setCollapsed }) => {
+  
+  // 1. Simplified Navigation Language
+  const mainNavItems = [
+    { id: 'home', icon: HomeIcon, label: 'Home', description: 'Main dashboard' },
+    { id: 'verify', icon: ShieldCheckIcon, label: 'Scan', description: 'Check links & files' },
+    { id: 'analytics', icon: ChartBarIcon, label: 'History', description: 'Past scan results' },
+    { id: 'community', icon: UsersIcon, label: 'Community', description: 'Public safety feed' },
+    { id: 'education', icon: BookOpenIcon, label: 'Learn', description: 'Security academy' },
+    { id: 'protection', icon: ShieldExclamationIcon, label: 'Emergency', description: 'Get help fast' },
   ];
 
-  const ActiveIcon = AVATAR_OPTIONS?.find(a => a.id === identity?.avatar)?.icon || UserCircleIcon;
+  const secondaryNavItems = [
+    { id: 'about', icon: InformationCircleIcon, label: 'About', description: 'Our mission' },
+    { id: 'contact', icon: PhoneIcon, label: 'Contact', description: 'Reach our team' },
+    { id: 'support', icon: QuestionMarkCircleIcon, label: 'Support', description: 'Help center' },
+  ];
+
+  // Helper function to render nav buttons
+  const NavButton = ({ item }) => {
+    const isActive = currentSection === item.id;
+    return (
+      <button
+        onClick={() => setCurrentSection(item.id)}
+        title={collapsed ? item.label : ''}
+        className={`flex items-center rounded-xl transition-all duration-200 group relative flex-shrink-0
+          ${isActive 
+            ? "bg-purple-50 dark:bg-cyan-500/10 text-purple-700 dark:text-cyan-300 border border-purple-200 dark:border-cyan-500/20 dark:shadow-[0_0_15px_rgba(6,182,212,0.15)]" 
+            : "hover:bg-gray-100 dark:hover:bg-white/5 hover:text-gray-900 dark:hover:text-white border border-transparent"}
+          ${collapsed ? "w-[52px] h-[52px] justify-center mx-auto p-0" : "w-full justify-start p-3"}
+        `}
+      >
+        {isActive && (
+          <motion.div layoutId="activeNavIndicator" className="absolute left-0 top-2 bottom-2 w-1 bg-purple-600 dark:bg-cyan-400 rounded-r-full shadow-sm dark:shadow-[0_0_10px_rgba(34,211,238,0.8)]" />
+        )}
+
+        <item.icon className={`flex-shrink-0 transition-colors ${collapsed ? 'w-6 h-6' : 'w-5 h-5 ml-2'} 
+          ${isActive ? 'text-purple-600 dark:text-cyan-400' : 'text-gray-400 dark:text-slate-500 group-hover:text-purple-500 dark:group-hover:text-cyan-200'}`} 
+        />
+        
+        <AnimatePresence>
+          {!collapsed && (
+            <motion.div 
+              initial={{ opacity: 0, width: 0 }}
+              animate={{ opacity: 1, width: 'auto' }}
+              exit={{ opacity: 0, width: 0 }}
+              className="text-left whitespace-nowrap overflow-hidden ml-3"
+            >
+              <div className={`font-semibold text-sm ${isActive ? 'text-purple-800 dark:text-white' : ''}`}>{item.label}</div>
+              <div className="text-[10px] text-gray-500 dark:text-slate-500 font-light mt-0.5">{item.description}</div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </button>
+    );
+  };
 
   return (
     <>
@@ -115,6 +94,7 @@ const DesktopSidebar = ({ currentSection, setCurrentSection, user, identity, col
           text-gray-800 dark:text-slate-300
           ${collapsed ? 'collapsed' : 'expanded'}`}
       >
+        {/* COLLAPSE TOGGLE */}
         <div className="flex-shrink-0 flex items-center justify-center p-4 border-b border-gray-200 dark:border-white/5 h-[72px] w-full transition-colors duration-300">
           <motion.button
             onClick={() => setCollapsed(!collapsed)}
@@ -129,101 +109,22 @@ const DesktopSidebar = ({ currentSection, setCurrentSection, user, identity, col
           </motion.button>
         </div>
 
-        <nav className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden custom-scrollbar py-4 w-full">
+        {/* MAIN NAVIGATION SCROLL AREA */}
+        <nav className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden custom-scrollbar py-4 w-full flex flex-col justify-between">
           <div className="px-3 space-y-2">
-            {navigationItems.map((item) => {
-              const isActive = currentSection === item.id;
-              return (
-                <button
-                  key={item.id}
-                  onClick={() => setCurrentSection(item.id)}
-                  title={collapsed ? item.label : ''}
-                  className={`flex items-center rounded-xl transition-all duration-200 group relative flex-shrink-0
-                    ${isActive 
-                      ? "bg-purple-50 dark:bg-cyan-500/10 text-purple-700 dark:text-cyan-300 border border-purple-200 dark:border-cyan-500/20 dark:shadow-[0_0_15px_rgba(6,182,212,0.15)]" 
-                      : "hover:bg-gray-100 dark:hover:bg-white/5 hover:text-gray-900 dark:hover:text-white border border-transparent"}
-                    ${collapsed ? "w-[52px] h-[52px] justify-center mx-auto p-0" : "w-full justify-start p-3"}
-                  `}
-                >
-                  {isActive && (
-                    <motion.div layoutId="activeNavIndicator" className="absolute left-0 top-2 bottom-2 w-1 bg-purple-600 dark:bg-cyan-400 rounded-r-full shadow-sm dark:shadow-[0_0_10px_rgba(34,211,238,0.8)]" />
-                  )}
-
-                  <item.icon className={`flex-shrink-0 transition-colors ${collapsed ? 'w-6 h-6' : 'w-5 h-5 ml-2'} 
-                    ${isActive ? 'text-purple-600 dark:text-cyan-400' : 'text-gray-400 dark:text-slate-500 group-hover:text-purple-500 dark:group-hover:text-cyan-200'}`} 
-                  />
-                  
-                  <AnimatePresence>
-                    {!collapsed && (
-                      <motion.div 
-                        initial={{ opacity: 0, width: 0 }}
-                        animate={{ opacity: 1, width: 'auto' }}
-                        exit={{ opacity: 0, width: 0 }}
-                        className="text-left whitespace-nowrap overflow-hidden ml-3"
-                      >
-                        <div className={`font-semibold text-sm ${isActive ? 'text-purple-800 dark:text-white' : ''}`}>{item.label}</div>
-                        <div className="text-[10px] text-gray-500 dark:text-slate-500 font-light mt-0.5">{item.description}</div>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-                </button>
-              );
-            })}
+            {mainNavItems.map(item => <NavButton key={item.id} item={item} />)}
+            
+            <div className="my-4 border-t border-gray-200 dark:border-white/5 mx-3" />
+            
+            {secondaryNavItems.map(item => <NavButton key={item.id} item={item} />)}
           </div>
         </nav>
 
-        {/* ✅ The padding and layout fixes are perfectly preserved here */}
+        {/* BOTTOM PINNED SETTINGS (Replaces the old profile block) */}
         <div className="flex-shrink-0 w-full mt-auto border-t border-gray-200 dark:border-white/5 bg-gray-50/80 dark:bg-slate-800/50 p-4 pb-24 md:pb-4 transition-colors duration-300">
-          
-          <div className={`flex items-center ${collapsed ? 'justify-center' : 'gap-3'}`}>
-            <div className="w-10 h-10 shrink-0 rounded-xl bg-purple-600/20 dark:bg-cyan-500/10 border border-purple-500/30 dark:border-cyan-500/30 flex items-center justify-center">
-              <ActiveIcon className="w-6 h-6 text-purple-600 dark:text-cyan-400" />
-            </div>
-            
-            <AnimatePresence>
-              {!collapsed && (
-                <motion.div 
-                  initial={{ opacity: 0, width: 0 }}
-                  animate={{ opacity: 1, width: 'auto' }}
-                  exit={{ opacity: 0, width: 0 }}
-                  className="overflow-hidden whitespace-nowrap"
-                >
-                  <div className="text-sm font-bold text-gray-900 dark:text-white truncate max-w-[160px]">
-                    {identity?.alias || 'Guest User'}
-                  </div>
-                  <div className="text-[10px] text-purple-600 dark:text-cyan-400 uppercase tracking-widest flex items-center gap-1 mt-0.5 font-bold">
-                    <div className="w-1.5 h-1.5 rounded-full bg-purple-600 dark:bg-cyan-400 animate-pulse" /> Active Protection
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </div>
-
-          <AnimatePresence>
-            {!collapsed && (
-              <motion.div
-                initial={{ opacity: 0, height: 0, marginTop: 0 }}
-                animate={{ opacity: 1, height: 'auto', marginTop: '16px' }}
-                exit={{ opacity: 0, height: 0, marginTop: 0 }}
-                transition={{ duration: 0.2 }}
-                className="grid grid-cols-3 gap-2 overflow-hidden"
-              >
-                <div className="bg-white dark:bg-white/5 rounded-lg py-2 text-center border border-gray-200 dark:border-white/5 shadow-sm dark:shadow-none transition-colors">
-                  <div className="text-sm font-bold text-gray-900 dark:text-white">{realStats.scans}</div>
-                  <div className="text-[9px] uppercase tracking-wider text-gray-500 dark:text-slate-500">Scans</div>
-                </div>
-                <div className="bg-white dark:bg-white/5 rounded-lg py-2 text-center border border-gray-200 dark:border-white/5 shadow-sm dark:shadow-none transition-colors">
-                  <div className="text-sm font-bold text-red-600 dark:text-red-400">{realStats.threats}</div>
-                  <div className="text-[9px] uppercase tracking-wider text-gray-500 dark:text-slate-500">Threats</div>
-                </div>
-                <div className="bg-white dark:bg-white/5 rounded-lg py-2 text-center border border-gray-200 dark:border-white/5 shadow-sm dark:shadow-none transition-colors">
-                  <div className="text-sm font-bold text-purple-600 dark:text-purple-400">{realStats.points}</div>
-                  <div className="text-[9px] uppercase tracking-wider text-gray-500 dark:text-slate-500">Points</div>
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
+          <NavButton item={{ id: 'settings', icon: Cog6ToothIcon, label: 'Settings', description: 'Profile & Preferences' }} />
         </div>
+
       </motion.div>
     </>
   );

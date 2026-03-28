@@ -6,7 +6,7 @@ import {
   TrashIcon, KeyIcon, FingerPrintIcon, ShieldCheckIcon, CpuChipIcon,
   EyeIcon, FireIcon, CodeBracketIcon, SparklesIcon, ClockIcon,
   ArrowLeftOnRectangleIcon,      // Use this for Sign Out (Modern replacement)
-  ArrowRightStartOnRectangleIcon
+  ArrowRightStartOnRectangleIcon,ChartBarIcon, MagnifyingGlassIcon, GlobeAltIcon
 } from '@heroicons/react/24/outline';
 import { useResponsive } from '../../hooks/useResponsive';
 
@@ -317,6 +317,47 @@ export default function SettingsSection({
                     ${isSaved ? 'bg-indigo-500 text-white' : 'bg-indigo-600 hover:bg-indigo-500 text-white active:scale-95'}`}>
                     {isSaved ? <><CheckCircleIcon className="w-4 h-4" /> Saved Successfully</> : 'Save Profile'}
                   </button>
+                </div>
+              </div>
+
+              {/* ✅ NEW: OPERATOR SUMMARY (Replaces API Dashboard) */}
+              <div className="pt-4 pb-2 animate-fade-in">
+                <h3 className="text-xs font-black uppercase tracking-widest mb-4 flex items-center gap-2">
+                  <ChartBarIcon className="w-5 h-5 text-indigo-500"/> Operator Statistics
+                </h3>
+                
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  {/* Total Scans */}
+                  <div className={`p-5 rounded-2xl border ${theme.inner} relative overflow-hidden group hover:border-indigo-500/50 transition-colors`}>
+                    <div className="absolute top-0 right-0 w-16 h-16 bg-indigo-500/10 rounded-bl-full -mr-8 -mt-8 transition-transform duration-500 group-hover:scale-150"></div>
+                    <MagnifyingGlassIcon className="w-5 h-5 text-indigo-400 mb-3 relative z-10" />
+                    <p className={`text-2xl font-black mb-1 relative z-10 ${theme.textPrimary}`}>{userStats?.totalScans || 0}</p>
+                    <p className={`text-[9px] uppercase tracking-widest font-bold relative z-10 ${theme.textSecondary}`}>Total Scans</p>
+                  </div>
+
+                  {/* Threats Detected */}
+                  <div className={`p-5 rounded-2xl border ${theme.inner} relative overflow-hidden group hover:border-rose-500/50 transition-colors`}>
+                     <div className="absolute top-0 right-0 w-16 h-16 bg-rose-500/10 rounded-bl-full -mr-8 -mt-8 transition-transform duration-500 group-hover:scale-150"></div>
+                     <ShieldExclamationIcon className="w-5 h-5 text-rose-500 mb-3 relative z-10" />
+                     <p className="text-2xl font-black mb-1 text-rose-500 relative z-10">{userStats?.threatsFound || 0}</p>
+                     <p className={`text-[9px] uppercase tracking-widest font-bold relative z-10 ${theme.textSecondary}`}>Threats Found</p>
+                  </div>
+
+                  {/* Community Intel */}
+                  <div className={`p-5 rounded-2xl border ${theme.inner} relative overflow-hidden group hover:border-blue-500/50 transition-colors`}>
+                     <div className="absolute top-0 right-0 w-16 h-16 bg-blue-500/10 rounded-bl-full -mr-8 -mt-8 transition-transform duration-500 group-hover:scale-150"></div>
+                     <GlobeAltIcon className="w-5 h-5 text-blue-400 mb-3 relative z-10" />
+                     <p className={`text-2xl font-black mb-1 relative z-10 ${theme.textPrimary}`}>{userStats?.communityShares || 0}</p>
+                     <p className={`text-[9px] uppercase tracking-widest font-bold relative z-10 ${theme.textSecondary}`}>Intel Shared</p>
+                  </div>
+
+                  {/* Operator Trust Score */}
+                  <div className={`p-5 rounded-2xl border ${theme.inner} relative overflow-hidden group hover:border-emerald-500/50 transition-colors`}>
+                     <div className="absolute top-0 right-0 w-16 h-16 bg-emerald-500/10 rounded-bl-full -mr-8 -mt-8 transition-transform duration-500 group-hover:scale-150"></div>
+                     <CheckCircleIcon className="w-5 h-5 text-emerald-400 mb-3 relative z-10" />
+                     <p className="text-2xl font-black mb-1 text-emerald-400 relative z-10">{userStats?.trustScore || 100}%</p>
+                     <p className={`text-[9px] uppercase tracking-widest font-bold relative z-10 ${theme.textSecondary}`}>Trust Score</p>
+                  </div>
                 </div>
               </div>
 

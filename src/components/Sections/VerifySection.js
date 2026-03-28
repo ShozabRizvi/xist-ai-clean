@@ -5,8 +5,8 @@ import { toast, Toaster } from 'react-hot-toast';
 import {
   ShieldCheckIcon, DocumentTextIcon, LinkIcon, PhotoIcon, VideoCameraIcon,
   MicrophoneIcon, TrashIcon, ShareIcon, SparklesIcon, SunIcon, MoonIcon,
-  CheckCircleIcon, ArrowUpTrayIcon, ClipboardDocumentCheckIcon, 
-  DocumentMagnifyingGlassIcon, MagnifyingGlassCircleIcon
+  CheckCircleIcon, ArrowUpTrayIcon, ClipboardDocumentCheckIcon, GlobeAltIcon,
+  DocumentMagnifyingGlassIcon, MagnifyingGlassCircleIcon,ChevronDownIcon,ArrowUpIcon,PaperClipIcon,PlusIcon, ExclamationTriangleIcon
 } from '@heroicons/react/24/outline';
 import { supabase } from '../../lib/supabase';
 
@@ -32,12 +32,6 @@ const timeAgo = (utcDateStr) => {
 
 const clamp = (v, a = 0, b = 100) => Math.max(a, Math.min(b, v));
 const formatPercent = (v) => Math.round(clamp(v));
-
-const verdictLabel = (level) => {
-  if (level === 'CRITICAL') return 'Psychological Deception';
-  if (level === 'QUESTIONABLE' || level === 'SUSPICIOUS') return 'Narrative Manipulation';
-  return 'Authentic & Verified';
-};
 
 // ✅ TYPING EFFECT HOOK
 const useTypewriter = (text, speed = 80, delay = 200) => {
@@ -89,10 +83,8 @@ const THEMES = {
 const MODES = [
   { id: 'text', label: 'Text', icon: DocumentTextIcon },
   { id: 'url', label: 'URL', icon: LinkIcon },
-  { id: 'image', label: 'Image', icon: PhotoIcon },
-  { id: 'video', label: 'Video', icon: VideoCameraIcon },
-  { id: 'voice', label: 'Voice', icon: MicrophoneIcon },
-  { id: 'document', label: 'Document', icon: ClipboardDocumentCheckIcon } 
+  { id: 'file', label: 'File', icon: PaperClipIcon }, 
+  { id: 'voice', label: 'Voice', icon: MicrophoneIcon }
 ];
 
 const DEFAULT_METRICS = { emotional_intensity: 0, bias_indicator_score: 0, sensationalism_score: 0, logical_consistency_score: 0 };
@@ -125,28 +117,28 @@ const ForensicScanner = ({ theme }) => {
   useEffect(() => { setActiveStage(Math.floor(progress / 20)); }, [progress]);
 
   return (
-    <div className={`${theme.card} rounded-3xl p-8 border border-indigo-500/30 shadow-[0_0_40px_rgba(99,102,241,0.1)] flex flex-col justify-center h-full min-h-[500px]`}>
+    <div className={`${theme.card} rounded-[32px] p-8 border border-indigo-500/30 shadow-[0_0_40px_rgba(99,102,241,0.1)] flex flex-col justify-center h-full min-h-[400px]`}>
       <div className="mb-10 flex justify-center">
         <div className="relative">
-          <div className="w-24 h-24 border-4 border-slate-700/50 border-t-indigo-500 rounded-full animate-spin shadow-[0_0_15px_rgba(99,102,241,0.3)]"></div>
-          <div className="absolute inset-0 flex items-center justify-center"><ShieldCheckIcon className="w-10 h-10 text-indigo-400 animate-pulse" /></div>
+          <div className="w-20 h-20 border-4 border-slate-700/50 border-t-indigo-500 rounded-full animate-spin shadow-[0_0_15px_rgba(99,102,241,0.3)]"></div>
+          <div className="absolute inset-0 flex items-center justify-center"><ShieldCheckIcon className="w-8 h-8 text-indigo-400 animate-pulse" /></div>
         </div>
       </div>
-      <h3 className="text-2xl font-black text-center mb-8 text-indigo-400 tracking-widest uppercase font-mono">Scanning...</h3>
-      <div className="w-full bg-slate-950 rounded-full h-2 mb-10 overflow-hidden border border-slate-800">
+      <h3 className="text-xl font-black text-center mb-6 text-indigo-400 tracking-widest uppercase font-mono">Scanning...</h3>
+      <div className="w-full bg-slate-950 rounded-full h-1.5 mb-8 overflow-hidden border border-slate-800">
         <motion.div className="bg-gradient-to-r from-indigo-600 via-blue-500 to-indigo-400 h-full shadow-[0_0_10px_rgba(99,102,241,0.8)]" animate={{ width: `${progress}%` }} transition={{ ease: "linear", duration: 0.4 }} />
       </div>
-      <div className="space-y-5 px-4 font-mono text-sm">
+      <div className="space-y-4 px-2 font-mono text-xs">
         {stages.map((stage) => {
           const isCompleted = activeStage > stage.id;
           const isActive = activeStage === stage.id;
           const isPending = activeStage < stage.id;
           return (
-            <div key={stage.id} className={`flex items-center gap-4 transition-all duration-500 ${isPending ? 'opacity-30' : 'opacity-100'} ${isActive ? 'translate-x-2' : ''}`}>
-              <div className={`w-6 h-6 rounded-sm flex items-center justify-center shrink-0 ${
+            <div key={stage.id} className={`flex items-center gap-3 transition-all duration-500 ${isPending ? 'opacity-30' : 'opacity-100'} ${isActive ? 'translate-x-2' : ''}`}>
+              <div className={`w-5 h-5 rounded-sm flex items-center justify-center shrink-0 ${
                 isCompleted ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 
                 isActive ? 'bg-indigo-500/20 text-indigo-400 animate-pulse border border-indigo-500/50' : 'bg-slate-800/50 text-slate-500 border border-slate-700/50'}`}>
-                {isCompleted ? <CheckCircleIcon className="w-4 h-4" /> : isActive ? <div className="w-1.5 h-1.5 bg-indigo-400 rounded-full" /> : <div className="w-1 h-1 bg-slate-500 rounded-full" />}
+                {isCompleted ? <CheckCircleIcon className="w-3.5 h-3.5" /> : isActive ? <div className="w-1.5 h-1.5 bg-indigo-400 rounded-full" /> : <div className="w-1 h-1 bg-slate-500 rounded-full" />}
               </div>
               <span className={`tracking-tight ${isActive ? 'text-indigo-200' : 'text-slate-500'}`}>{stage.text}</span>
             </div>
@@ -157,26 +149,6 @@ const ForensicScanner = ({ theme }) => {
   );
 };
 
-const ModeSelector = ({ mode, setMode, theme }) => (
-  <div className="w-full flex justify-center mt-6">
-    <div className={`inline-flex items-center rounded-xl p-1.5 ${theme.card} overflow-x-auto custom-scrollbar`}>
-      {MODES.map((m) => {
-        const Icon = m.icon;
-        const active = m.id === mode;
-        return (
-          <button key={m.id} onClick={() => setMode(m.id)}
-            className={`flex items-center gap-2 px-5 py-2 rounded-lg transition-all duration-200 focus:outline-none whitespace-nowrap ${
-              active ? `bg-slate-800 text-indigo-400 shadow-md border border-slate-700` : 'text-slate-500 hover:text-slate-300 hover:bg-slate-800/50 border border-transparent'
-            }`}>
-            <Icon className="w-4 h-4" />
-            <span className="hidden sm:inline text-sm font-semibold tracking-wide">{m.label}</span>
-          </button>
-        );
-      })}
-    </div>
-  </div>
-);
-
 const TypewriterTerminalText = ({ text }) => {
   const [displayedText, setDisplayedText] = useState("");
   useEffect(() => {
@@ -186,7 +158,7 @@ const TypewriterTerminalText = ({ text }) => {
       setDisplayedText(text.slice(0, i));
       i++;
       if (i > text.length) clearInterval(interval);
-    }, 15);
+    }, 10); // Sped up slightly for better UX
     return () => clearInterval(interval);
   }, [text]);
 
@@ -194,7 +166,7 @@ const TypewriterTerminalText = ({ text }) => {
 };
 
 const PrivateLedger = ({ entries, theme, onDelete, onDeleteAll, onLoad }) => (
-  <div className="mt-8">
+  <div className="mt-12 max-w-4xl mx-auto">
     <div className={`${theme.muted} text-xs uppercase tracking-widest mb-4 font-bold flex items-center justify-between`}>
       <span>Your History</span>
       <div className="flex items-center gap-3">
@@ -241,7 +213,6 @@ const PrivateLedger = ({ entries, theme, onDelete, onDeleteAll, onLoad }) => (
                 <span className={`${theme.muted} text-[10px] font-medium ml-auto tracking-widest uppercase`}>{timeAgo(e.created_at)}</span>
               </div>
               
-              {/* EXACT STEP 4 FIX: Bold Input, Normal Summary, No Labels */}
               <div className={`${theme.textPrimary} text-sm font-bold mb-1 truncate`}>
                 {e.input || 'Media File'}
               </div>
@@ -271,8 +242,10 @@ const PrivateLedger = ({ entries, theme, onDelete, onDeleteAll, onLoad }) => (
 export default function VerifySection({ user, theme: globalTheme }) { 
   const [localThemeMode, setLocalThemeMode] = useState('dark');
   const themeMode = THEMES[globalTheme] ? globalTheme : localThemeMode;
-const theme = THEMES[themeMode];
-  const typingTitle = useTypewriter("Xist Threat Parser", 80, 200);
+  const theme = THEMES[themeMode];
+  const typingTitle = useTypewriter("Xist Analytics", 80, 200);
+
+  const inputRef = useRef(null); // ✅ REF TO SCROLL TO TEXT BOX
 
   const [mode, setMode] = useState('text');
   const [inputValue, setInputValue] = useState('');
@@ -299,15 +272,11 @@ const theme = THEMES[themeMode];
     const currentUserId = user?.id || user?.uid;
     if (!currentUserId) return;
     try {
-      // ✅ FIX: Added .eq() to only fetch this specific user's private history
       const { data, error } = await supabase.from('user_history').select('*')
         .eq('user_id', currentUserId)
         .order('created_at', { ascending: false }).limit(10);
-      
       if (!error && data) setLedger(data);
-    } catch (err) { 
-      console.error('Ledger fetch error:', err); 
-    }
+    } catch (err) { console.error('Ledger fetch error:', err); }
   };
 
   const persistHistory = async (record) => {
@@ -320,7 +289,10 @@ const theme = THEMES[themeMode];
       const currentUserId = user?.id || user?.uid;
       if (currentUserId) payload.user_id = currentUserId;
       const { error } = await supabase.from('user_history').insert(payload); 
-      if (!error) { toast.success('💾 Saved to History'); fetchLedger(); }
+      if (!error) { 
+        toast.success('Saved to Secure Log', { icon: <ShieldCheckIcon className="w-5 h-5 text-indigo-400" />}); 
+        fetchLedger(); 
+      }
     } catch (error) { console.error('Save error:', error); }
   };
 
@@ -329,55 +301,52 @@ const theme = THEMES[themeMode];
       const { error } = await supabase.from('user_history').delete().eq('id', id);
       if (error) throw error;
       setLedger(prev => prev.filter(item => item.id !== id));
-      toast.success('History deleted.');
-    } catch (err) { toast.error('Failed to redact entry.'); }
+      toast('History entry deleted', { icon: <TrashIcon className="w-5 h-5 text-slate-400" /> });
+    } catch (err) { toast.error('Failed to delete entry.'); }
   };
 
   const handleDeleteAll = async () => {
     const currentUserId = user?.id || user?.uid;
-    if (!currentUserId) return toast.error('Authentication required.');
+    if (!currentUserId) return;
     if (!window.confirm('Are you sure you want to purge all secure logs?')) return;
     try {
       const { error } = await supabase.from('user_history').delete().eq('user_id', currentUserId);
       if (error) throw error;
       setLedger([]);
-      toast.success('History cleared.');
+      toast('All history cleared', { icon: <TrashIcon className="w-5 h-5 text-slate-400" /> });
     } catch (err) { toast.error('Failed to purge logs.'); }
   };
 
   const handleLoadEntry = (entry) => {
     setMode(entry.mode || 'text');
     setInputValue(entry.input || '');
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    
+    // ✅ SCROLL DIRECTLY TO THE INPUT BOX, NOT THE TOP OF THE PAGE
+    if (inputRef.current) {
+        inputRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+
     if (['image', 'video', 'voice', 'document'].includes(entry.mode)) {
-       toast('Media mode selected. Please re-upload the file.', { icon: '📁' });
-    } else { toast.success('Input loaded.'); }
+       toast('Media mode selected. Please re-upload the file.', { icon: <PaperClipIcon className="w-5 h-5 text-indigo-400" /> });
+    } else { 
+       toast.success('Input loaded', { icon: <DocumentTextIcon className="w-5 h-5 text-emerald-400" /> }); 
+    }
   };
   
   const shareToCommunity = async (record) => {
     setSharing(true);
     try {
       const currentUserId = user?.id || user?.uid;
-      
-      // ✅ THE NEW MULTI-MODAL ROUTER
-      // Maps the input method to the correct Community Feed category
-      let mappedCategory = 'misinfo'; // Default fallback
-      
-      if (record.mode === 'url') {
-        mappedCategory = 'scam'; // Malicious links go to Social Engineering
-      } else if (record.mode === 'document') {
-        mappedCategory = 'malware'; // Suspicious files go to Malware
-      } else if (['image', 'video', 'voice'].includes(record.mode)) {
-        mappedCategory = 'deepfake'; // Media goes to Deepfake Media
-      } else if (record.mode === 'text') {
-        // Text can be misinfo or a scam, we default to misinfo unless it's a critical threat
-        mappedCategory = record.score < 40 ? 'cyber_attack' : 'misinfo'; 
-      }
+      let mappedCategory = 'misinfo'; 
+      if (record.mode === 'url') mappedCategory = 'scam'; 
+      else if (record.mode === 'document') mappedCategory = 'malware'; 
+      else if (['image', 'video', 'voice'].includes(record.mode)) mappedCategory = 'deepfake'; 
+      else if (record.mode === 'text') mappedCategory = record.score < 40 ? 'cyber_attack' : 'misinfo'; 
 
       const postData = {
         title: `[${Math.round(record.score)}% Score] AI Detected ${record.verdict} Content`,
         description: `FORENSIC SUMMARY:\n${record.summary}\n\nSCANNED CONTENT:\n"${record.input.substring(0, 150)}..."`,
-        threat_type: mappedCategory, // 🎯 Now dynamically assigned!
+        threat_type: mappedCategory, 
         location: 'Global AI Network', 
         is_verified: false, 
         user_id: currentUserId || null, 
@@ -386,10 +355,9 @@ const theme = THEMES[themeMode];
       
       const { error } = await supabase.from('community_threats').insert(postData);
       if (error) throw error;
-      toast.success('🌍 Shared to Community!');
+      toast.success('Shared to Global Community', { icon: <GlobeAltIcon className="w-5 h-5 text-blue-400" /> });
     } catch (error) { 
-      toast.error('Broadcast failed.'); 
-      console.error(error);
+      toast.error('Broadcast failed.', { icon: <ExclamationTriangleIcon className="w-5 h-5 text-rose-500" /> }); 
     } finally { 
       setSharing(false); 
     }
@@ -403,29 +371,40 @@ const theme = THEMES[themeMode];
       mediaRecorder.ondataavailable = (e) => { if (e.data.size > 0) audioChunksRef.current.push(e.data); };
       mediaRecorder.onstop = () => { const blob = new Blob(audioChunksRef.current, { type: 'audio/webm' }); setAudioBlob(blob); };
       mediaRecorder.start(); setIsRecording(true);
-    } catch (err) { toast.error('Microphone access denied.'); }
+    } catch (err) { toast.error('Microphone access denied.', { icon: <ExclamationTriangleIcon className="w-5 h-5 text-rose-500" /> }); }
   };
 
   const stopRecording = () => { if (mediaRecorderRef.current) { mediaRecorderRef.current.stop(); setIsRecording(false); } };
 
   const runAnalysis = async (autoShare = false) => {
-    if (running) return toast('System busy. Analysis in progress.', { icon: '⚠️' });
-    if (mode === 'voice' && !audioBlob) return toast.error('Initiate audio capture first.');
-    if (['image', 'video', 'document'].includes(mode) && !file) return toast.error(`Please provide a ${mode} to analyze.`);
-    if (['text', 'url'].includes(mode) && !inputValue.trim()) return toast.error('Provide text/URL to analyze first.');
+    if (running) return toast('System busy. Analysis in progress.', { icon: <ShieldCheckIcon className="w-5 h-5 text-indigo-400" /> });
+    if (mode === 'voice' && !audioBlob) return toast.error('Initiate audio capture first.', { icon: <MicrophoneIcon className="w-5 h-5 text-rose-500" />});
+    if (['image', 'video', 'document'].includes(mode) && !file) return toast.error(`Please provide a ${mode} to analyze.`, { icon: <PaperClipIcon className="w-5 h-5 text-rose-500" />});
+    if (['text', 'url'].includes(mode) && !inputValue.trim()) return toast.error('Provide text/URL to analyze first.', { icon: <DocumentTextIcon className="w-5 h-5 text-rose-500" />});
 
-    setRunning(true); setScore(0); setCurrentMediaUrl(null);
+    setRunning(true); setScore(0); setCurrentMediaUrl(null); setSummary('');
+    
+    // ✅ SCROLL TO CENTER DURING ANALYSIS
+    if (inputRef.current) {
+        inputRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
     try {
-      // ✅ FORENSIC FIX: Pointing to your live Railway backend in production
-      const BACKEND_URL = 'https://xist-ai-clean.onrender.com';
-      
+      const BACKEND_URL = 'http://localhost:5000';
       const formData = new FormData();
-      formData.append('mode', mode);
+
+      let sendMode = mode;
+      if (mode === 'file' && file) {
+        if (file.type.startsWith('image/')) sendMode = 'image';
+        else if (file.type.startsWith('video/')) sendMode = 'video';
+        else sendMode = 'document';
+      }
+      
+      formData.append('mode', sendMode); 
       if (['text', 'url'].includes(mode)) formData.append('text', inputValue);
       else if (mode === 'voice' && audioBlob) formData.append('file', audioBlob, 'voice_note.webm');
-      else if (file) formData.append('file', file);
+      else if (mode === 'file' && file) formData.append('file', file); 
 
-      // ✅ Uses the dynamic URL
       const response = await fetch(`${BACKEND_URL}/api/analyze`, { method: 'POST', body: formData });
       if (!response.ok) throw new Error('Engine offline');
       const analysis = await response.json();
@@ -445,17 +424,22 @@ const theme = THEMES[themeMode];
       setScore(analysis.credibility_score); setVerdictLevel(analysis.overall_verdict);
       setMetrics(analysis.linguistic_patterns || DEFAULT_METRICS);
       setSummary(analysis.final_explanation_for_user); setSources(analysis.validation_sources || []); 
-      toast.success(`Analysis Complete`);
+      toast.success(`Analysis Complete`, { icon: <ShieldCheckIcon className="w-5 h-5 text-emerald-400" /> });
 
       const record = {
-        mode, input: mode === 'voice' ? 'Voice Recording' : (inputValue || file?.name),
+        mode: sendMode, 
+        input: mode === 'voice' ? 'Voice Recording' : (inputValue || file?.name),
         verdict: analysis.overall_verdict, score: analysis.credibility_score,
         level: analysis.overall_verdict, metrics: analysis.linguistic_patterns,
         summary: analysis.final_explanation_for_user, media_url: finalMediaUrl
       };
       await persistHistory(record);
       if (autoShare) await shareToCommunity(record);
-    } catch (err) { toast.error("Forensic Engine offline."); } finally { setRunning(false); }
+    } catch (err) { 
+      toast.error("Forensic Engine offline.", { icon: <ExclamationTriangleIcon className="w-5 h-5 text-rose-500" /> }); 
+    } finally { 
+      setRunning(false); 
+    }
   };
 
   const handleManualShareClick = async () => {
@@ -469,20 +453,9 @@ const theme = THEMES[themeMode];
     setScore(0); setSummary(''); setSources([]); setVerdictLevel('SAFE'); setCurrentMediaUrl(null);
   };
 
-  // Animation Variants
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: { opacity: 1, transition: { staggerChildren: 0.1, delayChildren: 0.2 } }
-  };
-  const itemVariants = {
-    hidden: { y: 20, opacity: 0 },
-    visible: { y: 0, opacity: 1, transition: { type: 'spring', stiffness: 100 } }
-  };
-
   return (
-    <motion.div initial="hidden" animate="visible" variants={containerVariants}
-                className={`w-full min-h-screen p-8 relative transition-colors duration-500 ${theme.background} ${theme.textPrimary} overflow-x-hidden`}
-                style={{ fontFamily: 'Inter, system-ui, sans-serif', marginLeft: '280px', marginTop: '64px' }}>
+    <div className={`w-full min-h-screen p-4 md:p-8 relative transition-colors duration-500 ${theme.background} ${theme.textPrimary} overflow-x-hidden`}
+         style={{ fontFamily: 'Inter, system-ui, sans-serif', marginLeft: '280px', marginTop: '64px' }}>
       
       {/* Dynamic Grid Background Overlay */}
       <div className={`absolute inset-0 pointer-events-none opacity-[0.03] ${themeMode === 'dark' ? '' : 'invert'}`} 
@@ -494,164 +467,253 @@ const theme = THEMES[themeMode];
         </button>
       </div>
 
-      <Toaster position="top-right" containerStyle={{ top: 80 }} />
+      {/* ✅ NEW GLASSMORPHISM TOASTER WITH ANIMATIONS */}
+      <Toaster 
+        position="top-right" 
+        toastOptions={{
+          className: '',
+          style: {
+            background: themeMode === 'dark' ? 'rgba(15, 23, 42, 0.7)' : 'rgba(255, 255, 255, 0.7)',
+            backdropFilter: 'blur(16px)',
+            WebkitBackdropFilter: 'blur(16px)',
+            border: themeMode === 'dark' ? '1px solid rgba(255, 255, 255, 0.1)' : '1px solid rgba(0, 0, 0, 0.1)',
+            color: themeMode === 'dark' ? '#fff' : '#0f172a',
+            borderRadius: '16px',
+            boxShadow: '0 10px 40px rgba(0, 0, 0, 0.2)',
+            fontFamily: 'system-ui, sans-serif',
+            fontSize: '14px',
+            fontWeight: '500'
+          },
+          duration: 3500,
+        }} 
+      />
 
-      <div className="max-w-5xl mx-auto text-center mb-10 relative z-10 px-4">
-        <ShieldCheckIcon className="w-16 h-16 text-indigo-500 mx-auto mb-4 opacity-80" />
+      {/* FULL WIDTH LAYOUT */}
+      <div className="max-w-6xl mx-auto flex flex-col gap-8 relative z-10 pt-4 md:pt-10">
         
-        {/* ✅ THE FINAL FIX: 
-            1. Changed 'flex' to 'block' so the container grows vertically.
-            2. Removed 'whitespace-nowrap' to allow line breaks on small screens.
-            3. Removed 'overflow-hidden' so the tail of the 'y' can never be clipped.
-            4. Added 'min-h-[1.5em]' and 'pb-4' to give the text breathing room.
-        */}
-        <h1 className="block w-full text-4xl sm:text-5xl md:text-6xl font-black tracking-tight mb-3 py-4 leading-tight min-h-[1.2em]">
-            <span className="inline">
-                {useTypewriter("Xist Analysis", 80, 200)}
-            </span>
-            <motion.span 
-                animate={{ opacity: [0, 1, 0] }} 
-                transition={{ repeat: Infinity, duration: 0.8 }} 
-                className="inline-block w-1.5 h-8 md:h-12 bg-indigo-500 ml-2 align-baseline" 
-            />
-        </h1>
-        
-        <p className={`${theme.muted} text-sm font-mono tracking-widest uppercase mt-4`}>
-          Verify news, links, and media
-        </p>
-        <ModeSelector mode={mode} setMode={setMode} theme={theme} />
-      </div>
+        {/* HEADER */}
+        <div className="text-center">
+           <ShieldCheckIcon className="w-12 h-12 text-indigo-500 mx-auto mb-4 opacity-80" />
+           <h1 className="text-4xl md:text-5xl lg:text-6xl font-black text-center mb-2 pb-4 leading-normal tracking-tight">
+              <span>{typingTitle}</span>
+              <motion.span animate={{ opacity: [0, 1, 0] }} transition={{ repeat: Infinity, duration: 0.9 }} className="inline-block w-2.5 md:w-3 h-[0.8em] bg-indigo-500 ml-2 align-baseline" />
+           </h1>
+        </div>
 
-      <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-8 relative z-10">
-        {/* LEFT COLUMN - Tactical Input */}
-        <motion.div variants={itemVariants} className="lg:col-span-5 space-y-6">
-          <div className={`${theme.card} rounded-2xl p-6 flex flex-col h-full relative overflow-hidden group`}>
-            <div className="flex items-center justify-between mb-4 border-b border-slate-800 pb-4 relative z-10">
-              <h2 className="text-sm font-bold uppercase tracking-widest text-indigo-400 flex items-center gap-2">
-                <ShieldCheckIcon className="w-4 h-4" /> Input Source
-              </h2>
-              <button onClick={clearAll} disabled={running} className="text-slate-500 hover:text-rose-400 flex items-center gap-1 text-xs font-bold transition-colors">
-                <TrashIcon className="w-3.5 h-3.5" /> Clear
-              </button>
-            </div>
+        {/* ✅ THE GLIDE ANIMATION WRAPPER */}
+        <motion.div layout className={`flex flex-col lg:flex-row gap-8 items-stretch w-full`}>
+          
+          {/* INPUT BOX (Shrinks to left when running) */}
+          <motion.div layout ref={inputRef} className={`transition-all duration-700 ease-in-out ${running ? 'w-full lg:w-1/2' : 'w-full max-w-4xl mx-auto'}`}>
+            <div className={`relative flex flex-col h-full transition-all duration-300 
+              bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800
+              rounded-[28px] md:rounded-[32px] 
+              ${running ? 'shadow-[0_0_30px_rgba(99,102,241,0.2)] border-indigo-500' : 'shadow-lg focus-within:shadow-xl focus-within:border-indigo-500/50'}`}>
+              
+              <div className="px-6 pt-6 pb-2 min-h-[140px] flex flex-col relative justify-center flex-grow">
+                {mode === 'text' && (
+                  <textarea 
+                    value={inputValue} 
+                    onChange={(e) => setInputValue(e.target.value)} 
+                    disabled={running} 
+                    placeholder="Ask Xist to verify a claim, or paste text/logs here..." 
+                    className={`w-full h-full flex-grow !bg-transparent !border-0 !outline-none !ring-0 shadow-none text-lg md:text-xl font-sans resize-none custom-scrollbar leading-relaxed placeholder:text-gray-400 dark:placeholder:text-slate-500 transition-all duration-200 ${inputValue ? 'text-left' : 'text-center'} ${theme.textPrimary}`} 
+                  />
+                )}
+                
+                {mode === 'url' && (
+                  <input 
+                    type="url" 
+                    value={inputValue} 
+                    onChange={(e) => setInputValue(e.target.value)} 
+                    disabled={running} 
+                    placeholder="Paste a URL to scan for threats..." 
+                    className={`w-full flex-grow !bg-transparent !border-0 !outline-none !ring-0 shadow-none text-lg md:text-xl font-sans placeholder:text-gray-400 dark:placeholder:text-slate-500 transition-all duration-200 ${inputValue ? 'text-left' : 'text-center'} ${theme.textPrimary}`} 
+                  />
+                )}
 
-            {mode === 'text' && (
-              <textarea value={inputValue} onChange={(e) => setInputValue(e.target.value)} disabled={running} placeholder="Paste text here to analyze..." 
-                        className={`w-full flex-grow min-h-[250px] p-4 rounded-lg text-sm border focus:border-indigo-500 outline-none font-mono resize-none transition-all relative z-10 shadow-inner custom-scrollbar ${theme.inner} ${theme.textPrimary}`} />
-            )}
-            
-            {mode === 'url' && (
-              <input type="url" value={inputValue} onChange={(e) => setInputValue(e.target.value)} disabled={running} placeholder="Enter URL..." 
-                     className={`w-full p-4 rounded-lg text-sm border focus:border-indigo-500 outline-none font-mono transition-all relative z-10 shadow-inner ${theme.inner} ${theme.textPrimary}`} />
-            )}
-
-            {['image', 'video', 'document'].includes(mode) && (
-              <div className={`border-2 border-dashed ${themeMode === 'dark' ? 'border-slate-800' : 'border-slate-200'} ${theme.inner} rounded-xl p-2 relative flex-grow min-h-[250px] flex flex-col items-center justify-center transition-all ${running ? 'opacity-80 pointer-events-none' : ''}`}>
-                {running && file && <motion.div initial={{ top: '0%' }} animate={{ top: ['0%', '95%', '0%'] }} transition={{ duration: 2.5, repeat: Infinity, ease: "linear" }} className="absolute left-0 right-0 h-1 bg-indigo-500 shadow-[0_0_20px_rgba(99,102,241,1)] z-50 pointer-events-none" />}
-                {file ? (
-                  <div className="w-full h-full relative flex flex-col items-center justify-center p-4">
-                    {mode === 'image' && <img src={URL.createObjectURL(file)} alt="Preview" className="max-h-56 rounded border border-slate-700" />}
-                    {mode === 'video' && <video src={URL.createObjectURL(file)} controls className="max-h-56 rounded border border-slate-700" />}
-                    {mode === 'document' && <div className="text-center w-full max-w-xs bg-slate-900 border border-slate-700 p-4 rounded-lg"><DocumentMagnifyingGlassIcon className="w-12 h-12 text-indigo-400 mx-auto mb-3"/><p className="text-indigo-300 font-mono text-xs truncate">{file.name}</p></div>}
-                    {!running && <button onClick={() => { setFile(null); setInputValue(''); }} className="mt-6 text-[10px] uppercase tracking-widest text-rose-400 font-bold border border-rose-500/30 px-4 py-2 rounded">Remove</button>}
+                {mode === 'file' && (
+                  <div className="flex-grow flex flex-col items-center justify-center transition-all p-4">
+                    {file ? (
+                      <div className="text-center">
+                         <div className="text-indigo-500 font-sans font-medium mb-2">{file.name}</div>
+                         <button onClick={() => { setFile(null); setInputValue(''); }} className="text-xs text-rose-500 uppercase tracking-widest font-bold">Remove</button>
+                      </div>
+                    ) : (
+                      <div className="cursor-pointer flex flex-col items-center text-slate-500 hover:text-slate-300 transition-colors" onClick={() => document.getElementById('file-upload').click()}>
+                        <PaperClipIcon className="w-10 h-10 mb-3" />
+                        <span className="text-sm font-sans font-medium">Upload Document, Image, or Video</span>
+                        <input id="file-upload" type="file" accept="image/*,video/*,.pdf,.doc,.docx,.txt" className="hidden" onChange={(e) => { setFile(e.target.files?.[0]); setInputValue(e.target.files?.[0]?.name); }} />
+                      </div>
+                    )}
                   </div>
-                ) : (
-                  <div className="cursor-pointer group flex flex-col items-center justify-center w-full h-full p-8" onClick={() => document.getElementById('file-upload').click()}>
-                    <div className="w-16 h-16 rounded-full bg-slate-900 border border-slate-800 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform"><PhotoIcon className="w-8 h-8 text-slate-500" /></div>
-                    <p className={`text-sm font-bold uppercase tracking-widest ${theme.textSecondary}`}>Upload {mode}</p>
-                    <input id="file-upload" type="file" className="hidden" onChange={(e) => { setFile(e.target.files?.[0]); setInputValue(e.target.files?.[0]?.name); }} />
+                )}
+
+                {mode === 'voice' && (
+                  <div className="flex-grow flex flex-col items-center justify-center">
+                    {audioBlob ? (
+                       <div className="text-center">
+                         <audio src={URL.createObjectURL(audioBlob)} controls className="mb-2 max-w-full rounded-full" />
+                         <button onClick={() => setAudioBlob(null)} className="text-xs text-rose-500 font-bold uppercase mt-2">Rerecord</button>
+                       </div>
+                    ) : (
+                       <button onClick={isRecording ? stopRecording : startRecording} className={`flex items-center gap-2 px-6 py-3 rounded-full font-sans font-medium text-sm transition-all ${isRecording ? 'bg-rose-500 text-white animate-pulse' : 'bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-700'}`}>
+                         <MicrophoneIcon className="w-5 h-5" /> {isRecording ? 'Listening...' : 'Tap to Speak'}
+                       </button>
+                    )}
                   </div>
                 )}
               </div>
-            )}
 
-            {mode === 'voice' && (
-              <div className={`border border-slate-800 rounded-xl p-8 text-center flex flex-col items-center flex-grow min-h-[250px] justify-center transition-all ${theme.inner} ${running ? 'opacity-50 pointer-events-none' : ''}`}>
-                {audioBlob ? <div className="w-full flex flex-col items-center gap-4"><audio src={URL.createObjectURL(audioBlob)} controls className="w-full max-w-xs" /><button onClick={() => setAudioBlob(null)} className="text-rose-400 text-xs font-bold">Rerecord</button></div> : 
-                <button onClick={isRecording ? stopRecording : startRecording} className={`px-6 py-2.5 rounded-lg text-sm font-bold border transition-all ${isRecording ? 'bg-rose-500/10 text-rose-500 border-rose-500/30' : 'bg-slate-800 text-slate-300 border-slate-700'}`}>{isRecording ? 'End Capture' : 'Initiate Audio Capture'}</button>}
+              {/* Bottom Toolbar */}
+              <div className="px-4 pb-4 pt-2 flex flex-wrap items-center justify-between gap-3">
+                <div className="flex items-center gap-1 overflow-x-auto no-scrollbar">
+                  {MODES.map((m) => {
+                    const active = mode === m.id;
+                    return (
+                      <button key={m.id} onClick={() => setMode(m.id)}
+                        className={`flex items-center justify-center w-10 h-10 rounded-full transition-all ${active ? 'bg-indigo-500/10 text-indigo-500' : 'text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800'}`}
+                        title={m.label}
+                      >
+                        <m.icon className="w-5 h-5" />
+                      </button>
+                    );
+                  })}
+                </div>
+
+                <div className="flex items-center gap-2 ml-auto">
+                  {inputValue || file || audioBlob ? (
+                    <button onClick={clearAll} disabled={running} className="p-2.5 text-slate-500 hover:text-rose-500 transition-colors rounded-full hover:bg-slate-100 dark:hover:bg-slate-800">
+                      <TrashIcon className="w-5 h-5" />
+                    </button>
+                  ) : null}
+                  
+                  {/* ✅ ADAPTIVE SCAN BUTTONS */}
+                  <button 
+                    onClick={() => runAnalysis(true)} 
+                    disabled={running || (!inputValue && !file && !audioBlob)}
+                    className={`flex items-center justify-center gap-1.5 shrink-0 px-3 h-10 rounded-full transition-all shadow-sm group ${themeMode === 'dark' ? 'bg-white text-slate-900 hover:bg-slate-200 disabled:bg-slate-800 disabled:text-slate-600' : 'bg-slate-900 text-white hover:bg-black disabled:bg-slate-200 disabled:text-slate-400'}`}
+                    title="Scan & Share"
+                  >
+                    {running ? (
+                      <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                    ) : (
+                      <>
+                        <ShareIcon className="w-4 h-4 stroke-[2.5] transition-transform group-hover:-translate-y-0.5" />
+                        <ArrowUpIcon className="w-4 h-4 stroke-[2.5] transition-transform group-hover:-translate-y-0.5" />
+                      </>
+                    )}
+                  </button>
+
+                  <button 
+                    onClick={() => runAnalysis(false)} 
+                    disabled={running || (!inputValue && !file && !audioBlob)}
+                    className={`flex items-center justify-center shrink-0 w-10 h-10 rounded-full transition-all shadow-sm group ${themeMode === 'dark' ? 'bg-white text-slate-900 hover:bg-slate-200 disabled:bg-slate-800 disabled:text-slate-600' : 'bg-slate-900 text-white hover:bg-black disabled:bg-slate-200 disabled:text-slate-400'}`}
+                    title="Private Scan"
+                  >
+                    {running ? (
+                      <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                    ) : (
+                      <ArrowUpIcon className="w-5 h-5 stroke-[2.5] transition-transform group-hover:-translate-y-0.5" />
+                    )}
+                  </button>
+                </div>
               </div>
-            )}
-            
-            <div className="grid grid-cols-2 gap-3 mt-6 relative z-10">
-              <button onClick={() => runAnalysis(false)} disabled={running} className="py-3 rounded-lg text-sm font-bold tracking-wider uppercase bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg">Analyze</button>
-              <button onClick={() => runAnalysis(true)} disabled={running} className={`py-3 rounded-lg text-sm font-bold tracking-wider uppercase border border-indigo-500/30 bg-indigo-500/10 text-indigo-300`}>Analyze & Share</button>
             </div>
-          </div>
+          </motion.div>
+
+          {/* SCANNER CONTAINER (Appears on right during running) */}
+          <AnimatePresence>
+            {running && (
+              <motion.div 
+                initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, scale: 0.95 }}
+                className="w-full lg:w-1/2 flex items-center"
+              >
+                <div className="w-full h-full">
+                  <ForensicScanner theme={theme} />
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </motion.div>
 
-        {/* RIGHT COLUMN - Threat Matrix */}
-        <motion.div variants={itemVariants} className="lg:col-span-7 space-y-4">
-          {running ? (
-             <ForensicScanner theme={theme} />
-          ) : summary ? (                                 // ✅ CHANGED THIS LINE
-            <div className="flex flex-col gap-4 h-full">
-              <div className={`${theme.card} p-4 rounded-2xl flex items-center justify-between`}>
-                 <h2 className={`text-sm font-bold uppercase tracking-widest ${theme.textSecondary}`}>Analysis Report</h2>
-                 <button onClick={handleManualShareClick} className="text-[10px] font-black uppercase text-indigo-400 bg-indigo-500/10 px-3 py-1.5 rounded-lg border border-indigo-500/20 flex items-center gap-2"><ShareIcon className="w-3.5 h-3.5" /> Share to Community</button>
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
-                <div className={`md:col-span-4 ${theme.card} p-6 rounded-2xl flex flex-col items-center justify-center`}>
-                   <div className="relative w-28 h-28 flex items-center justify-center shrink-0 mb-4">
-                      <svg className="w-full h-full transform -rotate-90" viewBox="0 0 36 36">
-                         <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke={themeMode === 'dark' ? "#1e293b" : "#e2e8f0"} strokeWidth="2.5" />
-                         <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke={score < 40 ? "#ef4444" : score < 70 ? "#eab308" : "#10b981"} strokeWidth="2.5" strokeDasharray={`${score}, 100`} />
-                      </svg>
-                      <div className="absolute font-black text-3xl">{formatPercent(score)}</div>
-                   </div>
-                   <div className={`text-sm font-black uppercase ${score < 40 ? "text-rose-500" : score < 70 ? "text-yellow-500" : "text-emerald-500"}`}>{verdictLevel}</div>
-                   <div className="text-[9px] text-slate-500 font-mono mt-2 pt-2 border-t border-slate-800 w-full text-center">{verdictLabel(verdictLevel)}</div>
-                </div>
-
-                <div className={`md:col-span-8 ${theme.inner} p-5 rounded-2xl shadow-inner flex flex-col h-48 md:h-auto`}>
-                   <div className="flex items-center gap-2 mb-3 opacity-50"><SparklesIcon className="w-3.5 h-3.5 text-indigo-400" /><span className="text-[10px] font-mono font-bold tracking-widest uppercase">AI_ANALYSIS_SUMMARY</span></div>
-                   <div className="text-xs font-mono leading-relaxed overflow-y-auto custom-scrollbar flex-grow"><TypewriterTerminalText text={summary} /></div>
-                </div>
-              </div>
-              
-              {/* EXACT STEP 3 FIX: THE NEW SOURCES SECTION */}
-              {sources && sources.length > 0 && (
-                <div className={`${theme.card} p-5 rounded-2xl border flex flex-col`}>
-                  <h3 className="text-xs font-bold uppercase tracking-widest text-indigo-400 flex items-center gap-2 mb-3">
-                    <ClipboardDocumentCheckIcon className="w-4 h-4" /> Validation Sources
-                  </h3>
-                  <div className="space-y-3">
-                    {sources.map((src, idx) => (
-                      <div key={idx} className={`border-l-2 border-indigo-500 pl-3 py-1 ${theme.inner} rounded-r-lg pr-3`}>
-                        <div className={`text-sm font-bold ${theme.textPrimary}`}>{src.source_name || src.name}</div>
-                        <div className={`text-xs mt-1 ${theme.textSecondary}`}>{src.why_relevant || src.relevance}</div>
+        {/* DYNAMIC RESULTS CONTAINER (Appears below input when done) */}
+        <AnimatePresence>
+          {!running && summary && (
+             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="w-full max-w-4xl mx-auto space-y-6 mt-4">
+                
+                {/* Results Header & Main Score */}
+                <div className={`${theme.card} p-6 rounded-2xl flex flex-col md:flex-row items-center md:items-start gap-6`}>
+                   <div className="flex-shrink-0 flex flex-col items-center">
+                      <div className="relative w-28 h-28 flex items-center justify-center mb-2">
+                         <svg className="w-full h-full transform -rotate-90" viewBox="0 0 36 36">
+                            <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke={themeMode === 'dark' ? "#1e293b" : "#e2e8f0"} strokeWidth="2.5" />
+                            <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke={score < 40 ? "#ef4444" : score < 70 ? "#eab308" : "#10b981"} strokeWidth="2.5" strokeDasharray={`${score}, 100`} />
+                         </svg>
+                         <div className="absolute font-black text-3xl">{formatPercent(score)}</div>
                       </div>
-                    ))}
-                  </div>
-                </div>
-              )}
+                      <div className={`text-sm font-black uppercase ${score < 40 ? "text-rose-500" : score < 70 ? "text-yellow-500" : "text-emerald-500"}`}>{verdictLevel}</div>
+                   </div>
 
-              {Object.values(metrics).some(v => v > 0) && (
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                  {Object.entries(metrics).map(([key, val]) => (
-                    <div key={key} className={`${theme.card} p-4 rounded-2xl relative overflow-hidden transition-colors`}>
-                       <div className={`absolute top-0 right-0 w-8 h-8 ${val > 60 ? 'bg-rose-500/10' : 'bg-emerald-500/10'} rounded-bl-full`}></div>
-                       <div className="text-[8px] text-slate-500 uppercase tracking-widest font-bold mb-2 truncate">{key.replace(/_/g, ' ')}</div>
-                       <div className="text-xl font-black">{formatPercent(val)}%</div>
-                       <div className="w-full h-1 bg-slate-950 mt-2 rounded-full overflow-hidden"><div className={`h-full ${val > 60 ? 'bg-rose-500' : 'bg-indigo-500'}`} style={{ width: `${val}%` }}/></div>
-                    </div>
-                  ))}
+                   <div className="flex-grow flex flex-col">
+                      <div className="flex items-center justify-between mb-3">
+                         <h2 className={`text-xs font-bold uppercase tracking-widest ${theme.textSecondary}`}>AI Forensic Report</h2>
+                         <button onClick={handleManualShareClick} className="text-[10px] font-black uppercase text-indigo-400 bg-indigo-500/10 hover:bg-indigo-500/20 px-3 py-1.5 rounded border border-indigo-500/20 flex items-center gap-1 transition-colors">
+                           <ShareIcon className="w-3 h-3" /> Share
+                         </button>
+                      </div>
+                      <div className={`${theme.inner} p-4 rounded-xl flex-grow`}>
+                         {/* ✅ THE PRE-WRAP FIX SO PARAGRAPHS LOOK BEAUTIFUL */}
+                         <div className="text-sm font-mono leading-relaxed whitespace-pre-wrap"><TypewriterTerminalText text={summary} /></div>
+                      </div>
+                   </div>
                 </div>
-              )}
-            </div>
-          ) : (
-             <div className={`${theme.card} rounded-2xl p-16 border flex flex-col items-center justify-center text-center h-full min-h-[500px]`}>
-                <ShieldCheckIcon className={`w-16 h-16 mb-4 ${themeMode === 'dark' ? 'text-slate-800' : 'text-slate-200'}`} />
-                <h3 className={`text-base font-bold uppercase tracking-widest ${theme.muted}`}>System Standby</h3>
-  <p className={`text-sm mt-2 max-w-xs ${theme.muted}`}>Awaiting input for analysis.</p>
-             </div>
+
+                {/* Sources & Metrics Grid */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                   {sources && sources.length > 0 && (
+                     <div className={`${theme.card} p-5 rounded-2xl`}>
+                       <h3 className="text-xs font-bold uppercase tracking-widest text-indigo-400 mb-4 flex items-center gap-2"><ClipboardDocumentCheckIcon className="w-4 h-4" /> Validation Sources</h3>
+                       <div className="space-y-3">
+                         {sources.map((src, idx) => (
+                           <a key={idx} 
+                              href={src.url !== 'Observation' ? src.url : '#'} 
+                              target={src.url !== 'Observation' ? "_blank" : "_self"}
+                              rel="noopener noreferrer"
+                              className={`block border-l-2 border-indigo-500 pl-3 py-2 ${theme.inner} rounded-r-lg pr-3 hover:bg-indigo-500/5 transition-colors group cursor-pointer`}
+                           >
+                             <div className={`text-sm font-bold flex items-center justify-between ${theme.textPrimary}`}>
+                               <span>[{src.id}] {src.source_name || src.name}</span>
+                               {src.url !== 'Observation' && <LinkIcon className="w-3.5 h-3.5 text-indigo-400 opacity-0 group-hover:opacity-100 transition-opacity" />}
+                             </div>
+                             <div className={`text-xs mt-1 leading-relaxed ${theme.textSecondary}`}>{src.why_relevant || src.relevance}</div>
+                           </a>
+                         ))}
+                       </div>
+                     </div>
+                   )}
+
+                   {Object.values(metrics).some(v => v > 0) && (
+                     <div className="grid grid-cols-2 gap-3">
+                       {Object.entries(metrics).map(([key, val]) => (
+                         <div key={key} className={`${theme.card} p-4 rounded-xl relative overflow-hidden`}>
+                            <div className="text-[9px] text-slate-500 uppercase tracking-widest font-bold mb-2 truncate">{key.replace(/_/g, ' ')}</div>
+                            <div className="text-xl font-black mb-2">{formatPercent(val)}%</div>
+                            <div className="w-full h-1 bg-slate-900 rounded-full overflow-hidden"><div className={`h-full ${val > 60 ? 'bg-rose-500' : 'bg-indigo-500'}`} style={{ width: `${val}%` }}/></div>
+                         </div>
+                       ))}
+                     </div>
+                   )}
+                </div>
+             </motion.div>
           )}
-        </motion.div>
-      </div>
+        </AnimatePresence>
 
-      <motion.div variants={itemVariants} className="max-w-7xl mx-auto mt-8 relative z-10">
-         <PrivateLedger entries={ledger} theme={theme} onDelete={handleDeleteEntry} onDeleteAll={handleDeleteAll} onLoad={handleLoadEntry} />
-      </motion.div>
+        {/* HISTORY SECTION */}
+        <PrivateLedger entries={ledger} theme={theme} onDelete={handleDeleteEntry} onDeleteAll={handleDeleteAll} onLoad={handleLoadEntry} />
+      
+      </div>
       <div className="h-24" />
-    </motion.div>
+    </div>
   );
 }

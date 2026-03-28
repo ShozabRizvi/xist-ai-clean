@@ -55,6 +55,8 @@ const AboutSection = ({ theme: globalTheme }) => {
   const { screenSize } = useResponsive();
   const themeMode = THEMES[globalTheme] ? globalTheme : 'dark';
   const theme = THEMES[themeMode];
+  const [isStackExpanded, setIsStackExpanded] = useState(false);
+  const [activeCard, setActiveCard] = useState(null);
   const typingTitle = useTypewriterEffect("About Xist AI", 80, 200);
 
   // ✅ STAGGERED ANIMATION ENGINE
@@ -65,6 +67,85 @@ const AboutSection = ({ theme: globalTheme }) => {
   const itemVariants = {
     hidden: { y: 20, opacity: 0 },
     visible: { y: 0, opacity: 1, transition: { type: 'spring', stiffness: 100 } }
+  };
+
+  // ✅ THE FOOLPROOF 4-STATE ANIMATION ENGINE (Adaptive Desktop/Mobile Focus)
+  const stackVariants = {
+    compressed: (i) => ({
+      x: i * 15,
+      y: i * 15,
+      rotate: i * -4,
+      scale: 1 - i * 0.05,
+      zIndex: 10 - i,
+      opacity: 1,
+      transition: { type: "spring", stiffness: 300, damping: 25 }
+    }),
+    expanded: (i) => {
+      const w = typeof window !== 'undefined' ? window.innerWidth : 1000;
+      const isMobile = w < 768;
+      const vSpread = typeof window !== 'undefined' ? Math.min(window.innerHeight * 0.35, 280) : 280;
+      const hSpread = Math.min(w * 0.22, 320);
+
+      return {
+        x: isMobile ? 0 : (i === 0 ? -hSpread : i === 1 ? 0 : hSpread),
+        y: isMobile ? (i === 0 ? -vSpread : i === 1 ? 0 : vSpread) : (i === 0 ? 10 : i === 1 ? -15 : 10),
+        rotate: isMobile ? 0 : (i === 0 ? -4 : i === 1 ? 0 : 4),
+        scale: isMobile ? 1.02 : 1.05,
+        zIndex: 20,
+        opacity: 1,
+        transition: { type: "spring", stiffness: 260, damping: 20 }
+      };
+    },
+    focusedActive: (i) => {
+      const w = typeof window !== 'undefined' ? window.innerWidth : 1000;
+      const isMobile = w < 768;
+      const hSpread = Math.min(w * 0.22, 320);
+
+      if (isMobile) {
+        // MOBILE: Center the card and zoom in
+        return {
+          x: 0, y: 0, rotate: 0, scale: 1.05, zIndex: 50, opacity: 1,
+          transition: { type: "spring", stiffness: 300, damping: 20 }
+        };
+      } else {
+        // DESKTOP: Keep in place, but pop to the front of the stack!
+        return {
+          x: i === 0 ? -hSpread : i === 1 ? 0 : hSpread,
+          y: i === 0 ? 10 : i === 1 ? -15 : 10,
+          rotate: i === 0 ? -4 : i === 1 ? 0 : 4,
+          scale: 1.1, // Slight bump in size to show it's active
+          zIndex: 50, // Brings it in front of the middle card
+          opacity: 1,
+          transition: { type: "spring", stiffness: 300, damping: 20 }
+        };
+      }
+    },
+    focusedInactive: (i) => {
+      const w = typeof window !== 'undefined' ? window.innerWidth : 1000;
+      const isMobile = w < 768;
+      const vSpread = typeof window !== 'undefined' ? Math.min(window.innerHeight * 0.35, 280) : 280;
+      const hSpread = Math.min(w * 0.22, 320);
+
+      if (isMobile) {
+        // MOBILE: Push other cards far away and fade them
+        return {
+          x: 0, y: i === 0 ? -vSpread - 40 : i === 1 ? 0 : vSpread + 40,
+          rotate: 0, scale: 0.85, zIndex: 10, opacity: 0.25,
+          transition: { type: "spring", stiffness: 260, damping: 20 }
+        };
+      } else {
+        // DESKTOP: Keep in place, drop behind, and dim slightly
+        return {
+          x: i === 0 ? -hSpread : i === 1 ? 0 : hSpread,
+          y: i === 0 ? 10 : i === 1 ? -15 : 10,
+          rotate: i === 0 ? -4 : i === 1 ? 0 : 4,
+          scale: 1.0, // Drop scale back to normal
+          zIndex: 10, // Push behind the active card
+          opacity: 0.5, // Dim them so the active card stands out
+          transition: { type: "spring", stiffness: 260, damping: 20 }
+        };
+      }
+    }
   };
 
   const teamMembers = [
@@ -150,18 +231,72 @@ const AboutSection = ({ theme: globalTheme }) => {
         </motion.div>
 
         {/* Team Section */}
-        <motion.div variants={itemVariants} className={`${theme.card} rounded-[2rem] p-8 border`}>
+        <motion.div variants={itemVariants} className={`${theme.card} rounded-[2rem] p-8 border overflow-visible`}>
           <div className="text-center mb-10">
             <h2 className="text-xl font-black uppercase tracking-widest mb-2 flex items-center justify-center gap-2">
               <CodeBracketIcon className="w-5 h-5 text-indigo-500" /> Primary Development Node
             </h2>
             <div className="w-10 h-1 bg-indigo-500/50 mx-auto rounded-full mb-2"></div>
-            <p className={`text-xs uppercase tracking-widest font-mono ${theme.muted}`}>Operators currently online</p>
+            <p className={`text-xs uppercase tracking-widest font-mono ${theme.muted}`}>Operators online. Tap or hover to expand stack.</p>
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          <motion.div 
+            onHoverStart={() => {
+              if (typeof window !== 'undefined' && window.innerWidth >= 768) setIsStackExpanded(true);
+            }}
+            onHoverEnd={() => {
+              if (typeof window !== 'undefined' && window.innerWidth >= 768) {
+                setIsStackExpanded(false);
+                setActiveCard(null);
+              }
+            }}
+            onClick={() => {
+              if (typeof window !== 'undefined' && window.innerWidth < 768) {
+                // Mobile tap logic
+                if (isStackExpanded && activeCard !== null) setActiveCard(null);
+                else setIsStackExpanded(!isStackExpanded);
+              }
+            }}
+            className="relative flex justify-center items-center h-[900px] md:h-[500px] w-full max-w-5xl mx-auto cursor-pointer"
+          >
             {teamMembers.map((member, index) => (
-              <div key={index} className={`relative p-6 rounded-2xl border ${theme.inner} group hover:border-indigo-500/50 transition-all hover:-translate-y-1`}>
+              <motion.div 
+                key={index} 
+                custom={index} 
+                variants={stackVariants}
+                initial="compressed"
+                animate={
+                  !isStackExpanded 
+                    ? "compressed" 
+                    : activeCard === null 
+                      ? "expanded" 
+                      : activeCard === index 
+                        ? "focusedActive" 
+                        : "focusedInactive"
+                }
+                // ✅ DESKTOP: Focuses the card seamlessly on hover
+                onHoverStart={() => {
+                  if (typeof window !== 'undefined' && window.innerWidth >= 768 && isStackExpanded) {
+                    setActiveCard(index);
+                  }
+                }}
+                // ✅ DESKTOP: Unfocuses the card when the mouse leaves it
+                onHoverEnd={() => {
+                  if (typeof window !== 'undefined' && window.innerWidth >= 768) {
+                    setActiveCard(null);
+                  }
+                }}
+                // ✅ MOBILE: Focuses the card on tap
+                onClick={(e) => {
+                  if (!isStackExpanded) return; 
+                  e.stopPropagation(); 
+                  if (typeof window !== 'undefined' && window.innerWidth < 768) {
+                    setActiveCard(activeCard === index ? null : index);
+                  }
+                }}
+                className={`absolute w-[90%] md:w-[320px] p-6 rounded-2xl border ${theme.inner} shadow-2xl group transition-colors bg-opacity-95 backdrop-blur-md ${activeCard === index ? 'shadow-[0_0_40px_rgba(99,102,241,0.2)] border-indigo-500/80' : 'hover:border-indigo-500/50'}`}
+                style={{ transformOrigin: 'center center' }}
+              >
                 
                 {/* Glowing Background Accent */}
                 <div className="absolute inset-0 bg-gradient-to-b from-indigo-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity rounded-2xl pointer-events-none"></div>
@@ -191,21 +326,21 @@ const AboutSection = ({ theme: globalTheme }) => {
 
                   <div className="flex justify-center space-x-3 pt-4 border-t border-slate-700/30">
                     {member.socialLinks?.github && (
-                      <a href={member.socialLinks.github} target="_blank" rel="noopener noreferrer" className={`${theme.textSecondary} hover:text-indigo-400 transition-colors`}>
+                      <a href={member.socialLinks.github} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()} className={`${theme.textSecondary} hover:text-indigo-400 transition-colors relative z-50`}>
                         <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
                       </a>
                     )}
                     {member.socialLinks?.linkedin && (
-                      <a href={member.socialLinks.linkedin} target="_blank" rel="noopener noreferrer" className={`${theme.textSecondary} hover:text-blue-500 transition-colors`}>
+                      <a href={member.socialLinks.linkedin} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()} className={`${theme.textSecondary} hover:text-blue-500 transition-colors relative z-50`}>
                         <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
                       </a>
                     )}
                   </div>
                 </div>
-              </div>
+              </motion.div>
             ))}
-          </div>
-        </motion.div>
+          </motion.div>
+        </motion.div>  
 
         {/* Development Journey & Mission Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
