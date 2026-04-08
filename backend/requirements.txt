@@ -29,7 +29,7 @@ urllib3==2.6.3
 Werkzeug==3.1.6
 wheel==0.46.3
 gunicorn==21.2.0
-google-generativeai==0.8.3
+google-genai==0.3.0
 beautifulsoup4==4.12.3
 soupsieve==2.5
 PyPDF2==3.0.1
