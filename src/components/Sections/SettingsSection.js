@@ -1,12 +1,14 @@
-import React, { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
+import React, { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
+import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Cog6ToothIcon, UserCircleIcon, PaintBrushIcon, SunIcon, 
   MoonIcon, CheckCircleIcon, ShieldExclamationIcon, 
   TrashIcon, KeyIcon, FingerPrintIcon, ShieldCheckIcon, CpuChipIcon,
   EyeIcon, FireIcon, CodeBracketIcon, SparklesIcon, ClockIcon,
-  ArrowLeftOnRectangleIcon,      // Use this for Sign Out (Modern replacement)
-  ArrowRightStartOnRectangleIcon,ChartBarIcon, MagnifyingGlassIcon, GlobeAltIcon
+  ArrowLeftOnRectangleIcon, ArrowRightStartOnRectangleIcon,
+  ChartBarIcon, MagnifyingGlassIcon, GlobeAltIcon,
+  QuestionMarkCircleIcon // <--- ✅ ADD THIS ONE
 } from '@heroicons/react/24/outline';
 import { useResponsive } from '../../hooks/useResponsive';
 
@@ -49,6 +51,83 @@ const useTypewriterEffect = (text, speed = 80, delay = 200) => {
   return displayedText;
 };
 
+// ==============================
+// ADAPTIVE TOOLTIP (THE PORTAL FIX)
+// ==============================
+const InfoTooltip = ({ text, themeMode }) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const [coords, setCoords] = useState({ top: 0, left: 0 });
+  const iconRef = useRef(null);
+
+  const updatePosition = () => {
+    if (iconRef.current) {
+      // Grabs the exact X/Y coordinates of the icon on your screen
+      const rect = iconRef.current.getBoundingClientRect();
+      setCoords({
+        top: rect.bottom + 10, // 10px below the icon
+        left: rect.left + (rect.width / 2) // Center of the icon
+      });
+    }
+  };
+
+  const handleOpen = (e) => {
+    if (e) e.preventDefault();
+    updatePosition();
+    setIsOpen(true);
+  };
+
+  const handleClose = () => setIsOpen(false);
+
+  // Closes the tooltip if the user scrolls, so it doesn't float away
+  useEffect(() => {
+    if (isOpen) {
+      window.addEventListener('scroll', handleClose, true);
+      return () => window.removeEventListener('scroll', handleClose, true);
+    }
+  }, [isOpen]);
+
+  return (
+    <div className="relative flex items-center ml-2">
+
+      {/* The Icon */}
+      <button
+        ref={iconRef}
+        type="button"
+        onMouseEnter={handleOpen}
+        onMouseLeave={handleClose}
+        onClick={(e) => {
+          if (isOpen) handleClose();
+          else handleOpen(e);
+        }}
+        className="focus:outline-none flex items-center justify-center p-1 rounded-full cursor-help"
+      >
+        <QuestionMarkCircleIcon
+          className={`w-[18px] h-[18px] transition-colors ${themeMode === 'dark' ? 'text-slate-400 hover:text-indigo-400' : 'text-slate-500 hover:text-indigo-500'}`}
+        />
+      </button>
+
+      {/* The Portal: Teleports the box completely out of the app's layout! */}
+      {isOpen && createPortal(
+        <div
+          className={`fixed z-[999999] w-56 sm:w-64 p-3 rounded-xl shadow-[0_20px_40px_rgba(0,0,0,0.4)] border backdrop-blur-md pointer-events-none transition-opacity duration-200
+            ${themeMode === 'dark' ? 'bg-slate-800/95 border-slate-700 text-slate-200' : 'bg-white/95 border-slate-200 text-slate-700'}`}
+          style={{
+            top: `${coords.top}px`,
+            left: `${coords.left}px`,
+            transform: 'translateX(-50%)', // Keeps it perfectly centered under the icon
+          }}
+        >
+          <div className="text-[11px] leading-relaxed font-medium">
+            {text}
+          </div>
+        </div>,
+        document.body // <-- This tells React to attach it to the root of the page
+      )}
+      
+    </div>
+  );
+};
+
 export const AVATAR_OPTIONS = [
   { id: 'ghost', icon: UserCircleIcon },
   { id: 'shield', icon: ShieldCheckIcon },
@@ -82,7 +161,7 @@ export default function SettingsSection({
     theme: globalTheme,
     forensics: { strictMode: false, autoPurge: true },
     privacy: { anonymousSharing: true },
-    security: { sessionTimeout: '30' }
+    security: { sessionTimeout: 'never' }
   });
   const [localIdentity, setLocalIdentity] = useState(() => {
     const saved = localStorage.getItem('xist_operator_identity');
@@ -430,12 +509,18 @@ export default function SettingsSection({
           {/* TAB 3: GENERAL PREFERENCES */}
           {activeTab === 'general' && (
             <div className="space-y-6 animate-fade-in">
-              <h3 className="text-xs font-black uppercase tracking-widest mb-6 flex items-center gap-2"><SparklesIcon className="w-5 h-5 text-indigo-500"/> App Behavior</h3>
+              <h3 className="text-xs font-black uppercase tracking-widest mb-6 flex items-center gap-2">
+                <SparklesIcon className="w-5 h-5 text-indigo-500"/> App Behavior
+              </h3>
               
+              {/* STRICT MODE ROW */}
               <div className={`flex flex-col sm:flex-row sm:items-center justify-between p-5 md:p-6 rounded-2xl border gap-4 ${theme.inner}`}>
-                <div className="pr-4">
-                  <h4 className={`font-bold text-sm mb-1 ${theme.textPrimary}`}>Strict AI Scanning</h4>
-                  <p className={`text-[11px] leading-relaxed ${theme.textSecondary}`}>Increases sensitivity to anomalies. May flag safe content more often.</p>
+                <div className="flex items-center">
+                  <h4 className={`font-bold text-sm ${theme.textPrimary}`}>Strict AI Scanning</h4>
+                  <InfoTooltip 
+                    themeMode={themeMode} 
+                    text="Forces the AI to be hyper-critical and highly sensitive to anomalies. It will flag content as 'Critical' even if there is only a 1% chance it is manipulated." 
+                  />
                 </div>
                 <label className="relative inline-flex items-center cursor-pointer flex-shrink-0">
                   <input type="checkbox" className="sr-only peer" checked={settings.forensics.strictMode} onChange={(e) => handleSettingChange('forensics', 'strictMode', e.target.checked)} />
@@ -443,10 +528,14 @@ export default function SettingsSection({
                 </label>
               </div>
 
+              {/* AUTO-SHARE ROW */}
               <div className={`flex flex-col sm:flex-row sm:items-center justify-between p-5 md:p-6 rounded-2xl border gap-4 ${theme.inner}`}>
-                <div className="pr-4">
-                  <h4 className={`font-bold text-sm mb-1 ${theme.textPrimary}`}>Share findings to Community</h4>
-                  <p className={`text-[11px] leading-relaxed ${theme.textSecondary}`}>Automatically submit malicious URLs to the global feed to warn others.</p>
+                <div className="flex items-center">
+                  <h4 className={`font-bold text-sm ${theme.textPrimary}`}>Share findings to Community</h4>
+                  <InfoTooltip 
+                    themeMode={themeMode} 
+                    text="Automatically submits any highly suspicious or malicious results to the Global Threat Feed to warn other operators. Your identity remains completely anonymous." 
+                  />
                 </div>
                 <label className="relative inline-flex items-center cursor-pointer flex-shrink-0">
                   <input type="checkbox" className="sr-only peer" checked={settings.privacy.anonymousSharing} onChange={(e) => handleSettingChange('privacy', 'anonymousSharing', e.target.checked)} />
@@ -454,9 +543,16 @@ export default function SettingsSection({
                 </label>
               </div>
 
-              <div className={`p-5 md:p-6 rounded-2xl border ${theme.inner}`}>
-                <h4 className={`font-bold text-sm mb-2 flex items-center gap-2 ${theme.textPrimary}`}><KeyIcon className="w-4 h-4 text-indigo-500"/> Auto-Lock App</h4>
-                <p className={`text-[11px] mb-4 ${theme.textSecondary}`}>Require re-authentication after inactivity to protect your scans.</p>
+              {/* AUTO-LOCK ROW */}
+              <div className={`p-5 md:p-6 rounded-2xl border ${theme.inner} flex flex-col sm:flex-row sm:items-center justify-between gap-4`}>
+                <div className="flex items-center">
+                  <KeyIcon className="w-4 h-4 text-indigo-500 mr-2"/>
+                  <h4 className={`font-bold text-sm ${theme.textPrimary}`}>Auto-Lock App</h4>
+                  <InfoTooltip 
+                    themeMode={themeMode} 
+                    text="Automatically locks your session and requires you to sign back in if you step away from your device. Moving your mouse or typing resets the timer." 
+                  />
+                </div>
                 <select value={settings.security.sessionTimeout} onChange={(e) => handleSettingChange('security', 'sessionTimeout', e.target.value)}
                   className={`w-full sm:w-max p-3 rounded-xl border-2 outline-none text-xs font-bold uppercase cursor-pointer ${theme.input} border-slate-700/50`}>
                   <option value="15">After 15 Minutes</option>

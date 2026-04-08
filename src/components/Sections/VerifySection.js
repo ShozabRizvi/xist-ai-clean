@@ -6,7 +6,8 @@ import {
   ShieldCheckIcon, DocumentTextIcon, LinkIcon, PhotoIcon, VideoCameraIcon,
   MicrophoneIcon, TrashIcon, ShareIcon, SparklesIcon, SunIcon, MoonIcon,
   CheckCircleIcon, ArrowUpTrayIcon, ClipboardDocumentCheckIcon, GlobeAltIcon,
-  DocumentMagnifyingGlassIcon, MagnifyingGlassCircleIcon,ChevronDownIcon,ArrowUpIcon,PaperClipIcon,PlusIcon, ExclamationTriangleIcon
+  DocumentMagnifyingGlassIcon, MagnifyingGlassCircleIcon,ChevronDownIcon,ArrowUpIcon,PaperClipIcon,PlusIcon, ExclamationTriangleIcon,
+  XMarkIcon // <--- ADD THIS ONE
 } from '@heroicons/react/24/outline';
 import { supabase } from '../../lib/supabase';
 
@@ -239,7 +240,7 @@ const PrivateLedger = ({ entries, theme, onDelete, onDeleteAll, onLoad }) => (
 // ==============================
 // MAIN COMPONENT
 // ==============================
-export default function VerifySection({ user, theme: globalTheme }) { 
+export default function VerifySection({ user, theme: globalTheme,globalSettings }) { 
   const [localThemeMode, setLocalThemeMode] = useState('dark');
   const themeMode = THEMES[globalTheme] ? globalTheme : localThemeMode;
   const theme = THEMES[themeMode];
@@ -266,7 +267,39 @@ export default function VerifySection({ user, theme: globalTheme }) {
   const [sharing, setSharing] = useState(false);
   const [currentMediaUrl, setCurrentMediaUrl] = useState(null);
 
-  useEffect(() => { fetchLedger(); }, []);
+  const abortControllerRef = useRef(null); // ✅ CONTROLS THE STOP BUTTON
+
+  // ✅ 5-MINUTE MEMORY: Restores state if you switch tabs or refresh
+  useEffect(() => {
+    fetchLedger();
+    const savedState = sessionStorage.getItem('xist_verify_state');
+    if (savedState) {
+      const parsed = JSON.parse(savedState);
+      const timePassed = Date.now() - parsed.timestamp;
+      
+      // If less than 5 minutes (300,000 ms) have passed, restore everything!
+      if (timePassed < 300000) {
+        setMode(parsed.mode);
+        setInputValue(parsed.inputValue);
+        setScore(parsed.score);
+        setVerdictLevel(parsed.verdictLevel);
+        setMetrics(parsed.metrics);
+        setSummary(parsed.summary);
+        setSources(parsed.sources);
+      } else {
+        sessionStorage.removeItem('xist_verify_state'); // Expire old data
+      }
+    }
+  }, []);
+
+  // ✅ STOP BUTTON FUNCTION
+  const stopAnalysis = () => {
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort(); // Kills the fetch request
+      setRunning(false);
+      toast('Analysis aborted by user.', { icon: <XMarkIcon className="w-5 h-5 text-yellow-500" /> });
+    }
+  };
 
   const fetchLedger = async () => {
     const currentUserId = user?.id || user?.uid;
@@ -298,23 +331,80 @@ export default function VerifySection({ user, theme: globalTheme }) {
 
   const handleDeleteEntry = async (id) => {
     try {
-      const { error } = await supabase.from('user_history').delete().eq('id', id);
-      if (error) throw error;
+      console.log("🛠️ DEBUG: Attempting to delete row with ID:", id);
+      
+      // 1. Find the entry in our local state to see if it has a media file
+      const entryToDelete = ledger.find(item => item.id === id);
+
+      // 2. If there is a media file, delete it from Supabase Storage first!
+      if (entryToDelete && entryToDelete.media_url) {
+        // Extract just the filename from the end of the long URL
+        const fileName = entryToDelete.media_url.split('/').pop(); 
+        console.log("🗑️ Deleting associated media file:", fileName);
+        
+        const { error: storageError } = await supabase.storage.from('threat_media').remove([fileName]);
+        if (storageError) {
+          console.warn("⚠️ Could not delete storage file (it might already be gone):", storageError);
+        }
+      }
+
+      // 3. Now delete the actual text row from the database
+      const response = await supabase.from('user_history').delete().eq('id', id);
+      
+      if (response.error) {
+        console.error("🚨 SUPABASE REJECTED DELETE:", response.error);
+        toast.error(`DB Error: ${response.error.message || response.error.details}`);
+        return; 
+      }
+
+      console.log("✅ DEBUG: Delete successful!");
       setLedger(prev => prev.filter(item => item.id !== id));
       toast('History entry deleted', { icon: <TrashIcon className="w-5 h-5 text-slate-400" /> });
-    } catch (err) { toast.error('Failed to delete entry.'); }
+      
+    } catch (err) { 
+      console.error('💥 FATAL CATCH ERROR:', err);
+      toast.error('Code crashed during delete.'); 
+    }
   };
 
   const handleDeleteAll = async () => {
     const currentUserId = user?.id || user?.uid;
     if (!currentUserId) return;
     if (!window.confirm('Are you sure you want to purge all secure logs?')) return;
+    
     try {
-      const { error } = await supabase.from('user_history').delete().eq('user_id', currentUserId);
-      if (error) throw error;
+      console.log("🛠️ DEBUG: Attempting to clear all history for user.");
+
+      // 1. Gather all file names from the current ledger that have a media_url
+      const filesToDelete = ledger
+        .filter(item => item.media_url)
+        .map(item => item.media_url.split('/').pop());
+
+      // 2. If there are files, delete them from Storage in ONE batch!
+      if (filesToDelete.length > 0) {
+        console.log("🗑️ Batch deleting media files:", filesToDelete);
+        const { error: storageError } = await supabase.storage.from('threat_media').remove(filesToDelete);
+        if (storageError) {
+          console.warn("⚠️ Issue deleting some files from storage:", storageError);
+        }
+      }
+
+      // 3. Delete all text rows from the database
+      const response = await supabase.from('user_history').delete().eq('user_id', currentUserId);
+      
+      if (response.error) {
+         console.error("🚨 SUPABASE REJECTED CLEAR ALL:", response.error);
+         return toast.error("Failed to clear logs.");
+      }
+
+      console.log("✅ DEBUG: Clear All successful!");
       setLedger([]);
       toast('All history cleared', { icon: <TrashIcon className="w-5 h-5 text-slate-400" /> });
-    } catch (err) { toast.error('Failed to purge logs.'); }
+      
+    } catch (err) { 
+      console.error("💥 FATAL CATCH ERROR:", err);
+      toast.error('Failed to purge logs.'); 
+    }
   };
 
   const handleLoadEntry = (entry) => {
@@ -381,7 +471,15 @@ export default function VerifySection({ user, theme: globalTheme }) {
     if (mode === 'voice' && !audioBlob) return toast.error('Initiate audio capture first.', { icon: <MicrophoneIcon className="w-5 h-5 text-rose-500" />});
     if (['image', 'video', 'document'].includes(mode) && !file) return toast.error(`Please provide a ${mode} to analyze.`, { icon: <PaperClipIcon className="w-5 h-5 text-rose-500" />});
     if (['text', 'url'].includes(mode) && !inputValue.trim()) return toast.error('Provide text/URL to analyze first.', { icon: <DocumentTextIcon className="w-5 h-5 text-rose-500" />});
-
+    
+    const MAX_FILE_SIZE = 20 * 1024 * 1024; 
+    if (file && file.size > MAX_FILE_SIZE) {
+        return toast.error("File is too large. Please upload media under 20MB.", { icon: <ExclamationTriangleIcon className="w-5 h-5 text-rose-500" /> });
+    }
+    if (audioBlob && audioBlob.size > MAX_FILE_SIZE) {
+        return toast.error("Audio recording too long. Please keep under 5 minutes.", { icon: <ExclamationTriangleIcon className="w-5 h-5 text-rose-500" /> });
+    }
+    
     setRunning(true); setScore(0); setCurrentMediaUrl(null); setSummary('');
     
     // ✅ SCROLL TO CENTER DURING ANALYSIS
@@ -390,7 +488,12 @@ export default function VerifySection({ user, theme: globalTheme }) {
     }
 
     try {
-      const BACKEND_URL = 'http://localhost:5000';
+      // ✅ IMPROVED SMART ROUTER: Handles both localhost and 127.0.0.1 safely
+      const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+      const BACKEND_URL = isLocal 
+        ? 'http://localhost:5000' 
+        : 'https://xist-ai-clean.onrender.com';
+        
       const formData = new FormData();
 
       let sendMode = mode;
@@ -401,11 +504,19 @@ export default function VerifySection({ user, theme: globalTheme }) {
       }
       
       formData.append('mode', sendMode); 
+      formData.append('strictMode', globalSettings?.forensics?.strictMode || false);
       if (['text', 'url'].includes(mode)) formData.append('text', inputValue);
       else if (mode === 'voice' && audioBlob) formData.append('file', audioBlob, 'voice_note.webm');
       else if (mode === 'file' && file) formData.append('file', file); 
 
-      const response = await fetch(`${BACKEND_URL}/api/analyze`, { method: 'POST', body: formData });
+      // ✅ WIRE UP THE ABORT CONTROLLER TO THE FETCH
+      abortControllerRef.current = new AbortController();
+      const response = await fetch(`${BACKEND_URL}/api/analyze`, { 
+        method: 'POST', 
+        body: formData,
+        signal: abortControllerRef.current.signal // <-- Tells fetch to listen for the stop command
+      });
+      
       if (!response.ok) throw new Error('Engine offline');
       const analysis = await response.json();
 
@@ -421,8 +532,20 @@ export default function VerifySection({ user, theme: globalTheme }) {
         }
       }
 
+      // ✅ SAVE TO 5-MINUTE MEMORY ON SUCCESS
+      sessionStorage.setItem('xist_verify_state', JSON.stringify({
+        timestamp: Date.now(),
+        mode: sendMode,
+        inputValue: inputValue || file?.name,
+        score: analysis.credibility_score,
+        verdictLevel: analysis.overall_verdict,
+        metrics: analysis.dynamic_metrics || DEFAULT_METRICS,
+        summary: analysis.final_explanation_for_user,
+        sources: analysis.validation_sources || []
+      }));
+
       setScore(analysis.credibility_score); setVerdictLevel(analysis.overall_verdict);
-      setMetrics(analysis.linguistic_patterns || DEFAULT_METRICS);
+      setMetrics(analysis.dynamic_metrics || DEFAULT_METRICS);
       setSummary(analysis.final_explanation_for_user); setSources(analysis.validation_sources || []); 
       toast.success(`Analysis Complete`, { icon: <ShieldCheckIcon className="w-5 h-5 text-emerald-400" /> });
 
@@ -430,13 +553,20 @@ export default function VerifySection({ user, theme: globalTheme }) {
         mode: sendMode, 
         input: mode === 'voice' ? 'Voice Recording' : (inputValue || file?.name),
         verdict: analysis.overall_verdict, score: analysis.credibility_score,
-        level: analysis.overall_verdict, metrics: analysis.linguistic_patterns,
+        level: analysis.overall_verdict, metrics: analysis.dynamic_metrics,
         summary: analysis.final_explanation_for_user, media_url: finalMediaUrl
       };
       await persistHistory(record);
       if (autoShare) await shareToCommunity(record);
+      
     } catch (err) { 
-      toast.error("Forensic Engine offline.", { icon: <ExclamationTriangleIcon className="w-5 h-5 text-rose-500" /> }); 
+      // ✅ HANDLE THE ABORT ERROR GRACEFULLY SO IT DOESN'T SHOW AS A CRASH
+      if (err.name === 'AbortError') {
+         console.log("Analysis stopped by user.");
+      } else {
+         console.error("Engine Error:", err);
+         toast.error("Forensic Engine offline.", { icon: <ExclamationTriangleIcon className="w-5 h-5 text-rose-500" /> }); 
+      }
     } finally { 
       setRunning(false); 
     }
@@ -588,15 +718,18 @@ export default function VerifySection({ user, theme: globalTheme }) {
                     </button>
                   ) : null}
                   
-                  {/* ✅ ADAPTIVE SCAN BUTTONS */}
+                  {/* ✅ ADAPTIVE SCAN / STOP BUTTON */}
                   <button 
-                    onClick={() => runAnalysis(true)} 
-                    disabled={running || (!inputValue && !file && !audioBlob)}
-                    className={`flex items-center justify-center gap-1.5 shrink-0 px-3 h-10 rounded-full transition-all shadow-sm group ${themeMode === 'dark' ? 'bg-white text-slate-900 hover:bg-slate-200 disabled:bg-slate-800 disabled:text-slate-600' : 'bg-slate-900 text-white hover:bg-black disabled:bg-slate-200 disabled:text-slate-400'}`}
-                    title="Scan & Share"
+                    onClick={() => running ? stopAnalysis() : runAnalysis(globalSettings?.privacy?.anonymousSharing)}
+                    disabled={(!running && !inputValue && !file && !audioBlob)}
+                    className={`flex items-center justify-center gap-1.5 shrink-0 px-3 h-10 rounded-full transition-all shadow-sm group ${running ? 'bg-rose-500 hover:bg-rose-600 text-white' : themeMode === 'dark' ? 'bg-white text-slate-900 hover:bg-slate-200 disabled:bg-slate-800 disabled:text-slate-600' : 'bg-slate-900 text-white hover:bg-black disabled:bg-slate-200 disabled:text-slate-400'}`}
+                    title={running ? "Stop Scan" : "Scan & Share"}
                   >
                     {running ? (
-                      <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                      <>
+                        <XMarkIcon className="w-5 h-5 stroke-[2.5]" />
+                        <span className="text-xs font-bold uppercase tracking-widest mr-1">Stop</span>
+                      </>
                     ) : (
                       <>
                         <ShareIcon className="w-4 h-4 stroke-[2.5] transition-transform group-hover:-translate-y-0.5" />
@@ -694,14 +827,37 @@ export default function VerifySection({ user, theme: globalTheme }) {
                    )}
 
                    {Object.values(metrics).some(v => v > 0) && (
-                     <div className="grid grid-cols-2 gap-3">
-                       {Object.entries(metrics).map(([key, val]) => (
-                         <div key={key} className={`${theme.card} p-4 rounded-xl relative overflow-hidden`}>
-                            <div className="text-[9px] text-slate-500 uppercase tracking-widest font-bold mb-2 truncate">{key.replace(/_/g, ' ')}</div>
-                            <div className="text-xl font-black mb-2">{formatPercent(val)}%</div>
-                            <div className="w-full h-1 bg-slate-900 rounded-full overflow-hidden"><div className={`h-full ${val > 60 ? 'bg-rose-500' : 'bg-indigo-500'}`} style={{ width: `${val}%` }}/></div>
-                         </div>
-                       ))}
+                     <div className="grid grid-cols-2 gap-3 content-start">
+                       {Object.entries(metrics)
+                         .filter(([_, val]) => val !== null && val !== undefined) // Hide inactive metrics
+                         .map(([key, val]) => {
+                         
+                         // 1. Format the key to be readable (replace underscores with spaces)
+                         const displayName = key.replace(/_/g, ' ');
+
+                         // 2. ADAPTIVE LOGIC: Define which metrics are "Good" when high. 
+                         // Everything else is assumed "Bad" (Red) when high.
+                         const isGoodWhenHigh = [
+                           'Original_File_History', 'Logical_Facts', 'Writing_Style_Match', 
+                           'Makes_Sense', 'Smooth_Movement', 'Normal_Background_Noise', 'Natural_Lighting'
+                         ].includes(key);
+
+                         const isHighRisk = isGoodWhenHigh ? val < 50 : val > 50;
+
+                         return (
+                           <div key={key} className={`${theme.card} p-4 rounded-xl flex flex-col justify-center h-full min-h-[90px]`}>
+                              <div className="text-[10px] text-indigo-400 uppercase tracking-widest font-bold mb-2 truncate" title={displayName}>
+                                {displayName}
+                              </div>
+                              <div className="text-xl font-black mb-2">
+                                {formatPercent(val)}%
+                              </div>
+                              <div className="w-full h-1.5 bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden">
+                                <div className={`h-full transition-all duration-1000 ${isHighRisk ? 'bg-rose-500' : 'bg-emerald-500'}`} style={{ width: `${val}%` }}/>
+                              </div>
+                           </div>
+                         );
+                       })}
                      </div>
                    )}
                 </div>

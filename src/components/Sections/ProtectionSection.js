@@ -4,7 +4,8 @@ import {
   ShieldCheckIcon, PhoneIcon, ShieldExclamationIcon, 
   CommandLineIcon, PaperAirplaneIcon, MagnifyingGlassIcon, 
   ClipboardDocumentCheckIcon, BanknotesIcon, CpuChipIcon, 
-  MapPinIcon, GlobeAsiaAustraliaIcon, IdentificationIcon
+  MapPinIcon, GlobeAsiaAustraliaIcon, IdentificationIcon,
+  MicrophoneIcon, ExclamationTriangleIcon // <--- ADDED THESE TWO
 } from '@heroicons/react/24/outline';
 import { toast, Toaster } from 'react-hot-toast';
 import { supabase } from '../../lib/supabase';
@@ -177,9 +178,55 @@ const theme = THEMES[themeMode];
   const [userInput, setUserInput] = useState('');
   const [isAiAnalyzing, setIsAiAnalyzing] = useState(false);
   const [showProtocolMenu, setShowProtocolMenu] = useState(false);
+  const [isListening, setIsListening] = useState(false); // ✅ NEW VOICE STATE
+  
   const [messages, setMessages] = useState([
     { id: 1, role: 'ai', text: "How can I help you today? Select a topic above or describe your issue for quick action steps." }
   ]);
+
+  // ✅ MISTOUCH PROTECTION: Load saved draft on startup
+  useEffect(() => {
+    const savedDraft = localStorage.getItem('xist_triage_draft');
+    if (savedDraft) setUserInput(savedDraft);
+  }, []);
+
+  // ✅ MISTOUCH PROTECTION: Save every keystroke instantly
+  const handleInputChange = (e) => {
+    setUserInput(e.target.value);
+    localStorage.setItem('xist_triage_draft', e.target.value);
+  };
+
+  // ✅ LIVE VOICE DICTATION ENGINE
+  const toggleDictation = () => {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      return toast.error("Voice dictation not supported in this browser. Please type.", { icon: <ExclamationTriangleIcon className="w-5 h-5 text-rose-500" /> });
+    }
+
+    if (isListening) return; // Ignore if already listening
+
+    const recognition = new SpeechRecognition();
+    recognition.continuous = true;
+    recognition.interimResults = true;
+
+    recognition.onstart = () => {
+      setIsListening(true);
+      toast('Listening...', { icon: <MicrophoneIcon className="w-5 h-5 text-indigo-400 animate-pulse" /> });
+    };
+    
+    recognition.onend = () => setIsListening(false);
+
+    recognition.onresult = (event) => {
+      let currentTranscript = '';
+      for (let i = 0; i < event.results.length; i++) {
+          currentTranscript += event.results[i][0].transcript;
+      }
+      setUserInput(currentTranscript);
+      localStorage.setItem('xist_triage_draft', currentTranscript); // Auto-save voice too!
+    };
+
+    recognition.start();
+  };
 
   const filteredDB = HELPLINE_DB.map(group => ({
     ...group,
@@ -196,11 +243,15 @@ const handleGeminiTriage = async (input) => {
     const userMsg = { id: Date.now(), role: 'user', text: input };
     setMessages(prev => [...prev, userMsg]);
     setIsAiAnalyzing(true);
+    
+    // ✅ CLEAR UI IMMEDIATELY, BUT KEEP IN LOCAL STORAGE JUST IN CASE API FAILS
     setUserInput('');
 
     try {
-      // ✅ FORENSIC FIX: Dynamic routing for the triage endpoint
-      const BACKEND_URL = 'https://xist-ai-clean.onrender.com';
+      // ✅ SMART ROUTER: Uses Localhost for testing, and Render for the live site
+const BACKEND_URL = window.location.hostname === 'localhost' 
+  ? 'http://localhost:5000' 
+  : 'https://xist-ai-clean.onrender.com';
 
       const response = await fetch(`${BACKEND_URL}/api/triage`, {
         method: 'POST',
@@ -217,19 +268,8 @@ const handleGeminiTriage = async (input) => {
         text: data.solution 
       }]);
 
-      // ✅ PATH B FIX: Log this action to Supabase so the Global Counter ticks down!
-      const currentUserId = user?.id || user?.uid;
-      if (currentUserId) {
-        await supabase.from('user_history').insert({
-          user_id: currentUserId,
-          mode: 'triage',
-          input: input.substring(0, 200), // Save a snippet of what they asked
-          verdict: 'EMERGENCY',
-          score: 50, 
-          level: 'URGENT',
-          summary: 'Emergency tactical survival plan generated.'
-        });
-      }
+      // ✅ SUCCESS! Clear the mistouch protection now that they are safe.
+      localStorage.removeItem('xist_triage_draft');
 
     } catch (err) {
       // Fallback for reliability
@@ -351,10 +391,34 @@ const handleGeminiTriage = async (input) => {
                 {isAiAnalyzing && <div className="text-rose-500 animate-pulse font-black text-[10px]">FINDING BEST SOLUTION...</div>}
               </div>
 
-              <div className={`p-4 border-t flex gap-2 ${theme.inner}`}>
-                <input value={userInput} onChange={e => setUserInput(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleGeminiTriage(userInput)}
-                       className={`flex-1 ${theme.input} px-5 py-3 rounded-2xl font-mono text-xs outline-none transition-all`} placeholder="Awaiting emergency input..."/>
-                <button onClick={() => handleGeminiTriage(userInput)} className="bg-rose-600 px-5 rounded-2xl hover:bg-rose-500 transition-all shadow-lg"><PaperAirplaneIcon className="w-5 h-5 text-white"/></button>
+              <div className={`p-4 border-t flex items-center gap-2 ${theme.inner}`}>
+                
+                {/* 🎤 Voice Button */}
+                <button 
+                  onClick={toggleDictation} 
+                  className={`p-3 rounded-2xl transition-all shadow-sm ${isListening ? 'bg-rose-500 text-white animate-pulse' : themeMode === 'dark' ? 'bg-slate-800 text-slate-400 hover:text-indigo-400' : 'bg-slate-200 text-slate-500 hover:text-indigo-500'}`}
+                  title="Voice Dictation"
+                >
+                  <MicrophoneIcon className="w-5 h-5"/>
+                </button>
+
+                {/* ⌨️ Text Input (Now with Auto-Save) */}
+                <input 
+                  value={userInput} 
+                  onChange={handleInputChange} 
+                  onKeyDown={e => e.key === 'Enter' && handleGeminiTriage(userInput)}
+                  className={`flex-1 ${theme.input} px-4 py-3 rounded-2xl font-mono text-xs outline-none transition-all`} 
+                  placeholder={isListening ? "Listening... Speak now." : "Awaiting emergency input..."}
+                />
+                
+                {/* 🚀 Send Button (Now prevents double-clicks) */}
+                <button 
+                  onClick={() => handleGeminiTriage(userInput)} 
+                  disabled={!userInput.trim() || isAiAnalyzing}
+                  className="bg-rose-600 px-5 py-3 rounded-2xl hover:bg-rose-500 disabled:bg-slate-700 disabled:text-slate-500 transition-all shadow-lg text-white"
+                >
+                  <PaperAirplaneIcon className="w-5 h-5"/>
+                </button>
               </div>
             </div>
           </div>

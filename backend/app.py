@@ -17,7 +17,11 @@ from google.genai import types
 
 load_dotenv()
 app = Flask(__name__)
-CORS(app)
+CORS(app, resources={r"/api/*": {"origins": [
+    "http://localhost:3000", 
+    "https://xistai.web.app",
+    "https://xistai.firebaseapp.com"
+]}})
 
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 
@@ -49,11 +53,15 @@ def analyze_content():
             mode = request.form.get('mode', 'text')
             content = request.form.get('text', '')
             uploaded_file = request.files.get('file')
+            # ✅ Extract Strict Mode
+            strict_mode = request.form.get('strictMode', 'false').lower() == 'true'
         else:
             data = request.get_json()
             mode = data.get('mode', 'text')
             content = data.get('text') or data.get('content', '')
             uploaded_file = None
+            # ✅ Extract Strict Mode
+            strict_mode = data.get('strictMode', False)
 
         if not content and not uploaded_file:
             return jsonify({'error': 'No content or file provided'}), 400
@@ -145,6 +153,7 @@ def analyze_content():
             
             STRICT OUTPUT PROTOCOL:
             1. VERDICT: Start the 'explanation' field EXACTLY with "[ VERDICT ] - YES. This media is authentic.", "[ VERDICT ] - NO. This media is AI-generated/manipulated.", or "[ VERDICT ] - CAUTION. This media is suspicious."
+            {f"CRITICAL OVERRIDE: STRICT MODE IS ACTIVE. You must be hyper-critical and highly sensitive to any anomalies. If there is even a slight chance this is manipulated or false, flag it as CRITICAL/SUSPICIOUS." if strict_mode else ""}
             2. SIMPLE LANGUAGE: You MUST use very simple, everyday words. Explain your visual/audio findings clearly so anyone can understand. NO technical jargon.
             3. CITATIONS & SOURCES: Include as many specific visual/audio observations as needed in your 'sources' array. If you find real web sources debunking this specific media, include their actual URLs. Embed markers like [1] in your explanation text.
             4. LANGUAGE: Respond in the exact same language as the user's input, but keep technical headers in English.
@@ -184,6 +193,7 @@ def analyze_content():
                - "[ VERDICT ] - YES. This information is correct."
                - "[ VERDICT ] - NO. This information is false."
                - "[ VERDICT ] - CAUTION. Unverified / Conflicting Reports."
+            {f"CRITICAL OVERRIDE: STRICT MODE IS ACTIVE. You must be hyper-critical and highly sensitive to any anomalies. If there is even a slight chance this is manipulated or false, flag it as CRITICAL/SUSPICIOUS." if strict_mode else ""}
             5. DEPTH & LENGTH: Your EXECUTIVE BRIEFING must be detailed (2-3 paragraphs). Explain the current reality and provide specific proof based ONLY on the live sources you retrieved.
             6. SURVIVAL PLAN (IF DANGER): ONLY trigger a 3-step tactical survival plan if the user is in immediate personal danger from a scam, hack, or phishing link. Do NOT trigger this for general news, rumors, or geopolitical misinformation.
             7. MULTILINGUAL SUPPORT: You MUST detect the language of the user's input. Write the entire explanation in that EXACT SAME LANGUAGE. (However, keep the "[ VERDICT ]" and "EXECUTIVE BRIEFING" headers in English for system formatting).
@@ -260,6 +270,28 @@ def analyze_content():
         prob_fake = 100 - prob_real
         verdict = ai_data.get("overall_verdict", "QUESTIONABLE")
 
+        # Extract the raw baseline scores from Gemini
+        base_1 = ai_data.get("emotional_intensity", 50)
+        base_2 = ai_data.get("bias_score", 50)
+        base_3 = ai_data.get("logical_consistency", 50)
+
+        # 🎯 DYNAMIC ROUTER (Simple English)
+        dynamic_metrics = {}
+        if mode in ['text', 'url']:
+            dynamic_metrics = { "Emotion_Level": base_1, "Opinion_and_Bias": base_2, "Exaggerated_Claims": 100 - base_3 if base_3 > 0 else 50, "Logical_Facts": base_3 }
+        elif mode == 'document':
+            dynamic_metrics = { "Writing_Style_Match": base_3, "Layout_and_Format": base_1, "Original_File_History": 100 - prob_fake, "Makes_Sense": base_2 }
+        elif mode == 'image':
+            dynamic_metrics = { "Visual_Glitches": base_2, "Fake_Pixels": prob_fake, "Original_File_History": base_3, "Natural_Lighting": base_1 }
+        elif mode == 'video':
+            dynamic_metrics = { "Weird_Jumpy_Frames": base_2, "Smooth_Movement": base_3, "Audio_and_Lip_Sync": base_1, "AI_Deepfake_Risk": prob_fake }
+        elif mode == 'voice':
+            dynamic_metrics = { "AI_Voice_Risk": prob_fake, "Human_Speech_Rhythm": base_1, "Normal_Background_Noise": base_3, "Audio_Glitches": base_2 }
+
+        # The Scrubber: Removes brackets/quotes from explanation
+        raw_explanation = str(ai_data.get("explanation", "Analysis complete."))
+        clean_explanation = raw_explanation.strip('"{}[ ]')
+
         structured_response = {
             "overall_verdict": verdict,
             "credibility_score": prob_real,
@@ -269,12 +301,7 @@ def analyze_content():
                 "primary_theme": f"AI {mode.capitalize()} Forensic Audit",
                 "intent_assessment": "Manipulation/Deepfake Detected" if prob_fake > 50 else "Authentic Content"
             },
-            "linguistic_patterns": {
-                "emotional_intensity": ai_data.get("emotional_intensity", 50),
-                "bias_indicator_score": ai_data.get("bias_score", 50),
-                "sensationalism_score": ai_data.get("emotional_intensity", 50),
-                "logical_consistency_score": ai_data.get("logical_consistency", 50)
-            },
+            "dynamic_metrics": dynamic_metrics,
             "claim_analysis": [{
                 "claim_text": content[:60] + "..." if mode in ['text', 'url'] else f"Analyzed {mode} file",
                 "claim_type": "Visual/Audio Content" if mode in ['image', 'video', 'voice'] else "Factual Claim",
@@ -284,7 +311,7 @@ def analyze_content():
                 "explanation": "AI detected manipulative intent or synthetic generation." if prob_fake > 50 else "Information/Media appears authentic."
             }],
             "validation_sources": ai_data.get("sources", []),
-            "final_explanation_for_user": ai_data.get("explanation", "Analysis complete.")
+            "final_explanation_for_user": clean_explanation
         }
         
         return jsonify(structured_response)
@@ -323,25 +350,30 @@ def emergency_triage():
         4. NO forensic technical terms.
         5. TONE: Cold, commanding, and action-oriented.
         6. FORMAT: A simple numbered list.
+        7. CLEAN TEXT: You MUST write in plain text. Do NOT wrap your answer in brackets [], braces {{}}, or double quotes "".
         """
 
-        # ✅ NEW SDK GENERATION (No JSON constraint needed here)
         response = client.models.generate_content(
             model='gemini-2.5-flash',
             contents=triage_prompt
         )
         
+        # 🧹 The Scrubber
+        raw_solution = response.text
         try:
-            ai_data = json.loads(response.text)
-            solution_text = ai_data.get('explanation', ai_data.get('solution', response.text))
+            ai_data = json.loads(raw_solution)
+            solution_text = ai_data.get('explanation', ai_data.get('solution', raw_solution))
         except:
-            solution_text = response.text
+            solution_text = raw_solution
 
-        return jsonify({"solution": solution_text})
+        clean_solution = str(solution_text).strip('"{}[ ]')
+
+        return jsonify({"solution": clean_solution})
 
     except Exception as e:
         print(f"❌ TRIAGE ERROR: {str(e)}")
         return jsonify({"error": "Emergency Triage Node Offline"}), 500
-    
+
 if __name__ == '__main__':
-    app.run(debug=True, port=5000, host='0.0.0.0')
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host='0.0.0.0', port=port)

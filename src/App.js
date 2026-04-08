@@ -3,6 +3,7 @@ import { Toaster } from 'react-hot-toast';
 
 // Import i18n
 import './i18n/i18n';
+import { useTranslation } from 'react-i18next';
 
 // Layout Components
 import TopNavigation from './components/Layout/TopNavigation';
@@ -53,6 +54,7 @@ const App = () => {
   // Auth and user management
   const { user, userStats, loading, login, logout, updateUserStats } = useAuth();
   const { screenSize } = useResponsive();
+  const { i18n } = useTranslation();
   
   useEffect(() => {
     checkForUpdates();
@@ -128,10 +130,9 @@ const App = () => {
   // Merge the standard auth stats with our live database stats
   const activeUserStats = { ...userStats, ...operatorStats };
   // ==========================================
-  // GLOBAL SETTINGS & IDENTITY STATE (FIXED)
+  // GLOBAL SETTINGS & IDENTITY STATE
   // ==========================================
   const [globalSettings, setGlobalSettings] = useState(() => {
-    // Attempt to load saved identity on boot so it survives page refreshes
     const savedIdentity = localStorage.getItem('xist_operator_identity');
     const parsedIdentity = savedIdentity ? JSON.parse(savedIdentity) : null;
     
@@ -139,12 +140,57 @@ const App = () => {
       theme: localStorage.getItem('xist-theme') || 'system',
       fontSize: 'medium',
       language: 'en',
+      security: { sessionTimeout: 'never' }, // ✅ DEFAULTS ADDED
+      privacy: { anonymousSharing: true },
+      forensics: { strictMode: false },
       identity: parsedIdentity || {
         alias: user?.displayName || 'Unknown Node', 
         avatar: 'ghost' 
       }
     };
   });
+
+  // ==========================================
+  // 🛡️ AUTO-LOCK SECURITY ENGINE
+  // ==========================================
+  useEffect(() => {
+    // Stop if user is not logged in, or if timeout is set to 'never'
+    if (!user || !globalSettings.security || globalSettings.security.sessionTimeout === 'never') return;
+
+    let timeoutId;
+    const timeoutMinutes = parseInt(globalSettings.security.sessionTimeout);
+    const timeoutMs = timeoutMinutes * 60 * 1000; // Minutes to Milliseconds
+
+    const resetTimer = () => {
+      clearTimeout(timeoutId);
+      // Start the countdown
+      timeoutId = setTimeout(() => {
+        if (logout) {
+          logout();
+          alert(`Security Protocol: Session locked due to ${timeoutMinutes} minutes of inactivity.`);
+        }
+      }, timeoutMs);
+    };
+
+    // Listen for ANY user activity to reset the clock
+    window.addEventListener('mousemove', resetTimer);
+    window.addEventListener('keypress', resetTimer);
+    window.addEventListener('click', resetTimer);
+    window.addEventListener('scroll', resetTimer);
+    window.addEventListener('touchstart', resetTimer);
+
+    resetTimer(); // Start the clock when the component loads
+
+    // Cleanup listeners if the component unmounts
+    return () => {
+      clearTimeout(timeoutId);
+      window.removeEventListener('mousemove', resetTimer);
+      window.removeEventListener('keypress', resetTimer);
+      window.removeEventListener('click', resetTimer);
+      window.removeEventListener('scroll', resetTimer);
+      window.removeEventListener('touchstart', resetTimer);
+    };
+  }, [user, globalSettings.security?.sessionTimeout, logout]);
 
  // Calculates the correct theme immediately before the first frame renders
   const [theme, setTheme] = useState(() => {
@@ -171,15 +217,17 @@ const App = () => {
         identity: newSettings.identity || prev.identity
       };
       
-      // Save identity to local storage
       if (newSettings.identity) {
         localStorage.setItem('xist_operator_identity', JSON.stringify(newSettings.identity));
       }
       return updated;
     });
     
-    if (newSettings.theme) {
-      setTheme(newSettings.theme);
+    if (newSettings.theme) setTheme(newSettings.theme);
+    
+    // ✅ ADD THIS TO SWAP THE ENTIRE WEBSITE'S LANGUAGE INSTANTLY
+    if (newSettings.language && i18n.changeLanguage) {
+      i18n.changeLanguage(newSettings.language);
     }
   };
 
@@ -381,7 +429,7 @@ const App = () => {
                   analysisResult={analysisResult}
                   onAnalysisComplete={handleAnalysisComplete}
                   globalSettings={globalSettings}
-                  updateGlobalSettings={updateGlobalSettings} 
+                  onGlobalSettingsChange={updateGlobalSettings}
                   theme={theme}
                   setTheme={setTheme}
                   isMobile={isMobile}
