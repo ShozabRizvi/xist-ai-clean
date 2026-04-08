@@ -492,7 +492,7 @@ export default function VerifySection({ user, theme: globalTheme,globalSettings 
       const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
       const BACKEND_URL = isLocal 
         ? 'http://localhost:5000' 
-        : 'https://xist-ai-clean.onrender.com';
+        : 'https://xist-ai-clean-1.onrender.com';
         
       const formData = new FormData();
 

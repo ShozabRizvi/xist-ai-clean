@@ -251,7 +251,7 @@ const handleGeminiTriage = async (input) => {
       // ✅ SMART ROUTER: Uses Localhost for testing, and Render for the live site
 const BACKEND_URL = window.location.hostname === 'localhost' 
   ? 'http://localhost:5000' 
-  : 'https://xist-ai-clean.onrender.com';
+  : 'https://xist-ai-clean-1.onrender.com';
 
       const response = await fetch(`${BACKEND_URL}/api/triage`, {
         method: 'POST',
