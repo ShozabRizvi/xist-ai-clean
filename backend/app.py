@@ -230,14 +230,14 @@ def analyze_content():
         print(f"🤖 Sending {mode} data to Gemini with Live Search...")
         
         gemini_response = client.models.generate_content(
-            model='gemini-2.5-flash',
+           model='gemini-2.5-flash',
             contents=gemini_payload,
             config=types.GenerateContentConfig(
-                # ✅ FIX: Official SDK 0.3.0 syntax for enabling Google Search
+                # ✅ Keep Live Search on
                 tools=[types.Tool(google_search=types.GoogleSearch())], 
-                max_output_tokens=8192,
-                # ✅ FIX: Force the AI to return clean JSON
-                response_mime_type="application/json"
+                # ✅ Keep max tokens high
+                max_output_tokens=8192
+                # ❌ DELETED: response_mime_type="application/json"
             )
         )
         
@@ -357,7 +357,7 @@ def emergency_triage():
         """
 
         response = client.models.generate_content(
-            model='gemini-2.5-flash',
+           model='gemini-2.5-flash',
             contents=triage_prompt
         )
         
