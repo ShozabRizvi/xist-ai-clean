@@ -233,8 +233,11 @@ def analyze_content():
             model='gemini-2.5-flash',
             contents=gemini_payload,
             config=types.GenerateContentConfig(
-                tools=[{"google_search": {}}], # Keep the internet on!
-                max_output_tokens=8192 # Prevents the AI from cutting off large JSONs
+                # ✅ FIX: Official SDK 0.3.0 syntax for enabling Google Search
+                tools=[types.Tool(google_search=types.GoogleSearch())], 
+                max_output_tokens=8192,
+                # ✅ FIX: Force the AI to return clean JSON
+                response_mime_type="application/json"
             )
         )
         
