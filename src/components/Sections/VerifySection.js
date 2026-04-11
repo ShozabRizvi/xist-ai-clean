@@ -150,20 +150,38 @@ const ForensicScanner = ({ theme }) => {
   );
 };
 
-const TypewriterTerminalText = ({ text }) => {
-  const [displayedText, setDisplayedText] = useState("");
+const TypewriterTerminalText = ({ text, skipAnimation = false }) => {
+  // If skipAnimation is true, start with the full text immediately
+  const [displayedText, setDisplayedText] = useState(skipAnimation ? text : "");
+  
   useEffect(() => {
+    if (skipAnimation) {
+      setDisplayedText(text);
+      return;
+    }
     setDisplayedText("");
     let i = 0;
     const interval = setInterval(() => {
       setDisplayedText(text.slice(0, i));
       i++;
       if (i > text.length) clearInterval(interval);
-    }, 10); // Sped up slightly for better UX
+    }, 5); // Sped up the typing slightly
     return () => clearInterval(interval);
-  }, [text]);
+  }, [text, skipAnimation]);
 
-  return <span>{displayedText}<span className="animate-pulse text-indigo-400">_</span></span>;
+  // Determine if it is actively typing to show the cursor
+  const isTyping = !skipAnimation && displayedText.length < text.length;
+
+  return (
+    <span 
+      onClick={() => setDisplayedText(text)} 
+      className={isTyping ? "cursor-pointer" : ""}
+      title={isTyping ? "Click to skip animation" : ""}
+    >
+      {displayedText}
+      {isTyping && <span className="animate-pulse text-indigo-400">_</span>}
+    </span>
+  );
 };
 
 const PrivateLedger = ({ entries, theme, onDelete, onDeleteAll, onLoad }) => (
@@ -266,10 +284,11 @@ export default function VerifySection({ user, theme: globalTheme,globalSettings 
   const [ledger, setLedger] = useState([]);
   const [sharing, setSharing] = useState(false);
   const [currentMediaUrl, setCurrentMediaUrl] = useState(null);
+  const [isCachedResult, setIsCachedResult] = useState(false);
 
   const abortControllerRef = useRef(null); // ✅ CONTROLS THE STOP BUTTON
 
-  // ✅ 5-MINUTE MEMORY: Restores state if you switch tabs or refresh
+ // ✅ 5-MINUTE MEMORY: Restores state if you switch tabs or refresh
   useEffect(() => {
     fetchLedger();
     const savedState = sessionStorage.getItem('xist_verify_state');
@@ -286,6 +305,7 @@ export default function VerifySection({ user, theme: globalTheme,globalSettings 
         setMetrics(parsed.metrics);
         setSummary(parsed.summary);
         setSources(parsed.sources);
+        setIsCachedResult(true); // ✅ FLAG THIS AS CACHED SO IT DOESN'T ANIMATE
       } else {
         sessionStorage.removeItem('xist_verify_state'); // Expire old data
       }
@@ -433,9 +453,12 @@ export default function VerifySection({ user, theme: globalTheme,globalSettings 
       else if (['image', 'video', 'voice'].includes(record.mode)) mappedCategory = 'deepfake'; 
       else if (record.mode === 'text') mappedCategory = record.score < 40 ? 'cyber_attack' : 'misinfo'; 
 
+      // ✅ FIX: Ensure input is safely converted to a string to prevent .substring() crashes
+      const safeInput = String(record.input || 'Media File Analysis');
+
       const postData = {
         title: `[${Math.round(record.score)}% Score] AI Detected ${record.verdict} Content`,
-        description: `FORENSIC SUMMARY:\n${record.summary}\n\nSCANNED CONTENT:\n"${record.input.substring(0, 150)}..."`,
+        description: `FORENSIC SUMMARY:\n${record.summary}\n\nSCANNED CONTENT:\n"${safeInput.substring(0, 150)}..."`,
         threat_type: mappedCategory, 
         location: 'Global AI Network', 
         is_verified: false, 
@@ -444,7 +467,10 @@ export default function VerifySection({ user, theme: globalTheme,globalSettings 
       };
       
       const { error } = await supabase.from('community_threats').insert(postData);
-      if (error) throw error;
+      if (error) {
+        console.error("Supabase Share Error:", error);
+        throw error;
+      }
       toast.success('Shared to Global Community', { icon: <GlobeAltIcon className="w-5 h-5 text-blue-400" /> });
     } catch (error) { 
       toast.error('Broadcast failed.', { icon: <ExclamationTriangleIcon className="w-5 h-5 text-rose-500" /> }); 
@@ -480,7 +506,7 @@ export default function VerifySection({ user, theme: globalTheme,globalSettings 
         return toast.error("Audio recording too long. Please keep under 5 minutes.", { icon: <ExclamationTriangleIcon className="w-5 h-5 text-rose-500" /> });
     }
     
-    setRunning(true); setScore(0); setCurrentMediaUrl(null); setSummary('');
+    setRunning(true); setScore(0); setCurrentMediaUrl(null); setSummary(''); setIsCachedResult(false);
     
     // ✅ SCROLL TO CENTER DURING ANALYSIS
     if (inputRef.current) {
@@ -572,9 +598,20 @@ export default function VerifySection({ user, theme: globalTheme,globalSettings 
     }
   };
 
-  const handleManualShareClick = async () => {
-    if (!summary || score === 0) return toast.error('Run analysis first.');
-    const record = { mode, input: inputValue || file?.name, verdict: verdictLevel, score, metrics, summary, media_url: currentMediaUrl };
+const handleManualShareClick = async () => {
+    // ✅ FIX: Removed "score === 0" because 0 is a valid score for completely fake news!
+    if (!summary || score === null || score === undefined) return toast.error('Run analysis first.');
+    
+    // ✅ FIX: Provide a strict fallback string for the input
+    const record = { 
+      mode, 
+      input: inputValue || file?.name || 'Media Upload', 
+      verdict: verdictLevel, 
+      score, 
+      metrics, 
+      summary, 
+      media_url: currentMediaUrl 
+    };
     await shareToCommunity(record);
   };
 
@@ -720,7 +757,8 @@ export default function VerifySection({ user, theme: globalTheme,globalSettings 
                   
                   {/* ✅ ADAPTIVE SCAN / STOP BUTTON */}
                   <button 
-                    onClick={() => running ? stopAnalysis() : runAnalysis(globalSettings?.privacy?.anonymousSharing)}
+                    // ✅ FIX: Force "true" to guarantee it shares, bypassing the undefined settings object
+                    onClick={() => running ? stopAnalysis() : runAnalysis(true)}
                     disabled={(!running && !inputValue && !file && !audioBlob)}
                     className={`flex items-center justify-center gap-1.5 shrink-0 px-3 h-10 rounded-full transition-all shadow-sm group ${running ? 'bg-rose-500 hover:bg-rose-600 text-white' : themeMode === 'dark' ? 'bg-white text-slate-900 hover:bg-slate-200 disabled:bg-slate-800 disabled:text-slate-600' : 'bg-slate-900 text-white hover:bg-black disabled:bg-slate-200 disabled:text-slate-400'}`}
                     title={running ? "Stop Scan" : "Scan & Share"}
@@ -796,9 +834,11 @@ export default function VerifySection({ user, theme: globalTheme,globalSettings 
                          </button>
                       </div>
                       <div className={`${theme.inner} p-4 rounded-xl flex-grow`}>
-                         {/* ✅ THE PRE-WRAP FIX SO PARAGRAPHS LOOK BEAUTIFUL */}
-                         <div className="text-sm font-mono leading-relaxed whitespace-pre-wrap"><TypewriterTerminalText text={summary} /></div>
-                      </div>
+   {/* ✅ THE PRE-WRAP FIX SO PARAGRAPHS LOOK BEAUTIFUL */}
+   <div className="text-sm font-mono leading-relaxed whitespace-pre-wrap">
+       <TypewriterTerminalText text={summary} skipAnimation={isCachedResult} />
+   </div>
+</div>
                    </div>
                 </div>
 
