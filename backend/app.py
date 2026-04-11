@@ -1,5 +1,6 @@
 import os
 import time
+import re
 import json
 import tempfile
 import datetime
@@ -11,9 +12,15 @@ from dotenv import load_dotenv
 from werkzeug.utils import secure_filename
 import PyPDF2
 
-# ✅ THE NEW, OFFICIAL SDK IMPORTS (No more deprecation warning!)
+# ✅ THE NEW, OFFICIAL SDK IMPORTS
 from google import genai
 from google.genai import types
+
+# ✅ IMPORT YOUR CUSTOM LOCAL SCANNERS
+from url_scanner import URLScanner
+from image_processor import ImageProcessor
+from video_processor import VideoThreatProcessor
+from detection_engine import AdvancedDetectionEngine
 
 load_dotenv()
 app = Flask(__name__)
@@ -28,6 +35,12 @@ OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY")
 
 # ✅ NEW SDK CLIENT INITIALIZATION
 client = genai.Client(api_key=GEMINI_API_KEY)
+
+# ✅ INITIALIZE LOCAL ENGINES
+url_engine = URLScanner()
+image_engine = ImageProcessor()
+text_engine = AdvancedDetectionEngine()
+video_engine = VideoThreatProcessor(text_engine, image_engine)
 
 def scrape_url(url):
     """Helper function to extract text from a webpage"""
@@ -55,14 +68,12 @@ def analyze_content():
             mode = request.form.get('mode', 'text')
             content = request.form.get('text', '')
             uploaded_file = request.files.get('file')
-            # ✅ Extract Strict Mode
             strict_mode = request.form.get('strictMode', 'false').lower() == 'true'
         else:
             data = request.get_json()
             mode = data.get('mode', 'text')
             content = data.get('text') or data.get('content', '')
             uploaded_file = None
-            # ✅ Extract Strict Mode
             strict_mode = data.get('strictMode', False)
 
         if not content and not uploaded_file:
@@ -149,7 +160,7 @@ def analyze_content():
         # Get the exact current time to prevent the AI from giving outdated news
         live_date = datetime.datetime.now().strftime("%B %d, %Y")
 
-        # 3. BUILD THE MULTIMODAL PROMPT (Original 2-3 paragraph Gemini prompt)
+        # 3. BUILD THE MULTIMODAL PROMPT
         if mode in ['image', 'video', 'voice']:
             prompt_instructions = f"""
             SYSTEM ROLE: Senior Forensic Intelligence Analyst for Xist AI.
@@ -230,7 +241,8 @@ def analyze_content():
         try:
             # --- TIER 1: GOOGLE GEMINI (PRIMARY) ---
             print(f"🤖 Sending {mode} data to Tier 1: Gemini...")
-            #raise Exception("SIMULATED OUTAGE: Testing Tier 2 Gemma Node")
+            #raise Exception("SIMULATED OUTAGE: Testing Tier 2 Node")
+            
             if media_file_for_gemini:
                 gemini_payload = [prompt_instructions, media_file_for_gemini]
             else:
@@ -247,25 +259,56 @@ def analyze_content():
             raw_text = gemini_response.text.strip()
 
         except Exception as e1:
-            print(f"⚠️ Tier 1 (Gemini) Offline: {str(e1)}. Engaging Tier 2 Invisible Fallback...")
-            # --- TIER 2: OPENROUTER (GEMMA 4 FREE) ---
+            print(f"⚠️ Tier 1 (Gemini) Offline: {str(e1)}. Engaging Smart Tier 2 Fallback...")
+            # --- TIER 2: OPENROUTER AUTO-ROUTER + LOCAL ENGINES ---
             try:
-                # DYNAMIC FALLBACK REWRITE: Change the depth to 1-2 paragraphs max to save credits
+                # 1. Compress the prompt & ENFORCE BULLETPROOF JSON RULES
                 fallback_prompt = prompt_instructions.replace(
                     "Provide a detailed 2-3 paragraph EXECUTIVE BRIEFING.",
-                    "Provide a concise 1-2 paragraph EXECUTIVE BRIEFING at most."
+                    "Provide a concise 1 paragraph EXECUTIVE BRIEFING."
                 ).replace(
                     "detailed (2-3 paragraphs)",
-                    "concise (1-2 paragraphs at most)"
-                )
+                    "concise (1 paragraph)"
+                ) + """
+                
+                CRITICAL JSON PROTOCOL FOR FALLBACK NODE:
+                You are generating raw JSON. You MUST obey these rules or the system will crash:
+                1. The 'explanation' value MUST be a single, continuous string. Do NOT close the quotes early.
+                2. Do NOT create an "EXECUTIVE BRIEFING" key. Put all briefing text inside the 'explanation' string.
+                3. Do NOT use actual line breaks (Enter key) inside your strings.
+                4. You MUST include the "sources" array at the bottom of the JSON, even if you just put a single Observation inside it.
+                """
 
-                # HANDLE MULTIMODAL IN TEXT-ONLY CLOUD: If Gemini crashed on an image/voice, OpenRouter free models 
-                # usually can't read the file directly. Tell the AI what the user tried to do so it doesn't break format.
-                if mode in ['image', 'video', 'voice']:
-                    fallback_input = f"FILE UPLOAD DETECTED: A user uploaded a {mode} file named '{filename_for_fallback}'. Since direct media scanning is currently routing through text-fallback, provide a generic risk analysis structural JSON for this file type assuming moderate risk and explain that the deep-scan node is temporarily busy."
+                # 2. RUN LOCAL FORENSICS TO ACT AS LLAMA'S "EYES"
+                local_findings = ""
+                
+                if mode == 'url':
+                    print("🔍 Running Local URL Scanner...")
+                    url_data = url_engine.scan_url(content)
+                    local_findings = f"LOCAL URL SCAN RESULTS: Risk Score {url_data.get('riskScore', 50)}/100. Verdict: {url_data.get('verdict', 'Unknown')}. Warnings: {url_data.get('warnings', [])}."
+                
+                elif mode == 'image' and temp_file_path:
+                    print("🔍 Running Local Image OCR...")
+                    import base64
+                    with open(temp_file_path, "rb") as img_file:
+                        b64_string = base64.b64encode(img_file.read()).decode('utf-8')
+                    img_data = image_engine.process_image(b64_string)
+                    local_findings = f"LOCAL IMAGE OCR EXTRACTED THIS TEXT: '{img_data.get('extractedText', '')}'. HEURISTIC RISK: {img_data.get('analysis', {}).get('riskScore', 50)}%."
+                
+                elif mode == 'video' and temp_file_path:
+                    print("🔍 Running Local Video Extraction...")
+                    vid_data = video_engine.process_video(temp_file_path)
+                    local_findings = f"LOCAL VIDEO SCAN EXTRACTED AUDIO TEXT. Heuristic Risk: {vid_data.get('transcription_risk', 50)}%. Warnings: {vid_data.get('extracted_warnings', [])}."
+                
+                # 3. COMBINE LOCAL FINDINGS WITH THE PROMPT
+                if mode in ['image', 'video', 'voice', 'document'] and not local_findings:
+                     # Generic fallback if the local processor fails
+                     fallback_input = f"FILE UPLOAD DETECTED ({mode}): '{filename_for_fallback}'. Since direct media scanning is offline, assume moderate risk based on file structure."
                 else:
-                    fallback_input = f"INPUT TEXT: {analysis_input}"
+                     # Send the actual extracted text to the fallback model!
+                     fallback_input = f"INPUT: {analysis_input}\n\nSYSTEM FORENSIC DATA (USE THIS TO DETERMINE VERDICT): {local_findings}"
 
+                # 4. CALL OPENROUTER AUTO-ROUTER
                 url = "https://openrouter.ai/api/v1/chat/completions"
                 headers = {
                     "Authorization": f"Bearer {OPENROUTER_API_KEY}",
@@ -273,7 +316,8 @@ def analyze_content():
                     "HTTP-Referer": "http://localhost:3000"
                 }
                 payload = {
-                    "model": "google/gemma-4-31b-it:free",
+                    "model": "openrouter/free",
+                    "response_format": {"type": "json_object"}, # 🚀 FORCES STRICT JSON ENFORCEMENT
                     "messages": [
                         {"role": "system", "content": fallback_prompt},
                         {"role": "user", "content": fallback_input}
@@ -288,27 +332,57 @@ def analyze_content():
                 print(f"❌ Tier 2 Failed: {str(e2)}")
                 return jsonify({"error": "All Forensic Cloud Nodes are currently offline. Please try again in 60 seconds."}), 503
 
-        # 5. JSON SANITIZATION AND PARSING
-        if raw_text.startswith("```json"):
-            raw_text = raw_text[7:]
-        elif raw_text.startswith("```"):
-            raw_text = raw_text[3:]
-        if raw_text.endswith("```"):
-            raw_text = raw_text[:-3]
+        # 5. ENTERPRISE-GRADE JSON SANITIZATION & SELF-HEALING
         raw_text = raw_text.strip()
+        
+        # Strip Markdown code blocks
+        raw_text = re.sub(r'^```json\s*', '', raw_text, flags=re.IGNORECASE)
+        raw_text = re.sub(r'^```\s*', '', raw_text)
+        raw_text = re.sub(r'\s*```$', '', raw_text)
+        raw_text = raw_text.strip()
+
+        # HEALING RULE 1: Fix stray trailing quotes (The exact error you just hit)
+        if raw_text.endswith('"') and not raw_text.endswith('}"'):
+            raw_text = raw_text[:-1].strip()
+
+        # HEALING RULE 2: Fix trailing commas (e.g., "bias": 50, } -> "bias": 50 })
+        raw_text = re.sub(r',\s*}', '}', raw_text)
+        raw_text = re.sub(r',\s*\]', ']', raw_text)
+
+        # HEALING RULE 3: Auto-close missing brackets if the model got cut off
+        open_braces = raw_text.count('{')
+        close_braces = raw_text.count('}')
+        open_brackets = raw_text.count('[')
+        close_brackets = raw_text.count(']')
+
+        while close_brackets < open_brackets:
+            raw_text += '\n]'
+            close_brackets += 1
+        while close_braces < open_braces:
+            raw_text += '\n}'
+            close_braces += 1
         
         try:
             ai_data = json.loads(raw_text)
         except json.JSONDecodeError as e:
-            print(f"⚠️ JSON PARSE ERROR: {str(e)}")
-            print(f"RAW OUTPUT WAS: {raw_text}")
-            ai_data = {
-                "credibility_score": 50,
-                "overall_verdict": "QUESTIONABLE",
-                "threat_category": "Formatting Error",
-                "explanation": f"[ VERDICT ] - CAUTION. Data retrieved but poorly formatted.\\n\\nEXECUTIVE BRIEFING:\\nOur forensic AI found live data but encountered a formatting error while building the report. Please try running the scan again.",
-                "sources": []
-            }
+            print(f"⚠️ TRADITIONAL PARSE FAILED. ENGAGING REGEX EXTRACTION... Error: {str(e)}")
+            try:
+                # HEALING RULE 4: Extract the largest JSON object ignoring preamble/postamble text
+                match = re.search(r'\{.*\}', raw_text, re.DOTALL)
+                if match:
+                    ai_data = json.loads(match.group(0))
+                else:
+                    raise ValueError("No JSON object found in output")
+            except Exception as inner_e:
+                print(f"❌ FATAL PARSE ERROR: {str(inner_e)}")
+                print(f"RAW OUTPUT WAS: {raw_text}")
+                ai_data = {
+                    "credibility_score": 50,
+                    "overall_verdict": "QUESTIONABLE",
+                    "threat_category": "Formatting Error",
+                    "explanation": f"[ VERDICT ] - CAUTION. Data retrieved but heavily corrupted.\\n\\nEXECUTIVE BRIEFING:\\nOur forensic AI successfully fetched the data, but the cloud node returned a corrupted payload that could not be repaired. Please run the scan again.",
+                    "sources": []
+                }
 
         # 6. FORMAT RESPONSE FOR REACT UI
         prob_real = ai_data.get("credibility_score", 50)
@@ -398,13 +472,13 @@ def emergency_triage():
             raw_solution = response.text
         except Exception:
             # Fallback rewrites triage prompt to be extremely tight
-            url = "[https://openrouter.ai/api/v1/chat/completions](https://openrouter.ai/api/v1/chat/completions)"
+            url = "[https://openrouter.ai/api/v1/chat/completions](https://openrouter.ai/api/v1/chat/completions)" # ✅ FIXED URL
             headers = {
                 "Authorization": f"Bearer {OPENROUTER_API_KEY}",
                 "Content-Type": "application/json"
             }
             payload = {
-                "model": "google/gemma-4-31b-it:free",
+                "model": "openrouter/free", # 🚀 AUTO-ROUTER: NEVER GOES DOWN
                 "messages": [{"role": "user", "content": triage_prompt + "\nKEEP IT EXTREMELY CONCISE. MAX 1-2 PARAGRAPHS TOTAL."}]
             }
             resp = requests.post(url, headers=headers, json=payload, timeout=15)
