@@ -9,6 +9,10 @@ import AboutSection from './AboutSection';
 import ProtectionSection from './ProtectionSection';
 import ContactSection from './ContactSection';  
 import SupportSection from './SupportSection';  
+import ApiDashboard from './ApiDashboard'; // 🚀 1. ADDED IMPORT HERE
+import PrivacyPolicy from './PrivacyPolicy'; // ✅ ADDED THIS
+import TermsOfService from './TermsOfService'; // ✅ ADDED THIS
+import ScanDetails from './ScanDetails';
 
 const SectionRouter = ({ 
   currentSection, 
@@ -29,6 +33,16 @@ const SectionRouter = ({
   
   const renderSection = () => {
     switch (currentSection) {
+      
+      // 🚀 2. ADDED THE API ROUTE HERE
+      case 'api':
+        return (
+          <ApiDashboard
+            user={user}
+            themeMode={theme}
+          />
+        );
+
       case 'home':
         return (
           <HomeSection
@@ -99,9 +113,6 @@ const SectionRouter = ({
             theme={theme}
           />
         );
-      
-      
-     
       case 'protection':
         return (
           <ProtectionSection
@@ -111,7 +122,6 @@ const SectionRouter = ({
             theme={theme}
           />
         );
-     
       case 'contact':  
         return (
           <ContactSection
@@ -130,7 +140,22 @@ const SectionRouter = ({
             theme={theme}
           />
         );
+
+      // ✅ ADDED PRIVACY AND TERMS ROUTES HERE
+      case 'privacy':
+        return <PrivacyPolicy theme={theme} />;
       
+      case 'terms':
+        return <TermsOfService theme={theme} />;
+      
+        case 'scan-details':
+        return (
+          <ScanDetails 
+            user={user}
+            analysisHistory={analysisHistory}
+            setCurrentSection={setCurrentSection}
+          />
+        );
       default:
         return (
           <HomeSection

@@ -3,42 +3,13 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   MagnifyingGlassIcon, ChevronDownIcon, ShieldCheckIcon, 
   CpuChipIcon, DocumentMagnifyingGlassIcon, EyeSlashIcon, 
-  BoltIcon, FingerPrintIcon, LifebuoyIcon, BookOpenIcon
+  BoltIcon, FingerPrintIcon, LifebuoyIcon, BookOpenIcon,
+  ArrowLeftIcon
 } from '@heroicons/react/24/outline';
-import { useResponsive } from '../../hooks/useResponsive';
 
 // ==============================
-// 100% ADAPTIVE THEME MATRIX
+// UTILITY: TYPEWRITER EFFECT
 // ==============================
-const THEMES = {
-  dark: {
-    background: 'bg-[#020617]',
-    headerBg: 'bg-[#020617]/80 backdrop-blur-xl',
-    card: 'bg-slate-900 border border-slate-800 shadow-2xl',
-    inner: 'bg-slate-950 border border-slate-800',
-    textPrimary: 'text-slate-100',
-    textSecondary: 'text-slate-400',
-    muted: 'text-slate-500',
-    accent: 'text-indigo-400',
-    input: 'bg-slate-950 border-slate-800 text-indigo-400 placeholder-slate-700 focus:border-indigo-500/50',
-    glow: 'from-indigo-500/10 via-rose-500/5 to-transparent',
-    iconContainer: 'bg-slate-800/50'
-  },
-  light: {
-    background: 'bg-slate-50',
-    headerBg: 'bg-white/80 backdrop-blur-xl',
-    card: 'bg-white border border-slate-200 shadow-xl',
-    inner: 'bg-slate-100 border border-slate-200',
-    textPrimary: 'text-slate-900',
-    textSecondary: 'text-slate-700',
-    muted: 'text-slate-600',
-    accent: 'text-indigo-600',
-    input: 'bg-white border-slate-300 text-indigo-600 placeholder-slate-500 focus:border-indigo-500',
-    glow: 'from-indigo-500/5 via-rose-500/5 to-transparent',
-    iconContainer: 'bg-slate-200'
-  }
-};
-
 const useTypewriterEffect = (text, speed = 80, delay = 200) => {
   const [displayedText, setDisplayedText] = useState("");
   const [started, setStarted] = useState(false);
@@ -59,7 +30,7 @@ const useTypewriterEffect = (text, speed = 80, delay = 200) => {
 };
 
 // ==============================
-// SIMPLIFIED FAQ DATA
+// FAQ DATA
 // ==============================
 const FAQS = [
   {
@@ -73,7 +44,7 @@ const FAQS = [
     ]
   },
   {
-    category: 'App Performance & Limits',
+    category: 'App Limits',
     icon: CpuChipIcon,
     questions: [
       { q: 'Is there a file size limit for uploads?', a: 'Yes. To keep the app running fast, media files should be kept under standard short-clip sizes. Massive 4K videos may time out during upload.' },
@@ -83,7 +54,7 @@ const FAQS = [
     ]
   },
   {
-    category: 'Understanding the AI Scores',
+    category: 'AI Scores',
     icon: DocumentMagnifyingGlassIcon,
     questions: [
       { q: 'What does the "Emotional Intensity" score mean?', a: 'A high score means the content is designed to trigger fear, urgency, or outrage to bypass your logical thinking—a classic hallmark of scams.' },
@@ -93,7 +64,7 @@ const FAQS = [
     ]
   },
   {
-    category: 'Privacy & Data Security',
+    category: 'Privacy',
     icon: EyeSlashIcon,
     questions: [
       { q: 'Are my uploaded files stored permanently?', a: 'Absolutely not. Once the analysis is complete, your temporary media or document file is permanently deleted from our servers.' },
@@ -103,10 +74,9 @@ const FAQS = [
   }
 ];
 
-export default function SupportSection({ theme: globalTheme = 'dark' }) {
-  const { screenSize } = useResponsive();
-  const theme = THEMES[globalTheme];
+export default function SupportSection() {
   const [searchQuery, setSearchQuery] = useState('');
+  const [activeCategory, setActiveCategory] = useState(null); // Controls the "Rolling" Animation Flow
   const [expandedFaq, setExpandedFaq] = useState(null);
 
   const typingTitle = useTypewriterEffect("Help Center", 80, 200);
@@ -115,171 +85,215 @@ export default function SupportSection({ theme: globalTheme = 'dark' }) {
     setExpandedFaq(expandedFaq === id ? null : id);
   };
 
-  const filteredFaqs = FAQS.map(category => ({
-    ...category,
-    questions: category.questions.filter(q => 
-      q.q.toLowerCase().includes(searchQuery.toLowerCase()) || 
-      q.a.toLowerCase().includes(searchQuery.toLowerCase())
-    )
-  })).filter(category => category.questions.length > 0);
+  // Search Logic
+  const allQuestions = FAQS.flatMap(cat => cat.questions);
+  const searchResults = searchQuery 
+    ? allQuestions.filter(q => q.q.toLowerCase().includes(searchQuery.toLowerCase()) || q.a.toLowerCase().includes(searchQuery.toLowerCase()))
+    : [];
 
   return (
-    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}
-                className={`w-full min-h-screen relative transition-colors duration-500 ${theme.background} ${theme.textPrimary} overflow-x-hidden`}
-                style={{ marginLeft: screenSize.isMobile ? '0' : '280px', marginTop: '64px', fontFamily: 'Inter, system-ui, sans-serif' }}>
+    // 🚀 FIX: Removed hardcoded marginLeft so it aligns perfectly with the sidebar layout
+    <div className="w-full min-h-screen relative overflow-x-hidden" style={{ marginTop: '64px' }}>
       
       {/* 🌐 GLOBAL GRID BACKGROUND OVERLAY */}
-      <div className={`absolute inset-0 pointer-events-none opacity-[0.03] ${globalTheme === 'light' ? 'invert' : ''} z-0`} 
-           style={{ backgroundImage: 'linear-gradient(to right, #ffffff 1px, transparent 1px), linear-gradient(to bottom, #ffffff 1px, transparent 1px)', backgroundSize: '40px 40px' }}></div>
+      <div className="absolute inset-0 pointer-events-none opacity-[0.03] dark:invert-0 invert z-0" 
+           style={{ backgroundImage: 'linear-gradient(to right, currentColor 1px, transparent 1px), linear-gradient(to bottom, currentColor 1px, transparent 1px)', backgroundSize: '40px 40px' }}></div>
 
       {/* ========================================= */}
-      {/* 🚀 HERO HEADER (SUPPORT STYLE)            */}
+      {/* 🚀 HERO HEADER                            */}
       {/* ========================================= */}
-      <div className={`sticky top-0 z-30 px-4 py-8 md:py-12 transition-all overflow-visible ${theme.headerBg}`}>
-        
-        {/* 🔥 TACTICAL GRID FOR HEADER (SEAMLESS) 🔥 */}
-        <div className={`absolute inset-0 pointer-events-none opacity-[0.05] md:opacity-[0.03] ${globalTheme === 'light' ? 'invert' : ''} z-0`} 
-             style={{ backgroundImage: 'linear-gradient(to right, #ffffff 1px, transparent 1px), linear-gradient(to bottom, #ffffff 1px, transparent 1px)', backgroundSize: '24px 24px' }}></div>
+      <div className="sticky top-0 z-30 px-4 py-8 md:py-12 transition-all overflow-visible bg-transparent">
+        <div className="absolute inset-0 pointer-events-none opacity-[0.05] md:opacity-[0.03] dark:invert-0 invert z-0" 
+             style={{ backgroundImage: 'linear-gradient(to right, currentColor 1px, transparent 1px), linear-gradient(to bottom, currentColor 1px, transparent 1px)', backgroundSize: '24px 24px' }}></div>
 
         <div className="max-w-4xl mx-auto flex flex-col items-center justify-center relative z-10 overflow-visible">
+          <LifebuoyIcon className="w-10 h-10 md:w-14 md:h-14 mb-5 stroke-[1.5] text-indigo-500 dark:text-indigo-400" />
           
-          <LifebuoyIcon className={`w-10 h-10 md:w-14 md:h-14 mb-5 stroke-[1.5] ${theme.accent}`} />
-          
-          {/* ✅ SIMPLIFIED MASSIVE TITLE: Bulletproof Descender Fix */}
-          <h1 className="text-4xl md:text-5xl lg:text-6xl font-black text-center mb-2 pb-4 leading-normal tracking-tight">
-            <span>{typingTitle}</span>
-            <motion.span 
-              animate={{ opacity: [0, 1, 0] }} 
-              transition={{ repeat: Infinity, duration: 0.9 }} 
-              className="inline-block w-2.5 md:w-3 h-[0.8em] bg-indigo-500 ml-2 align-baseline" 
-            />
+          <h1 className="text-4xl md:text-5xl lg:text-6xl font-black text-center mb-2 pb-4 leading-normal tracking-tight text-slate-900 dark:text-white">
+            <span className="text-brand-highlight">{typingTitle}</span>
+            <motion.span animate={{ opacity: [0, 1, 0] }} transition={{ repeat: Infinity, duration: 0.9 }} className="inline-block w-2.5 md:w-3 h-[0.8em] bg-indigo-500 dark:bg-indigo-400 ml-2 align-baseline" />
           </h1>
           
-          <p className="text-[9px] md:text-[11px] font-mono font-bold uppercase tracking-[0.3em] md:tracking-[0.4em] text-slate-500 mb-4 text-center px-4">
+          <p className="text-[9px] md:text-[11px] font-mono font-bold uppercase tracking-[0.3em] md:tracking-[0.4em] text-slate-600 dark:text-slate-400 mb-4 text-center px-4">
             Here to help you navigate Xist safely.
           </p>
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-8 px-4 md:px-8 py-8">
+      <div className="max-w-5xl mx-auto relative z-10 px-4 md:px-8 py-4 pb-24">
         
-        {/* LEFT COLUMN: GUIDES & LEGENDS */}
-        <div className="lg:col-span-5 space-y-8 h-fit">
-          <div className={`${theme.card} p-5 md:p-6 rounded-[2rem] border-t-4 border-t-indigo-500`}>
-            <div className="flex items-center gap-3 mb-6">
-              <BoltIcon className="w-6 h-6 text-indigo-500 shrink-0" />
-              <h3 className="text-xs font-black uppercase tracking-widest break-words whitespace-normal">How-To Guides</h3>
-            </div>
-            <div className="relative border-l-2 border-indigo-500/30 ml-3 space-y-6 pb-2">
-              {[
-                { step: "1. Select Input", desc: "Open the Verify tab. Choose Text, URL, Document, or Media." },
-                { step: "2. Run Scan", desc: "Provide the data and click Analyze. The AI will scan for threats." },
-                { step: "3. Read Report", desc: "Check the Credibility Score, Threat Category, and explanation." },
-                { step: "4. Take Action", desc: "If the threat is CRITICAL, visit the Support tab for next steps." }
-              ].map((item, i) => (
-                <div key={i} className="relative pl-5 md:pl-6 w-full">
-                  <div className="absolute w-3 h-3 bg-indigo-500 rounded-full -left-[7px] top-1 shadow-[0_0_10px_#6366f1]" />
-                  {/* ✅ Text wrapping enforced for tiny screens */}
-                  <h4 className={`text-[11px] font-bold uppercase mb-1 break-words whitespace-normal ${theme.textPrimary}`}>{item.step}</h4>
-                  <p className={`text-[10px] break-words whitespace-normal leading-relaxed ${theme.textSecondary}`}>{item.desc}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <div className={`${theme.card} p-5 md:p-6 rounded-[2rem] border-l-4 border-l-rose-500`}>
-            <div className="flex items-center gap-3 mb-6">
-              <ShieldCheckIcon className="w-6 h-6 text-rose-500 shrink-0" />
-              <h3 className="text-xs font-black uppercase tracking-widest break-words whitespace-normal">Understanding the AI Scores</h3>
-            </div>
-            <div className="space-y-3">
-              {[
-                { label: "[SAFE]", range: "80-100%", color: "text-emerald-500", border: "border-emerald-500/20", desc: "Content looks completely natural. Low risk." },
-                { label: "[QUESTIONABLE]", range: "40-79%", color: "text-amber-500", border: "border-amber-500/20", desc: "AI detected missing data or mild manipulation. Be careful." },
-                { label: "[CRITICAL]", range: "0-39%", color: "text-rose-500", border: "border-rose-500/20", desc: "High chance of a Deepfake or active scam. Do not interact." }
-              ].map((legend, i) => (
-                <div key={i} className={`p-4 rounded-xl ${theme.inner} border ${legend.border} w-full`}>
-                  {/* ✅ Flex-wrap ensures the label and percentage don't collide on an iPhone SE */}
-                  <div className="flex flex-wrap justify-between items-center mb-2 gap-2">
-                    <span className={`${legend.color} font-bold text-[11px] uppercase tracking-wider`}>{legend.label}</span>
-                    <span className={`${legend.color} font-mono text-[10px] shrink-0`}>{legend.range}</span>
-                  </div>
-                  <p className={`text-[10px] ${theme.textSecondary} leading-relaxed break-words whitespace-normal`}>{legend.desc}</p>
-                </div>
-              ))}
-            </div>
-          </div>
+        {/* ========================================= */}
+        {/* 🚀 STICKY SEARCH BAR                      */}
+        {/* ========================================= */}
+        <div className="relative mb-8">
+          <MagnifyingGlassIcon className="w-5 h-5 absolute left-6 top-1/2 -translate-y-1/2 text-slate-500" />
+          <input
+            type="text"
+            placeholder="Search for guides, errors, or limits..."
+            value={searchQuery}
+            onChange={(e) => { setSearchQuery(e.target.value); setActiveCategory(null); }}
+            className="w-full pl-14 pr-6 py-5 rounded-full text-sm font-bold outline-none transition-all shadow-[0_15px_40px_rgba(0,0,0,0.15)] glass-input text-slate-900 dark:text-white placeholder-slate-500 dark:placeholder-slate-400"
+          />
         </div>
 
-        {/* RIGHT COLUMN: SEARCH & FAQ */}
-        <div className="lg:col-span-7 flex flex-col space-y-6 min-h-0">
-          <div className="relative shrink-0">
-            <MagnifyingGlassIcon className={`w-5 h-5 absolute left-5 top-1/2 -translate-y-1/2 ${theme.muted}`} />
-            <input
-              type="text"
-              placeholder="Search for help, guides, or troubleshooting..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className={`w-full pl-14 pr-6 py-5 rounded-[2rem] text-xs md:text-sm font-bold outline-none border transition-all shadow-lg ${theme.input} placeholder-slate-500`}
-            />
-          </div>
-
-          <div className="flex-grow overflow-y-auto h-[600px] custom-scrollbar pr-1 md:pr-2 space-y-6 pb-20">
-            {filteredFaqs.map((cat, catIdx) => (
-              <div key={catIdx} className={`${theme.card} p-5 md:p-6 rounded-[2rem] h-auto`}>
-                <div className="flex items-center gap-3 mb-4">
-                  <div className={`p-2 rounded-lg shrink-0 ${theme.iconContainer}`}>
-                    <cat.icon className={`w-5 h-5 ${theme.accent}`} />
+        {/* ========================================= */}
+        {/* 🚀 DYNAMIC ROLLING VIEW INTERFACE         */}
+        {/* ========================================= */}
+        <AnimatePresence mode="wait">
+          
+          {/* STATE 1: SEARCH RESULTS */}
+          {searchQuery ? (
+            <motion.div key="search-results" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} className="space-y-4">
+              <h3 className="text-xs font-black uppercase tracking-widest text-slate-500 dark:text-slate-400 ml-2 mb-4">Search Results</h3>
+              {searchResults.length > 0 ? searchResults.map((faq, idx) => (
+                <div key={idx} className="glass-card rounded-2xl overflow-hidden">
+                  <div className="p-5">
+                    <h4 className="text-sm font-bold text-slate-900 dark:text-white mb-2">{faq.q}</h4>
+                    <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed font-medium">{faq.a}</p>
                   </div>
-                  {/* ✅ Enforced wrapping for category titles */}
-                  <h3 className={`text-xs font-black uppercase tracking-widest break-words whitespace-normal ${theme.textPrimary}`}>{cat.category}</h3>
                 </div>
-                
-                <div className="space-y-3 h-auto">
-                  {cat.questions.map((faq, qIdx) => {
-                    const id = `${catIdx}-${qIdx}`;
-                    const isOpen = expandedFaq === id;
-                    return (
-                      <div key={qIdx} className={`rounded-xl overflow-hidden h-auto transition-all ${theme.inner} border ${isOpen ? 'border-indigo-500/50' : 'border-transparent'}`}>
-                        <button 
-                          onClick={() => toggleFaq(id)}
-                          className="w-full p-4 flex items-start justify-between text-left focus:outline-none h-auto min-h-fit gap-3"
-                        >
-                          {/* ✅ GUARANTEED WRAPPING: The text will naturally wrap and push the container down */}
-                          <div className={`block w-full text-[11px] md:text-xs font-bold leading-relaxed whitespace-normal break-words ${theme.textPrimary}`}>
-                            {faq.q}
-                          </div>
-                          <motion.div animate={{ rotate: isOpen ? 180 : 0 }} className="mt-1 shrink-0">
-                            <ChevronDownIcon className={`w-4 h-4 ${theme.muted}`} />
+              )) : (
+                <div className="glass-card p-12 text-center rounded-[2rem] flex flex-col items-center justify-center">
+                  <FingerPrintIcon className="w-12 h-12 text-slate-500 opacity-50 mb-4" />
+                  <p className="text-xs font-mono uppercase text-slate-500">No articles match your search.</p>
+                </div>
+              )}
+            </motion.div>
+          ) 
+          
+          /* STATE 2: TOPIC DRILL-DOWN (The Questions) */
+          : activeCategory ? (
+            <motion.div key="category-view" initial={{ opacity: 0, x: 50 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 50 }} transition={{ type: 'spring', stiffness: 300, damping: 30 }} className="space-y-6">
+              
+              {/* Back Button */}
+              <button 
+                onClick={() => { setActiveCategory(null); setExpandedFaq(null); }}
+                className="flex items-center gap-2 px-4 py-2 rounded-full glass-input text-[10px] font-black uppercase tracking-widest text-slate-700 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-400 transition-all"
+              >
+                <ArrowLeftIcon className="w-4 h-4" /> Back to Dashboard
+              </button>
+
+              {/* Topic Header */}
+              <div className="glass-card p-8 rounded-[2rem] flex items-center gap-5">
+                <div className="p-4 bg-indigo-500/10 rounded-2xl">
+                  <activeCategory.icon className="w-8 h-8 text-indigo-600 dark:text-indigo-400" />
+                </div>
+                <div>
+                  <h2 className="text-2xl md:text-3xl font-black text-slate-900 dark:text-white">{activeCategory.category}</h2>
+                  <p className="text-[10px] font-mono uppercase tracking-widest text-slate-500 mt-1">Select a question to expand</p>
+                </div>
+              </div>
+
+              {/* Accordion List */}
+              <div className="space-y-3">
+                {activeCategory.questions.map((faq, idx) => {
+                  const isOpen = expandedFaq === idx;
+                  return (
+                    <div key={idx} className={`rounded-2xl overflow-hidden transition-all duration-300 ${isOpen ? 'glass-card border border-indigo-500/50 shadow-[0_0_20px_rgba(79,70,229,0.15)]' : 'glass-input'}`}>
+                      <button onClick={() => toggleFaq(idx)} className="w-full p-5 flex items-start justify-between text-left focus:outline-none gap-4">
+                        <div className={`text-xs md:text-sm font-bold leading-relaxed ${isOpen ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-900 dark:text-white'}`}>
+                          {faq.q}
+                        </div>
+                        <motion.div animate={{ rotate: isOpen ? 180 : 0 }} className="shrink-0 mt-0.5">
+                          <ChevronDownIcon className={`w-5 h-5 ${isOpen ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-500'}`} />
+                        </motion.div>
+                      </button>
+                      <AnimatePresence>
+                        {isOpen && (
+                          <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }}>
+                            <p className="px-5 pb-5 text-xs md:text-sm leading-relaxed text-slate-700 dark:text-slate-300 font-medium border-t border-black/5 dark:border-white/5 pt-4">
+                              {faq.a}
+                            </p>
                           </motion.div>
-                        </button>
-                        
-                        <AnimatePresence>
-                          {isOpen && (
-                            <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden h-auto">
-                              <p className={`px-4 pb-4 text-[10.5px] leading-relaxed whitespace-normal break-words ${theme.textSecondary} border-t border-slate-700/30 pt-3`}>
-                                {faq.a}
-                              </p>
-                            </motion.div>
-                          )}
-                        </AnimatePresence>
+                        )}
+                      </AnimatePresence>
+                    </div>
+                  );
+                })}
+              </div>
+            </motion.div>
+          ) 
+          
+          /* STATE 3: MAIN DASHBOARD (The Puzzle Bento Grid) */
+          : (
+            <motion.div key="bento-dashboard" initial={{ opacity: 0, x: -50 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -50 }} transition={{ type: 'spring', stiffness: 300, damping: 30 }} className="space-y-8">
+              
+              {/* TOP BENTO: Quick Guides */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                
+                {/* Guide 1 */}
+                <div className="glass-card p-6 md:p-8 rounded-[2rem] border-t-4 border-t-indigo-500 group hover:-translate-y-1 transition-transform">
+                  <div className="flex items-center gap-3 mb-6">
+                    <BoltIcon className="w-6 h-6 text-indigo-500 shrink-0" />
+                    <h3 className="text-xs font-black uppercase tracking-widest text-slate-900 dark:text-white">Quick Start</h3>
+                  </div>
+                  <div className="relative border-l-2 border-indigo-500/30 ml-3 space-y-5">
+                    {[
+                      { step: "1. Select", desc: "Choose Text, URL, Document, or Media." },
+                      { step: "2. Scan", desc: "Provide data and let the AI process it." },
+                      { step: "3. Act", desc: "Read the report. If CRITICAL, block the sender." }
+                    ].map((item, i) => (
+                      <div key={i} className="relative pl-5 w-full">
+                        <div className="absolute w-3 h-3 bg-indigo-500 rounded-full -left-[7px] top-0.5 shadow-[0_0_10px_#6366f1]" />
+                        <h4 className="text-[10px] font-black uppercase text-slate-900 dark:text-white">{item.step}</h4>
+                        <p className="text-[10px] font-medium text-slate-600 dark:text-slate-400 mt-1">{item.desc}</p>
                       </div>
-                    );
-                  })}
+                    ))}
+                  </div>
+                </div>
+
+                {/* Guide 2 */}
+                <div className="glass-card p-6 md:p-8 rounded-[2rem] border-l-4 border-l-rose-500 group hover:-translate-y-1 transition-transform">
+                  <div className="flex items-center gap-3 mb-6">
+                    <ShieldCheckIcon className="w-6 h-6 text-rose-500 shrink-0" />
+                    <h3 className="text-xs font-black uppercase tracking-widest text-slate-900 dark:text-white">Threat Levels</h3>
+                  </div>
+                  <div className="space-y-4">
+                    {[
+                      { label: "SAFE", range: "80-100%", color: "text-emerald-500", desc: "Content looks completely natural." },
+                      { label: "CAUTION", range: "40-79%", color: "text-amber-500", desc: "AI detected mild manipulation." },
+                      { label: "CRITICAL", range: "0-39%", color: "text-rose-500", desc: "High chance of a Deepfake/Scam." }
+                    ].map((legend, i) => (
+                      <div key={i} className="p-3 rounded-xl glass-input w-full flex items-center gap-4">
+                        <div className={`w-2 h-2 rounded-full ${legend.color.replace('text-', 'bg-')} shadow-[0_0_8px_currentColor] shrink-0`} />
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-2 mb-0.5">
+                            <span className={`${legend.color} font-black text-[10px] uppercase tracking-widest`}>{legend.label}</span>
+                            <span className="text-slate-500 font-mono text-[9px]">{legend.range}</span>
+                          </div>
+                          <p className="text-[10px] text-slate-600 dark:text-slate-300 font-medium truncate">{legend.desc}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               </div>
-            ))}
 
-            {filteredFaqs.length === 0 && (
-              <div className={`p-12 text-center rounded-[2rem] ${theme.card}`}>
-                <FingerPrintIcon className={`w-12 h-12 mx-auto mb-4 ${theme.muted} opacity-50`} />
-                <p className={`text-xs font-mono uppercase break-words whitespace-normal ${theme.muted}`}>No help articles match your search.</p>
+              {/* BOTTOM BENTO: Interactive Topics Grid */}
+              <div className="pt-4">
+                <h3 className="text-xs font-black uppercase tracking-widest text-slate-500 dark:text-slate-400 ml-2 mb-4">Browse Topics</h3>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  {FAQS.map((cat, i) => (
+                    <button 
+                      key={i} 
+                      onClick={() => setActiveCategory(cat)}
+                      className="glass-card p-6 md:p-8 rounded-[2rem] flex flex-col items-center justify-center gap-4 hover:scale-105 hover:shadow-[0_0_30px_rgba(79,70,229,0.2)] hover:border-indigo-500/50 transition-all duration-300 group"
+                    >
+                      <div className="p-4 rounded-2xl bg-black/5 dark:bg-white/5 group-hover:bg-indigo-500/20 transition-colors">
+                        <cat.icon className="w-8 h-8 text-slate-600 dark:text-slate-300 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors" />
+                      </div>
+                      <span className="text-[10px] md:text-[11px] font-black uppercase tracking-widest text-center text-slate-900 dark:text-white leading-relaxed">
+                        {cat.category}
+                      </span>
+                    </button>
+                  ))}
+                </div>
               </div>
-            )}
-          </div>
-        </div>
+              
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
-      <div className="h-24" />
-    </motion.div>
+    </div>
   );
 }

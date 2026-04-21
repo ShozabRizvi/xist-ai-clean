@@ -2,475 +2,271 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Import mobile styles first */
+/* 🚀 1. IMPORT THE NEW SMOOTH GEOMETRIC FONT */
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap');
+
 @import './mobile.css';
 
-/* Global Base Styles */
 * {
   box-sizing: border-box;
-  max-width: 100%;
-  overflow-x: hidden !important;
 }
 
 html {
   scroll-behavior: smooth;
   font-size: 16px;
-  line-height: 1.6;
-  width: 100%;
+  color-scheme: dark light; 
 }
 
+/* =========================================================
+   1. GLOBAL BACKGROUNDS (The Foundation)
+   ========================================================= */
 body {
   margin: 0;
   padding: 0;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen,
-    Ubuntu, Cantarell, 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+  font-family: 'Outfit', sans-serif; /* 🚀 REPLACED: No more spikey default fonts */
   -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
   width: 100%;
-  max-width: 100vw;
-  transition: background-color 0.3s ease, color 0.3s ease;
+  overflow-x: hidden; 
+  transition: background-color 0.6s cubic-bezier(0.22, 1, 0.36, 1), color 0.6s ease;
+}
+
+/* 🌙 DARK MODE: Gemini Dark Background (#080c1a) */
+body.dark {
+  background-color: #0d001a !important; 
+  color: #F8FAFC !important;
+}
+
+/* ☀️ LIGHT MODE: Soft Light Purple Background (#e2c8f5) */
+body:not(.dark) {
+  background-color: #e6d8f0 !important;
+  color: #0F172A !important; 
 }
 
 #root {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
+}
+
+/* =========================================================
+   2. ULTRA-CLEAR SHINY LIQUID GLASS & OUTER GLOW
+   ========================================================= */
+
+/* 🌙 DARK MODE CARDS: Polished Obsidian Glass */
+.glass-card {
+  background: 
+    linear-gradient(105deg, rgba(255,255,255,0.1) 0%, transparent 15%, transparent 45%, rgba(255,255,255,0.05) 50%, transparent 60%),
+    linear-gradient(135deg, rgba(53, 32, 78, 0.4) 0%, rgba(53, 32, 78, 0.1) 100%) !important; 
+  
+  backdrop-filter: blur(20px) saturate(130%);
+  -webkit-backdrop-filter: blur(20px) saturate(130%);
+  
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-top: 1px solid rgba(255, 255, 255, 0.3);
+  border-left: 1px solid rgba(255, 255, 255, 0.2);
+  
+  /* 🚀 Ambient Purple Outer Glow */
+  box-shadow: 
+    inset 1px 1px 1px rgba(255, 255, 255, 0.2), 
+    inset -1px -1px 2px rgba(0, 0, 0, 0.4), 
+    0 0 25px rgba(173, 87, 234, 0.15), 
+    0 20px 40px rgba(0, 0, 0, 0.4); 
+    
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.3s ease;
+}
+
+.glass-card:hover {
+  box-shadow: 
+    inset 1px 1px 2px rgba(255, 255, 255, 0.3), 
+    inset -1px -1px 2px rgba(0, 0, 0, 0.5), 
+    0 0 35px rgba(173, 87, 234, 0.3), 
+    0 24px 50px rgba(0, 0, 0, 0.6);
+}
+
+/* ☀️ LIGHT MODE CARDS: Glossy Purple Glass */
+body:not(.dark) .glass-card, .light .glass-card {
+  background: 
+    linear-gradient(105deg, rgba(255,255,255,0.7) 0%, rgba(255,255,255,0.1) 15%, transparent 45%, rgba(255,255,255,0.3) 50%, transparent 60%),
+    linear-gradient(135deg, rgba(255, 255, 255, 0.3) 0%, rgba(255, 255, 255, 0.05) 100%) !important; 
+  
+  backdrop-filter: blur(20px) saturate(140%);
+  -webkit-backdrop-filter: blur(20px) saturate(140%);
+  
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  border-top: 1px solid rgba(255, 255, 255, 0.9);
+  border-left: 1px solid rgba(255, 255, 255, 0.7);
+  
+  /* 🚀 Ambient Light Outer Glow */
+  box-shadow: 
+    inset 1px 1px 2px rgba(255, 255, 255, 1),
+    inset -1px -1px 3px rgba(173, 87, 234, 0.2), 
+    0 0 30px rgba(255, 255, 255, 0.5), 
+    0 20px 40px rgba(173, 87, 234, 0.15);
+}
+
+.light .glass-card:hover, body:not(.dark) .glass-card:hover {
+  box-shadow: 
+    inset 1px 1px 3px rgba(255, 255, 255, 1), 
+    inset -1px -1px 3px rgba(173, 87, 234, 0.3), 
+    0 0 45px rgba(255, 255, 255, 0.8), 
+    0 24px 50px rgba(173, 87, 234, 0.25);
+}
+
+/* =========================================================
+   2.5 THE GEMINI-STYLE ANIMATED GLOWING INPUT
+   ========================================================= */
+@keyframes geminiBorderFlow {
+  0% { background-position: 0% 50%; }
+  100% { background-position: 200% 50%; }
+}
+
+.glass-input {
+  position: relative;
+  background: rgba(0, 0, 0, 0.15);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.08); 
+  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  z-index: 1; 
+}
+
+/* ☀️ LIGHT MODE: Base resting state */
+body:not(.dark) .glass-input {
+  background: rgba(255, 255, 255, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  box-shadow: inset 0 2px 4px rgba(255, 255, 255, 0.5);
+}
+
+/* 🌙 DARK MODE: Focus Glow */
+.glass-input:focus-within {
+  border-color: transparent; 
+  background: rgba(0, 0, 0, 0.25);
+  box-shadow: 0 0 30px rgba(173, 87, 234, 0.4); 
+}
+
+/* ☀️ LIGHT MODE: Focus Glow (The Fix!) */
+body:not(.dark) .glass-input:focus-within {
+  background: rgba(255, 255, 255, 0.9);
+  /* 🚀 Dual-Glow: Blinding white core + saturated purple aura */
+  box-shadow: 
+    inset 0 0 10px rgba(255, 255, 255, 1),
+    0 0 15px rgba(255, 255, 255, 1), 
+    0 0 40px rgba(173, 87, 234, 0.6);
+}
+
+/* 🚀 THE GEMINI BORDER pseudo-element */
+.glass-input::after {
+  content: "";
+  position: absolute;
+  inset: -1px; 
+  border-radius: inherit;
+  padding: 2px; 
+  
+  /* ☀️ LIGHT MODE FLOW: Uses deep purple (#35204E) for high contrast against the light background */
+  background: linear-gradient(90deg, #AD57EA, #35204E, #AD57EA, #ffffff);
+  background-size: 200% auto;
+  animation: geminiBorderFlow 2.5s linear infinite;
+  
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.4s ease;
+  z-index: -1;
+}
+
+/* 🌙 DARK MODE FLOW: Uses Gemini dark (#080c1a) and white for contrast */
+body.dark .glass-input::after {
+  background: linear-gradient(90deg, #AD57EA, #080c1a, #ffffff, #AD57EA);
+  background-size: 200% auto;
+}
+
+.glass-input:focus-within::after {
+  opacity: 1;
+}
+
+/* =========================================================
+   3. FORENSIC HUD TARGETING ANIMATIONS
+   ========================================================= */
+
+/* Draws the lines from the center outward */
+@keyframes drawHudLine {
+  from { stroke-dashoffset: 256; opacity: 0; }
+  to { stroke-dashoffset: 0; }
+}
+
+/* Continuous breathing scanner glow */
+@keyframes hudBreathingGlow {
+  0%, 100% { filter: drop-shadow(0 0 2px currentColor) opacity(0.6); transform: scale(1); }
+  50% { filter: drop-shadow(0 0 10px currentColor) opacity(1); transform: scale(1.02); }
+}
+
+.hud-line {
+  /* 256 is the exact width of our SVG viewBox */
+  stroke-dasharray: 256;
+  stroke-dashoffset: 256;
+  animation: drawHudLine 1.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.hud-container {
+  /* After the draw animation finishes, the breathing pulse takes over */
+  animation: hudBreathingGlow 4s ease-in-out infinite;
+}
+
+/* Structural Workspace Reveal Animation */
+@keyframes workspaceReveal {
+  from { opacity: 0; transform: translateY(15px) scale(0.99); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+.animate-workspace {
+  animation: workspaceReveal 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* =========================================================
+   4. SCROLLBARS & LAYOUT SHELL
+   ========================================================= */
+.no-scrollbar::-webkit-scrollbar { display: none !important; }
+.no-scrollbar { -ms-overflow-style: none !important; scrollbar-width: none !important; }
+
+::-webkit-scrollbar { width: 6px; background: transparent; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background-color: rgba(156, 163, 175, 0.3); border-radius: 10px; }
+.dark ::-webkit-scrollbar-thumb { background-color: rgba(255, 255, 255, 0.15); }
+::-webkit-scrollbar-thumb:hover { background-color: rgba(173, 87, 234, 0.6); }
+
+main {
   width: 100%;
-  max-width: 100vw;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative; 
+  z-index: 1;
+}
+main > div {
+  width: 100%;
+  max-width: 72rem; 
+  margin-left: auto;
+  margin-right: auto;
+  display: flex;
+  flex-direction: column;
+}
+/* =========================================================
+   TEXT HIGHLIGHT UTILITY (The Clartha Effect)
+   ========================================================= */
+.text-brand-highlight {
+  /* A subtle gradient that matches your Light Theme purple but glows on Dark Theme */
+  background: linear-gradient(90deg, #AD57EA, #D28BFF);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  color: transparent;
+  font-weight: inherit; /* Inherits the boldness of the heading */
 }
 
-/* Desktop-Specific Styles */
-@media (min-width: 769px) {
-  /* Fixed Navigation Bar */
-  nav[class*="bg-gradient-to-r"],
-  .top-navigation,
-  header {
-    position: fixed !important;
-    top: 0 !important;
-    left: 0 !important;
-    right: 0 !important;
-    width: 100vw !important;
-    height: 64px !important;
-    z-index: 9999 !important;
-  }
-
-  /* Sidebar Base */
-  .desktop-sidebar {
-    position: fixed !important;
-    top: 64px !important;
-    left: 0 !important;
-    height: calc(100vh - 64px) !important;
-    z-index: 40 !important;
-    /* width and transition removed so Framer Motion can control it */
-    border-right: 1px solid rgba(0, 0, 0, 0.1) !important;
-    box-shadow: 2px 0 8px rgba(0, 0, 0, 0.1) !important;
-    overflow-y: auto !important;
-  }
-
-  /* Collapsed / Expanded Variants */
-  .desktop-sidebar.collapsed {}
-  .desktop-sidebar.expanded {}
-
-  /* Sidebar Toggle Button */
-  .sidebar-toggle-btn {
-    position: absolute !important;
-    top: 16px !important;
-    right: -12px !important;
-    width: 24px !important;
-    height: 24px !important;
-    background: rgba(147, 51, 234, 0.9) !important;
-    border: 2px solid rgba(255, 255, 255, 0.2) !important;
-    border-radius: 50% !important;
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    z-index: 50 !important;
-    transition: all 0.3s ease !important;
-  }
-  .sidebar-toggle-btn:hover {
-    background: rgba(147, 51, 234, 1) !important;
-    transform: scale(1.1) !important;
-  }
-  .sidebar-toggle-btn svg {
-    width: 12px !important;
-    height: 12px !important;
-    color: #fff !important;
-  }
-
-  /* Navigation Items */
-  .sidebar-nav-item {
-    display: flex !important;
-    align-items: center !important;
-    width: 100% !important;
-    transition: all 0.2s ease !important;
-  }
-  .desktop-sidebar.collapsed .sidebar-nav-item {
-    justify-content: flex-start !important;
-    padding: 0 16px !important;
-  }
-  .sidebar-nav-item svg {
-    flex-shrink: 0 !important;
-    width: 20px !important;
-    height: 20px !important;
-  }
-.desktop-sidebar.collapsed .sidebar-nav-item svg {
-  width: 20px !important; /* or w-5/h-5 size */
-  height: 20px !important;
+/* Optional: A darker highlight for when the app is in Light Mode so it's readable */
+body:not(.dark) .text-brand-highlight {
+  background: linear-gradient(90deg, #7A6A8D, #4A3A5D);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
 }
-.main-content-with-sidebar {
-  margin-left: 280px !important;
-  margin-top: 64px !important;
-  transition: margin-left 0.3s ease !important;
-  padding: 1rem !important;
-  min-height: calc(100vh - 64px) !important;
-}
-
-.main-content-with-sidebar.collapsed {
-  margin-left: 80px !important;
-}
-
-  /* Main Content Wrapper */
-  .main-content-with-sidebar {
-    margin-left: 280px !important;
-    margin-top: 64px !important;
-    transition: margin-left 0.3s ease !important;
-    padding: 1rem !important;
-    min-height: calc(100vh - 64px) !important;
-  }
-  .main-content-with-sidebar.collapsed {
-    margin-left: 88px !important;
-  }
-
-  /* Hide mobile elements */
-  .mobile-header,
-  .mobile-nav-card,
-  .mobile-qr-btn,
-  .mobile-bottom-nav {
-    display: none !important;
-  }
-}
-
-/* Theme Optimization - All Devices */
-.home-section,
-.verify-section,
-.education-section,
-.community-section,
-.analytics-section,
-.settings-section,
-.about-section {
-  background: #fff !important;
-  color: #1f2937 !important;
-  transition: background 0.3s ease, color 0.3s ease;
-}
-
-/* Dark Mode */
-.dark {
-  color-scheme: dark;
-}
-.dark .home-section,
-.dark .verify-section,
-.dark .education-section,
-.dark .community-section,
-.dark .analytics-section,
-.dark .settings-section,
-.dark .about-section {
-  background: linear-gradient(to bottom right, #111827, #1e40af, #7c3aed) !important;
-  color: #fff !important;
-}
-
-/* Utility Classes */
-.h-screen-minus-nav {
-  height: calc(100vh - 64px) !important;
-}
-.overflow-x-hidden {
-  overflow-x: hidden !important;
-}
-/* Animations */
-@keyframes fadeInUp {
-  from {
-    opacity: 0;
-    transform: translateY(30px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.animate-fadeInUp {
-  animation: fadeInUp 0.6s ease-out;
-}
-
-@keyframes pulse {
-  0%, 100% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0.5;
-  }
-}
-
-.animate-pulse-slow {
-  animation: pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-}
-
-/* Theme Toggles */
-.theme-toggle,
-.theme-toggle-btn,
-button[aria-label*="theme"] {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
-  border: 2px solid rgba(255,255,255,0.2) !important;
-  border-radius: 50px !important;
-  padding: 8px 16px !important;
-  height: 40px !important;
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  gap: 8px !important;
-  cursor: pointer !important;
-  box-shadow: 0 4px 15px rgba(102,126,234,0.3) !important;
-  transition: all 0.3s ease !important;
-}
-.theme-toggle:hover,
-.theme-toggle-btn:hover,
-button[aria-label*="theme"]:hover {
-  transform: translateY(-2px) scale(1.05) !important;
-  box-shadow: 0 8px 25px rgba(102,126,234,0.4) !important;
-  border-color: rgba(255,255,255,0.4) !important;
-}
-.dark .theme-toggle,
-.dark .theme-toggle-btn,
-.dark button[aria-label*="theme"] {
-  background: linear-gradient(135deg, #8b5cf6 0%, #a855f7 100%) !important;
-  border-color: rgba(255,255,255,0.3) !important;
-  box-shadow: 0 4px 15px rgba(139,92,246,0.3) !important;
-}
-.dark .theme-toggle:hover,
-.dark .theme-toggle-btn:hover,
-.dark button[aria-label*="theme"]:hover {
-  box-shadow: 0 8px 25px rgba(139,92,246,0.5) !important;
-  border-color: rgba(255,255,255,0.5) !important;
-}
-
-/* Notification Toasts */
-.notification-container {
-  position: fixed !important;
-  top: 80px !important;
-  right: 20px !important;
-  z-index: 9998 !important;
-  pointer-events: none !important;
-}
-.notification-toast {
-  pointer-events: auto !important;
-  margin-bottom: 12px !important;
-  max-width: 400px !important;
-  word-wrap: break-word !important;
-}
-
-/* Scrollbar Solution */
-* {
-  scrollbar-width: none !important;
-  -ms-overflow-style: none !important;
-}
-*::-webkit-scrollbar {
-  display: none !important;
-}
-@media (min-width: 769px) {
-  .desktop-sidebar::-webkit-scrollbar {
-    display: block !important;
-    width: 6px !important;
-  }
-  .desktop-sidebar::-webkit-scrollbar-track {
-    background: rgba(0,0,0,0.05) !important;
-    border-radius: 3px !important;
-  }
-  .desktop-sidebar::-webkit-scrollbar-thumb {
-    background: rgba(147,51,234,0.3) !important;
-    border-radius: 3px !important;
-  }
-  .desktop-sidebar::-webkit-scrollbar-thumb:hover {
-    background: rgba(147,51,234,0.5) !important;
-  }
-}
-
-/* Dark-Mode Text Color Overrides */
-.dark .text-red-800,
-.dark .text-orange-800,
-.dark .text-yellow-800,
-.dark .text-green-800,
-.dark .text-blue-800,
-.dark .text-indigo-800,
-.dark .text-purple-800,
-.dark .text-pink-800 {
-  color: #fff !important;
-}
-.dark .text-red-800 { color: #fca5a5 !important; }
-.dark .text-orange-800 { color: #fed7aa !important; }
-.dark .text-green-800 { color: #86efac !important; }
-.dark .text-blue-800 { color: #93c5fd !important; }
-.dark .text-indigo-800 { color: #a5b4fc !important; }
-.dark .text-purple-800 { color: #c4b5fd !important; }
-.dark .text-pink-800 { color: #f9a8d4 !important; }
-
-/* Protection Section Overrides */
-.dark .protection-section h1,
-.dark .protection-section h2,
-.dark .protection-section h3,
-.dark .protection-section h4,
-.dark .protection-section h5 {
-  color: #fff !important;
-}
-.dark .text-red-800.emergency-protocol {
-  color: #ff6b6b !important;
-  text-shadow: 0 0 10px rgba(255,107,107,0.3) !important;
-}
-.dark .ai-recommendations h4 {
-  color: #60a5fa !important;
-  text-shadow: 0 0 5px rgba(96,165,250,0.2) !important;
-}
-.dark .status-current { color: #34d399 !important; }
-.dark .status-monitoring { color: #60a5fa !important; }
-.dark .status-learning { color: #a78bfa !important; }
-/* Fallback for any missed dark text colors */
-.dark [class*="text-"][class*="-800"] {
-  color: #e5e7eb !important;
-}
-
-/* Dark Mode Card Background Fixes */
-.dark .bg-white {
-  background-color: #1f2937 !important;
-}
-.dark .border-gray-200 {
-  border-color: #4b5563 !important;
-}
-.dark .bg-blue-50 {
-  background-color: rgba(59,130,246,0.1) !important;
-}
-.dark .text-gray-800,
-.dark .text-gray-900 {
-  color: #ffffff !important;
-}
-
-/* Protection Cards */
-.dark .protection-card {
-  background: rgba(31,41,55,0.9) !important;
-  border: 1px solid rgba(255,255,255,0.1) !important;
-  color: #fff !important;
-}
-.dark .protection-card h4 {
-  color: #fff !important;
-}
-.dark .protection-card:hover {
-  background: rgba(55,65,81,0.9) !important;
-  border-color: rgba(255,255,255,0.2) !important;
-  transform: translateY(-2px) !important;
-  box-shadow: 0 8px 25px rgba(0,0,0,0.3) !important;
-}
-
-/* Tailwind dark-scheme override */
-@media (prefers-color-scheme: dark) {
-  .text-red-800,
-  .text-orange-800,
-  .text-green-800,
-  .text-blue-800,
-  .text-indigo-800,
-  .text-purple-800 {
-    color: #ffffff !important;
-  }
-}
-/* Universal Overflow Prevention */
-body, html, main, section, div, nav {
-  overflow-x: hidden !important;
-}
-
-/* Responsive Containers */
-.container, .max-w-7xl, .max-w-6xl, .max-w-5xl,
-.max-w-4xl, .max-w-3xl, .max-w-2xl, .max-w-xl, .w-full {
-  width: 100% !important;
-  max-width: 100% !important;
-  overflow-x: hidden !important;
-  margin-left: auto !important;
-  margin-right: auto !important;
-}
-
-/* Large Screens Container Limits */
-@media (min-width: 1280px) {
-  .container {
-    max-width: 1200px;
-  }
-}
-@media (min-width: 1536px) {
-  .container {
-    max-width: 1400px;
-  }
-}
-
-/* 🚨 Desktop Overflow Fix Only */
-@media (min-width: 769px) {
-  /* Navigation and Header Containment */
-  nav[class*="bg-gradient-to-r"],
-  .top-navigation,
-  header {
-    position: fixed !important;
-    top: 0 !important;
-    left: 0 !important;
-    right: 0 !important;
-    width: 100vw !important;
-    height: 64px !important;
-  }
-
-  /* Sidebar Containment */
-  .desktop-sidebar,
-  aside,
-  [class*="sidebar"] {
-    position: fixed !important;
-    top: 64px !important;
-    left: 0 !important;
-    height: calc(100vh - 64px) !important;
-    overflow-y: auto !important;
-  }
-
-  /* Content Area Containment */
-  main, .main-content, .app-content {
-    margin-left: 280px !important;
-    margin-top: 64px !important;
-    width: calc(100vw - 280px) !important;
-    max-width: calc(100vw - 280px) !important;
-    min-height: calc(100vh - 64px) !important;
-    padding: 20px !important;
-    overflow-x: hidden !important;
-    box-sizing: border-box !important;
-  }
-
-  /* Section Containment */
-  .home-section, .verify-section, .education-section,
-  .community-section, .analytics-section,
-  .settings-section, .about-section, .protection-section {
-    width: 100% !important;
-    max-width: 100% !important;
-    overflow-x: hidden !important;
-    box-sizing: border-box !important;
-  }
-
-  /* Box-Sizing Enforcement */
-  * {
-    box-sizing: border-box !important;
-  }
-
-  /* Hide Mobile on Desktop */
-  .mobile-header, .mobile-nav-card,
-  .mobile-qr-btn, .mobile-bottom-nav {
-    display: none !important;
-  }
-
-  /* Container Width Enforcement */
-  .container, .max-w-7xl, .max-w-6xl,
-  .max-w-5xl, .max-w-4xl, .max-w-3xl,
-  .max-w-2xl, .max-w-xl, .w-full {
-    width: 100% !important;
-    max-width: 100% !important;
-    overflow-x: hidden !important;
-  }
-}
-
-/* End of index.css */

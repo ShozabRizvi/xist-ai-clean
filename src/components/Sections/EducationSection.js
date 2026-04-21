@@ -1,37 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  PlayIcon, ClockIcon, ShieldCheckIcon, QuestionMarkCircleIcon, 
+  PlayIcon, ClockIcon, QuestionMarkCircleIcon, 
   ArrowRightIcon, ArrowLeftIcon, XMarkIcon, AcademicCapIcon, 
   CpuChipIcon, ArrowTopRightOnSquareIcon, FunnelIcon
 } from '@heroicons/react/24/outline';
 import { showNotification } from '../UI/NotificationToast';
-
-// ==============================
-// THEMES & TYPEWRITER
-// ==============================
-const THEMES = {
-  dark: { 
-    background: 'bg-[#020617]', 
-    headerBg: 'bg-[#020617]/80 backdrop-blur-xl',
-    card: 'bg-slate-900/60 backdrop-blur-xl border border-slate-800 shadow-2xl', 
-    inner: 'bg-slate-950 border border-slate-800', 
-    textPrimary: 'text-slate-100', 
-    textSecondary: 'text-slate-400', 
-    muted: 'text-slate-500',
-    glow: 'from-indigo-500/10 via-cyan-500/5 to-transparent'
-  },
-  light: { 
-    background: 'bg-slate-50', 
-    headerBg: 'bg-white/80 backdrop-blur-xl',
-    card: 'bg-white/80 backdrop-blur-xl border border-slate-200 shadow-xl', 
-    inner: 'bg-slate-100 border border-slate-200', 
-    textPrimary: 'text-slate-900', 
-    textSecondary: 'text-slate-600', 
-    muted: 'text-slate-400',
-    glow: 'from-indigo-500/5 via-blue-500/5 to-transparent'
-  }
-};
 
 const useTypewriter = (text, speed = 60, delay = 200) => {
   const [displayedText, setDisplayedText] = useState("");
@@ -51,14 +25,31 @@ const useTypewriter = (text, speed = 60, delay = 200) => {
 // 20 ACTIVE CYBER MODULES (2024/2025 VERIFIED)
 // ==============================
 const educationContent = [
-  // 🟢 OSINT & Investigation
   {
-    id: 1, title: 'Website OSINT Full Tutorial', category: 'OSINT', duration: '32m', creator: 'John Hammond', videoId: 'G0vUbO5QU2M',
-    content: 'Learn how to gather hidden data, track footprints, and perform professional Open Source Intelligence on any website.',
+    // 🚀 NEW VIDEO REPLACEMENT: Guaranteed Embeddable 2026 OSINT Masterclass
+    id: 1, 
+    title: 'OSINT Course 2026: The Complete Intelligence Cycle', 
+    category: 'OSINT', 
+    duration: '1h 2m', 
+    creator: 'Simplilearn', 
+    videoId: 'luk-9Ld-NPs',
+    content: 'Explore real-world OSINT tools like Google Dorking, Maltego, Shodan, and ExifTool while learning how to ethically gather, clean, and verify publicly available data.',
     quiz: [
-      { question: 'What is the primary goal of OSINT?', options: ['To hack databases directly', 'To gather actionable intelligence from publicly available data', 'To install malware', 'To bypass firewalls'], correct: 1 },
-      { question: 'Why do investigators analyze website certificates (SSL/TLS)?', options: ['To speed up the connection', 'To find hidden subdomains and historical registration data', 'To block ads', 'To change the website color'], correct: 1 },
-      { question: 'What is a "Sock Puppet" account?', options: ['A hacked bank account', 'A fake profile used for investigations to stay anonymous', 'A dark web forum', 'A type of malware'], correct: 1 }
+      { 
+        question: 'What does the OSINT Intelligence Cycle primarily consist of?', 
+        options: ['Hacking, Cracking, and Leaking', 'Direction, Collection, Processing, Analysis, and Dissemination', 'Installing firewalls and antivirus software', 'Writing code and developing software'], 
+        correct: 1 
+      },
+      { 
+        question: 'Which tool is commonly used to search for specific connected devices and servers (like webcams or unsecured routers) on the internet?', 
+        options: ['Shodan', 'Photoshop', 'Microsoft Word', 'Notepad++'], 
+        correct: 0 
+      },
+      { 
+        question: 'What is ExifTool primarily used for in an investigation?', 
+        options: ['Editing video files', 'Extracting hidden metadata (like GPS coordinates or camera details) from images and files', 'Sending encrypted emails', 'Bypassing passwords'], 
+        correct: 1 
+      }
     ]
   },
   {
@@ -242,10 +233,8 @@ const educationContent = [
   }
 ];
 
-const EducationSection = ({ theme: globalTheme = 'dark' }) => {
-  const isDark = globalTheme === 'dark';
-  const theme = THEMES[isDark ? 'dark' : 'light'];
-  const typingTitle = useTypewriter("Intelligence Academy", 80, 200);
+const EducationSection = () => {
+  const typingTitle = useTypewriter("Education Centre", 80, 200);
 
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [showCategoryMenu, setShowCategoryMenu] = useState(false);
@@ -276,71 +265,67 @@ const EducationSection = ({ theme: globalTheme = 'dark' }) => {
   };
 
   const containerVariants = { hidden: { opacity: 0 }, visible: { opacity: 1, transition: { staggerChildren: 0.1 } } };
-  const itemVariants = { hidden: { y: 20, opacity: 0 }, visible: { y: 0, opacity: 1, transition: { type: 'spring', stiffness: 100 } } };
 
   return (
-    <motion.div initial="hidden" animate="visible" variants={containerVariants}
-                className={`w-full min-h-screen transition-colors duration-500 ${theme.background} ${theme.textPrimary} relative overflow-x-hidden`}
-                style={{ marginLeft: window.innerWidth > 768 ? '280px' : '0px', marginTop: '64px', fontFamily: 'Inter, system-ui, sans-serif' }}>
+    // 🚀 FIX: Removed the hardcoded double margin (`marginLeft: 280px`). The App.js `main` wrapper already handles this!
+    <motion.div 
+      initial="hidden" 
+      animate="visible" 
+      variants={containerVariants}
+      className="w-full min-h-screen relative overflow-visible"
+    >
       
-      {/* 🚨 GLOBAL GRID BACKGROUND */}
-      <div className={`absolute inset-0 pointer-events-none opacity-[0.03] ${isDark ? '' : 'invert'} z-0`} 
-           style={{ backgroundImage: 'linear-gradient(to right, #ffffff 1px, transparent 1px), linear-gradient(to bottom, #ffffff 1px, transparent 1px)', backgroundSize: '40px 40px' }}></div>
-
       {/* ========================================= */}
-      {/* 🚀 HERO HEADER (ACADEMY STYLE)            */}
+      {/* 🚀 HERO HEADER (CLARTHA ACADEMY STYLE)  */}
       {/* ========================================= */}
-      <div className={`sticky top-0 z-30 px-4 py-8 md:py-12 transition-all overflow-visible ${theme.headerBg}`}>
+      {/* Removed hardcoded background so global theme shines through */}
+      <div className="sticky top-0 z-30 px-4 py-8 md:py-12 transition-all overflow-visible bg-transparent">
         
-        {/* 🔥 TACTICAL GRID FOR HEADER (SEAMLESS) 🔥 */}
-        <div className={`absolute inset-0 pointer-events-none opacity-[0.05] md:opacity-[0.03] ${isDark ? '' : 'invert'} z-0`} 
-             style={{ backgroundImage: 'linear-gradient(to right, #ffffff 1px, transparent 1px), linear-gradient(to bottom, #ffffff 1px, transparent 1px)', backgroundSize: '24px 24px' }}></div>
-
         <div className="max-w-4xl mx-auto flex flex-col items-center justify-center relative z-10 overflow-visible">
           
-          <AcademicCapIcon className="w-10 h-10 md:w-14 md:h-14 text-indigo-500 mb-5 stroke-[1.5]" />
+          <AcademicCapIcon className="w-10 h-10 md:w-14 md:h-14 text-indigo-500 dark:text-indigo-400 mb-5 stroke-[1.5]" />
           
-          {/* ✅ SIMPLIFIED MASSIVE TITLE: Bulletproof Descender Fix */}
-          <h1 className="text-4xl md:text-5xl lg:text-6xl font-black text-center mb-2 pb-4 leading-normal tracking-tight">
-            <span>{typingTitle}</span>
+          <h1 className="text-4xl md:text-5xl lg:text-6xl font-black text-center mb-2 pb-4 leading-normal tracking-tight text-slate-900 dark:text-white">
+            <span className="text-brand-highlight">{typingTitle}</span>
             <motion.span 
               animate={{ opacity: [0, 1, 0] }} 
               transition={{ repeat: Infinity, duration: 0.9 }} 
-              className="inline-block w-2.5 md:w-3 h-[0.8em] bg-indigo-500 ml-2 align-baseline" 
+              className="inline-block w-2.5 md:w-3 h-[0.8em] bg-indigo-500 dark:bg-indigo-400 ml-2 align-baseline" 
             />
           </h1>
 
-          <p className="text-[9px] md:text-[11px] font-mono font-bold uppercase tracking-[0.3em] md:tracking-[0.4em] text-slate-500 mb-8 md:mb-12 text-center px-4">
+          <p className="text-[9px] md:text-[11px] font-mono font-bold uppercase tracking-[0.3em] md:tracking-[0.4em] text-slate-600 dark:text-slate-400 mb-8 md:mb-12 text-center px-4">
             Cognitive Firewall Training & Security Modules
           </p>
           
-          {/* ✅ DESKTOP: SEGMENTED CONTROL (DESCENDER PROTECTED) */}
+          {/* ✅ DESKTOP: SEGMENTED FILTER CONTROL (GLASS INPUT STYLE) */}
           <div className="hidden md:flex w-full max-w-4xl px-2 overflow-visible justify-center pb-2 flex-wrap gap-y-2">
-            <div className={`p-1.5 flex items-center gap-1 rounded-full border transition-all flex-wrap justify-center ${
-              isDark ? 'bg-slate-900/50 border-slate-800' : 'bg-slate-100 border-slate-200'
-            }`}>
+            <div className="p-1.5 flex items-center gap-1 rounded-full glass-input transition-all flex-wrap justify-center">
               {categories.map(f => (
                 <button 
                   key={f} onClick={() => setSelectedCategory(f)} 
-                  className={`relative px-6 py-2.5 rounded-full text-[10px] md:text-[11px] font-black uppercase tracking-widest transition-all duration-300 flex-shrink-0 ${selectedCategory === f ? 'text-white' : (isDark ? 'text-slate-500 hover:text-slate-300' : 'text-slate-500 hover:text-slate-700')}`}
+                  className={`relative px-6 py-2.5 rounded-full text-[10px] md:text-[11px] font-black uppercase tracking-widest transition-all duration-300 flex-shrink-0 ${
+                    selectedCategory === f 
+                      ? 'text-white' 
+                      : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                  }`}
                 >
                   {selectedCategory === f && (
-                    <motion.div layoutId="activeCategory" className="absolute inset-0 rounded-full shadow-lg bg-indigo-600" transition={{ type: 'spring', stiffness: 400, damping: 30 }} />
+                    <motion.div layoutId="activeCategory" className="absolute inset-0 rounded-full shadow-lg bg-indigo-600 dark:bg-indigo-500" transition={{ type: 'spring', stiffness: 400, damping: 30 }} />
                   )}
-                  {/* Py-0.5 span ensures the tail of the 'y' isn't chopped off */}
                   <span className="relative z-10 block py-0.5">{f}</span>
                 </button>
               ))}
             </div>
           </div>
 
-          {/* ✅ MOBILE: CATEGORY BUTTON (OPENS GLOBAL MODAL) */}
+          {/* ✅ MOBILE: CATEGORY BUTTON */}
           <div className="md:hidden relative mt-1 w-max mx-auto overflow-visible pb-2">
             <button 
               onClick={() => setShowCategoryMenu(true)}
-              className={`flex items-center gap-2 px-6 py-3 rounded-full border shadow-lg transition-all ${isDark ? 'bg-slate-900 border-slate-700 text-white' : 'bg-white border-slate-300 text-slate-900'}`}
+              className="flex items-center gap-2 px-6 py-3 rounded-full glass-card transition-all text-slate-900 dark:text-white"
             >
-              <FunnelIcon className="w-4 h-4 text-indigo-500" />
+              <FunnelIcon className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
               <span className="text-[11px] font-black uppercase tracking-widest block py-0.5">
                 {selectedCategory}
               </span>
@@ -349,17 +334,17 @@ const EducationSection = ({ theme: globalTheme = 'dark' }) => {
         </div>
       </div>
 
+      {/* ========================================= */}
+      {/* 🚀 COURSE GRID (LIQUID GLASS CARDS)       */}
+      {/* ========================================= */}
       <div className="max-w-7xl mx-auto relative z-10 px-4 md:px-8 py-8">
         <div className="grid gap-8 grid-cols-1 md:grid-cols-2 xl:grid-cols-3">
           {filteredContent.map(course => (
-            <motion.div variants={itemVariants} key={course.id} 
-                        className={`${theme.card} p-1.5 overflow-hidden group hover:border-indigo-500/50 transition-all flex flex-col relative
-                                   rounded-tl-3xl rounded-br-3xl rounded-tr-lg rounded-bl-lg`}> 
+            // 🚀 CLARTHA STYLE: Changed to glass-card and added animate-workspace
+            <motion.div key={course.id} 
+                        className="glass-card animate-workspace p-1.5 overflow-hidden group transition-all flex flex-col relative rounded-[2rem]"> 
               
-              <div className="absolute top-0 left-0 w-6 h-6 border-t-2 border-l-2 border-indigo-500/30 rounded-tl-3xl z-20 pointer-events-none"></div>
-              <div className="absolute bottom-0 right-0 w-6 h-6 border-b-2 border-r-2 border-indigo-500/30 rounded-br-3xl z-20 pointer-events-none"></div>
-
-              <div className="relative aspect-video cursor-pointer overflow-hidden rounded-tl-[1.3rem] rounded-tr-md rounded-bl-md rounded-br-md" 
+              <div className="relative aspect-video cursor-pointer overflow-hidden rounded-[1.5rem]" 
                    onClick={() => window.open(`https://www.youtube.com/watch?v=${course.videoId}`, '_blank')}>
                 <img src={`https://img.youtube.com/vi/${course.videoId}/hqdefault.jpg`} alt={course.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
                 <div className="absolute inset-0 bg-slate-900/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity backdrop-blur-sm">
@@ -373,21 +358,20 @@ const EducationSection = ({ theme: globalTheme = 'dark' }) => {
               </div>
 
               <div className="p-5 md:p-6 flex flex-col flex-grow">
-                <h3 className={`font-black text-lg mb-2 leading-tight ${theme.textPrimary} group-hover:text-indigo-400 transition-colors`}>{course.title}</h3>
-                <p className={`text-xs leading-relaxed mb-6 line-clamp-3 ${theme.textSecondary}`}>{course.content}</p>
+                <h3 className="font-black text-lg mb-2 leading-tight text-slate-900 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">{course.title}</h3>
+                <p className="text-xs leading-relaxed mb-6 line-clamp-3 text-slate-700 dark:text-slate-300">{course.content}</p>
                 
-                {/* ✅ DYNAMIC FLEX FOOTER (FIXES SQUISHED BUTTONS ON MOBILE) */}
-                <div className="mt-auto pt-4 border-t border-slate-800/30 flex items-center justify-between gap-2">
+                <div className="mt-auto pt-4 border-t border-slate-300/30 dark:border-slate-700/50 flex items-center justify-between gap-2">
                   <div className="flex flex-col gap-1 min-w-0 pr-2">
-                     <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest flex items-center gap-1 truncate"><ClockIcon className="w-3 h-3 shrink-0"/> {course.duration}</span>
-                     <span className={`text-[10px] font-bold truncate ${theme.textPrimary}`}>{course.creator}</span>
+                     <span className="text-[9px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest flex items-center gap-1 truncate"><ClockIcon className="w-3 h-3 shrink-0"/> {course.duration}</span>
+                     <span className="text-[10px] font-bold truncate text-slate-800 dark:text-slate-200">{course.creator}</span>
                   </div>
                   <div className="flex items-center gap-1.5 md:gap-2 shrink-0">
-                    <button onClick={() => window.open(`https://www.youtube.com/watch?v=${course.videoId}`, '_blank')} className="px-3 md:px-4 h-8 rounded-lg bg-indigo-500/10 text-indigo-500 hover:bg-indigo-600 hover:text-white flex items-center justify-center gap-1 transition-all border border-indigo-500/20 text-[9px] md:text-[10px] font-black uppercase tracking-widest">
+                    <button onClick={() => window.open(`https://www.youtube.com/watch?v=${course.videoId}`, '_blank')} className="px-3 md:px-4 h-8 rounded-lg bg-indigo-600/10 dark:bg-indigo-500/10 text-indigo-700 dark:text-indigo-400 hover:bg-indigo-600 hover:text-white flex items-center justify-center gap-1 transition-all border border-indigo-600/20 dark:border-indigo-500/20 text-[9px] md:text-[10px] font-black uppercase tracking-widest">
                       <PlayIcon className="w-3 h-3" /> Watch
                     </button>
                     {course.quiz && (
-                      <button onClick={() => startQuiz(course.id)} className={`px-3 md:px-4 h-8 rounded-lg flex items-center justify-center gap-1 transition-all border text-[9px] md:text-[10px] font-black uppercase tracking-widest ${isDark ? 'bg-slate-800 text-slate-300 border-slate-700 hover:bg-slate-700' : 'bg-slate-100 text-slate-700 border-slate-200 hover:bg-slate-200'}`}>
+                      <button onClick={() => startQuiz(course.id)} className="px-3 md:px-4 h-8 rounded-lg flex items-center justify-center gap-1 transition-all text-[9px] md:text-[10px] font-black uppercase tracking-widest glass-input text-slate-800 dark:text-slate-200 hover:text-indigo-600 dark:hover:text-indigo-400">
                         <QuestionMarkCircleIcon className="w-3 h-3 shrink-0" /> Quiz
                       </button>
                     )}
@@ -409,12 +393,12 @@ const EducationSection = ({ theme: globalTheme = 'dark' }) => {
             <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setShowCategoryMenu(false)} />
             <motion.div 
               initial={{ opacity: 0, scale: 0.9, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.9, y: 20 }}
-              className={`relative w-64 rounded-3xl shadow-2xl border overflow-hidden flex flex-col z-10 ${isDark ? 'bg-slate-900 border-slate-700' : 'bg-white border-slate-200'}`}
+              className="relative w-64 rounded-3xl shadow-2xl overflow-hidden flex flex-col z-10 glass-card"
             >
-              <div className={`p-4 border-b text-center text-xs font-black uppercase tracking-widest ${isDark ? 'border-slate-800 text-slate-400' : 'border-slate-100 text-slate-500'}`}>Intelligence Modules</div>
+              <div className="p-4 border-b border-white/10 text-center text-xs font-black uppercase tracking-widest text-slate-800 dark:text-slate-300">Intelligence Modules</div>
               {categories.map(f => (
                 <button key={f} onClick={() => { setSelectedCategory(f); setShowCategoryMenu(false); }}
-                  className={`w-full text-center px-5 py-4 text-[11px] font-black uppercase tracking-widest transition-all ${selectedCategory === f ? 'bg-indigo-600 text-white' : (isDark ? 'text-slate-300 hover:bg-slate-800' : 'text-slate-600 hover:bg-slate-50')}`}
+                  className={`w-full text-center px-5 py-4 text-[11px] font-black uppercase tracking-widest transition-all ${selectedCategory === f ? 'bg-indigo-600 text-white' : 'text-slate-700 dark:text-slate-300 hover:bg-black/5 dark:hover:bg-white/5'}`}
                 > {f} </button>
               ))}
             </motion.div>
@@ -422,49 +406,53 @@ const EducationSection = ({ theme: globalTheme = 'dark' }) => {
         )}
       </AnimatePresence>
 
-      {/* 🚨 QUIZ MODAL: Fixed Z-Index & Sidebar Offset */}
+      {/* ========================================= */}
+      {/* 🚨 QUIZ MODAL (GLASS CARD UPGRADE)        */}
+      {/* ========================================= */}
       <AnimatePresence>
         {currentQuiz && (
-          <div className="fixed inset-0 z-[9999] flex items-center justify-center" style={{ paddingLeft: window.innerWidth > 768 ? '280px' : '0px' }}>
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setCurrentQuiz(null)} className="absolute inset-0 bg-slate-950/90 backdrop-blur-xl" />
+          <div className="fixed inset-0 z-[9999] flex items-center justify-center">
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setCurrentQuiz(null)} className="absolute inset-0 bg-slate-900/60 backdrop-blur-md" />
             <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }} onClick={(e) => e.stopPropagation()} 
-                        className={`${theme.card} rounded-2xl p-8 max-w-2xl w-[90%] max-h-[85vh] overflow-y-auto relative z-10 custom-scrollbar border-t-4 border-t-indigo-500 mx-4`}>
-              <div className="flex justify-between items-center mb-8 border-b border-slate-800/50 pb-4">
+                        className="glass-card rounded-[2rem] p-8 max-w-2xl w-[90%] max-h-[85vh] overflow-y-auto relative z-10 mx-4">
+              <div className="flex justify-between items-center mb-8 border-b border-black/10 dark:border-white/10 pb-4">
                 <div>
-                  <h2 className="text-xl font-black uppercase tracking-tight text-indigo-500 flex items-center gap-2"><CpuChipIcon className="w-5 h-5"/> Protocol Evaluation</h2>
-                  <p className={`text-xs mt-1 font-mono uppercase tracking-widest ${theme.textSecondary}`}>{currentQuiz.courseTitle}</p>
+                  <h2 className="text-xl font-black uppercase tracking-tight text-indigo-600 dark:text-indigo-400 flex items-center gap-2"><CpuChipIcon className="w-5 h-5"/> Protocol Evaluation</h2>
+                  <p className="text-xs mt-1 font-mono uppercase tracking-widest text-slate-600 dark:text-slate-400">{currentQuiz.courseTitle}</p>
                 </div>
-                <button onClick={() => setCurrentQuiz(null)} className="p-2 hover:bg-rose-500/20 text-slate-500 hover:text-rose-500 rounded-lg transition-colors"><XMarkIcon className="w-5 h-5" /></button>
+                <button onClick={() => setCurrentQuiz(null)} className="p-2 hover:bg-rose-500/20 text-slate-600 dark:text-slate-400 hover:text-rose-600 dark:hover:text-rose-500 rounded-lg transition-colors"><XMarkIcon className="w-5 h-5" /></button>
               </div>
               
               <div className="space-y-6">
-                <div className={`flex items-center justify-between text-[10px] font-black uppercase tracking-widest ${theme.textSecondary}`}>
-                  <span className="bg-slate-800/50 px-3 py-1.5 rounded border border-slate-700/50">Node {currentQuiz.currentQuestion + 1} // {currentQuiz.questions.length}</span>
-                  <span className="text-indigo-400">Score: {currentQuiz.score}</span>
+                <div className="flex items-center justify-between text-[10px] font-black uppercase tracking-widest text-slate-600 dark:text-slate-400">
+                  <span className="glass-input px-3 py-1.5 rounded">Node {currentQuiz.currentQuestion + 1} // {currentQuiz.questions.length}</span>
+                  <span className="text-indigo-600 dark:text-indigo-400">Score: {currentQuiz.score}</span>
                 </div>
                 
-                <h3 className={`text-lg font-bold leading-relaxed ${theme.textPrimary}`}>
+                <h3 className="text-lg font-bold leading-relaxed text-slate-900 dark:text-white">
                   {currentQuiz.questions[currentQuiz.currentQuestion]?.question}
                 </h3>
                 
                 <div className="space-y-3">
                   {currentQuiz.questions[currentQuiz.currentQuestion]?.options.map((option, index) => (
                     <motion.button key={index} onClick={() => submitQuizAnswer(currentQuiz.currentQuestion, index)} whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.99 }}
-                      className={`w-full text-left p-4 rounded-xl border-2 transition-all font-medium text-sm ${
+                      className={`w-full text-left p-4 rounded-xl transition-all font-medium text-sm ${
                         quizAnswers[currentQuiz.currentQuestion] === index
-                          ? 'border-indigo-500 bg-indigo-500/10 text-indigo-400 shadow-[0_0_15px_rgba(79,70,229,0.1)]'
-                          : `${theme.inner} ${theme.textPrimary} hover:border-indigo-500/30`
+                          ? 'border-2 border-indigo-600 dark:border-indigo-500 bg-indigo-600/10 text-indigo-800 dark:text-indigo-300 shadow-[0_0_15px_rgba(79,70,229,0.2)]'
+                          : 'glass-input text-slate-800 dark:text-slate-200'
                       }`}>
                       {option}
                     </motion.button>
                   ))}
                 </div>
 
-                <div className="flex items-center justify-between pt-6 border-t border-slate-800/50">
-                  <button onClick={() => setCurrentQuiz(prev => ({ ...prev, currentQuestion: prev.currentQuestion - 1 }))} disabled={currentQuiz.currentQuestion === 0} className={`flex items-center gap-2 px-5 py-2.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${currentQuiz.currentQuestion === 0 ? 'opacity-50 cursor-not-allowed text-slate-500' : 'bg-slate-800 text-slate-300 hover:bg-slate-700'}`}>
+                <div className="flex items-center justify-between pt-6 border-t border-black/10 dark:border-white/10">
+                  <button onClick={() => setCurrentQuiz(prev => ({ ...prev, currentQuestion: prev.currentQuestion - 1 }))} disabled={currentQuiz.currentQuestion === 0} 
+                          className={`flex items-center gap-2 px-5 py-2.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${currentQuiz.currentQuestion === 0 ? 'opacity-30 cursor-not-allowed' : 'glass-input hover:text-indigo-600 dark:hover:text-indigo-400'}`}>
                     <ArrowLeftIcon className="w-4 h-4" /> Previous
                   </button>
-                  <button onClick={() => { if (currentQuiz.currentQuestion < currentQuiz.questions.length - 1) { setCurrentQuiz(prev => ({ ...prev, currentQuestion: prev.currentQuestion + 1 })); } else { completeQuiz(); } }} disabled={quizAnswers[currentQuiz.currentQuestion] === undefined} className={`flex items-center gap-2 px-6 py-2.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${quizAnswers[currentQuiz.currentQuestion] === undefined ? 'opacity-50 cursor-not-allowed bg-slate-800 text-slate-500' : 'bg-indigo-600 text-white hover:bg-indigo-500 shadow-lg shadow-indigo-500/20'}`}>
+                  <button onClick={() => { if (currentQuiz.currentQuestion < currentQuiz.questions.length - 1) { setCurrentQuiz(prev => ({ ...prev, currentQuestion: prev.currentQuestion + 1 })); } else { completeQuiz(); } }} disabled={quizAnswers[currentQuiz.currentQuestion] === undefined} 
+                          className={`flex items-center gap-2 px-6 py-2.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${quizAnswers[currentQuiz.currentQuestion] === undefined ? 'opacity-30 cursor-not-allowed glass-input' : 'bg-indigo-600 text-white hover:bg-indigo-500 shadow-lg shadow-indigo-500/20'}`}>
                     {currentQuiz.currentQuestion === currentQuiz.questions.length - 1 ? 'Finish' : 'Next'} <ArrowRightIcon className="w-4 h-4" />
                   </button>
                 </div>

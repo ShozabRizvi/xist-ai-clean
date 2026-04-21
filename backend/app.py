@@ -11,6 +11,9 @@ from flask_cors import CORS, cross_origin
 from dotenv import load_dotenv
 from werkzeug.utils import secure_filename
 import PyPDF2
+import razorpay
+import hmac
+import hashlib
 
 # ✅ THE NEW, OFFICIAL SDK IMPORTS
 from google import genai
@@ -21,6 +24,7 @@ from url_scanner import URLScanner
 from image_processor import ImageProcessor
 from video_processor import VideoThreatProcessor
 from detection_engine import AdvancedDetectionEngine
+from supabase import create_client, Client
 
 load_dotenv()
 app = Flask(__name__)
@@ -32,6 +36,9 @@ CORS(app, resources={r"/api/*": {"origins": [
 
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY")
+SUPABASE_URL = os.getenv("REACT_APP_SUPABASE_URL") # Or whatever you named it in your .env
+SUPABASE_KEY = os.getenv("REACT_APP_SUPABASE_ANON_KEY")
+supabase_db: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
 # ✅ NEW SDK CLIENT INITIALIZATION
 client = genai.Client(api_key=GEMINI_API_KEY)
@@ -496,6 +503,145 @@ def emergency_triage():
     except Exception as e:
         print(f"❌ TRIAGE ERROR: {str(e)}")
         return jsonify({"error": "Emergency Triage Node Offline"}), 500
+    
+@app.route('/api/v1/public/scan', methods=['POST'])
+@cross_origin()
+def public_developer_api():
+    provided_key = request.headers.get('X-Xist-API-Key')
+    
+    if not provided_key:
+        return jsonify({'error': 'Unauthorized. Missing X-Xist-API-Key header.'}), 401
+    
+    try:
+        # 1. VERIFY THE KEY
+        response = supabase_db.table('api_keys').select('*').eq('key_string', provided_key).execute()
+        if len(response.data) == 0:
+            return jsonify({'error': 'Unauthorized. Invalid API Key.'}), 401
+            
+        # INSIDE app.py
+        user_data = response.data[0]
+        user_email = user_data.get('user_email', '')
+        
+        # 2. THE VIP BYPASS BY GMAIL
+        VIP_EMAILS = [
+            "rshozab@gmail.com",
+            "asmitgupta@gmail.com",
+            "your.friend3@gmail.com"
+        ]
+        is_vip = user_email in VIP_EMAILS
+
+        # Now, only those 3 Gmails get unlimited requests!
+
+        # 3. PACIFIC TIME (PT) MIDNIGHT CALCULATOR
+        pt_tz = pytz.timezone('America/Los_Angeles')
+        current_date_pt = datetime.now(pt_tz).strftime('%Y-%m-%d')
+        
+        daily_count = user_data.get('daily_count', 0)
+        last_scan_date = user_data.get('last_scan_date', '')
+        
+        # 4. RESET LOGIC: If the last scan wasn't today (in PT), reset the counter to 0
+        if last_scan_date != current_date_pt:
+            daily_count = 0
+            
+        # 5. ENFORCE THE LIMIT (If not VIP and hit 5 requests)
+        if not is_vip and daily_count >= 5:
+            return jsonify({
+                'error': 'Limit reached. You have used your 5 free daily requests. Please purchase a premium plan to continue.'
+            }), 429 # HTTP 429 means "Too Many Requests"
+
+        # 6. UPDATE THE DATABASE COUNTERS
+        supabase_db.table('api_keys').update({
+            'daily_count': daily_count + 1,
+            'last_scan_date': current_date_pt,
+            'usage_count': user_data.get('usage_count', 0) + 1 # Lifetime total
+        }).eq('key_string', provided_key).execute()
+
+    except Exception as db_err:
+        print(f"Database Error: {db_err}")
+        return jsonify({'error': 'Internal server error validating key.'}), 500
+    
+    # 7. RUN THE ACTUAL SCAN
+    data = request.get_json()
+    user_text = data.get('text', '')
+    mode = data.get('mode', 'text')
+    
+    if not user_text:
+         return jsonify({'error': 'Bad Request. Missing "text" field.'}), 400
+    
+    try:
+        # Runs the FREE local heuristic engine
+        analysis = text_engine.analyze_comprehensive(user_text, "API_User")
+        
+        api_response = {
+            "status": "success",
+            "timestamp": datetime.now().isoformat(),
+            "results": {
+                "verdict": analysis.get('verdict', 'Unknown'),
+                "risk_score": analysis.get('scamRisk', 50),
+                "threat_flags": analysis.get('warnings', []),
+            },
+            "meta": { "engine": "Xist AI Core v1.1", "mode": mode, "requests_remaining": "Unlimited" if is_vip else 4 - daily_count }
+        }
+        return jsonify(api_response), 200
+        
+    except Exception as e:
+        return jsonify({'error': 'Internal Engine Error', 'details': str(e)}), 500
+    
+    # --- ADD THIS TO THE BOTTOM OF app.py ---
+
+@app.route('/api/webhooks/razorpay', methods=['POST'])
+@cross_origin()
+def razorpay_webhook():
+    """
+    This route listens for successful payments from Razorpay.
+    """
+    # 1. Get the secret signature Razorpay sends in the headers
+    webhook_signature = request.headers.get('X-Razorpay-Signature')
+    webhook_secret = os.getenv("RAZORPAY_WEBHOOK_SECRET")
+    
+    # 2. Get the raw data payload
+    payload = request.get_data(as_text=True)
+    
+    # 3. Cryptographically verify the request is ACTUALLY from Razorpay
+    # This prevents hackers from faking a payment
+    expected_signature = hmac.new(
+        bytes(webhook_secret, 'latin-1'),
+        msg=bytes(payload, 'latin-1'),
+        digestmod=hashlib.sha256
+    ).hexdigest()
+    
+    if not hmac.compare_digest(expected_signature, webhook_signature):
+        return jsonify({'error': 'Invalid Signature. Intrusion detected.'}), 400
+
+    # 4. If the signature is valid, parse the JSON data
+    data = json.loads(payload)
+    
+    # 5. Check if it's a successful payment event
+    if data.get('event') == 'payment.captured':
+        payment_entity = data['payload']['payment']['entity']
+        
+        # Get the email the user typed into the checkout page!
+        customer_email = payment_entity.get('email')
+        
+        if customer_email:
+            print(f"💰 SUCCESSFUL PAYMENT RECEIVED FROM: {customer_email}")
+            
+            try:
+                # UPGRADE THE USER IN SUPABASE!
+                # We give them a massive daily limit (e.g., 999999) to act as "Unlimited"
+                # and you can also add a 'plan' column later if you want.
+                supabase_db.table('api_keys').update({
+                    'daily_count': -999999 # Negative count ensures they never hit the 5 limit
+                }).eq('user_email', customer_email).execute()
+                
+                print("✅ Account upgraded to Premium Pro!")
+                
+            except Exception as e:
+                print(f"❌ Database update failed: {e}")
+                return jsonify({'error': 'Database error'}), 500
+
+    # Always return a 200 OK so Razorpay knows we received the message
+    return jsonify({'status': 'ok'}), 200
 
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 5000))

@@ -1,98 +1,102 @@
 import React from 'react';
-import { CodeBracketIcon, UserCircleIcon, HeartIcon } from '@heroicons/react/24/outline';
 
-const Footer = ({ theme: globalTheme = 'dark' }) => {
-  const isDark = globalTheme === 'dark';
+const Footer = ({ setCurrentSection }) => {
   const currentYear = new Date().getFullYear();
-  
-  const theme = {
-    bg: isDark ? 'bg-[#020617]' : 'bg-slate-50',
-    border: isDark ? 'border-slate-800/60' : 'border-slate-200',
-    textPrimary: isDark ? 'text-slate-200' : 'text-slate-900', 
-    textSecondary: isDark ? 'text-slate-400' : 'text-slate-700', 
-    brandText: isDark ? 'text-white' : 'text-slate-950', 
-    accent: 'text-indigo-500'
-  };
 
-  const team = [
-    { name: 'Shozab Rizvi', url: 'https://www.linkedin.com/in/shozab-rizvi' },
-    { name: 'Rishabh Srivastava', url: 'https://www.linkedin.com/in/srishabh9140' },
-    { name: 'Asmit Gupta', url: 'https://www.linkedin.com/in/asmit-gupta' }
+  const productLinks = [
+    { id: 'home', label: 'Home Page' },
+    { id: 'verify', label: 'Scan' },
+    { id: 'analytics', label: 'Your Past History' },
+    { id: 'api', label: 'Developer API' }
+  ];
+
+  const resourceLinks = [
+    { id: 'protection', label: 'Helpline 24/7' },
+    { id: 'community', label: 'Community' },
+    { id: 'education', label: 'Education' }
+  ];
+
+  const companyLinks = [
+    { id: 'about', label: 'About Xist AI' },
+    { id: 'contact', label: 'Contact Support' },
+    { id: 'support', label: 'Help Center' }
   ];
 
   return (
-    <footer className={`w-full py-8 md:py-10 border transition-colors duration-500 relative overflow-hidden rounded-none md:rounded-2xl ${theme.bg} ${theme.border} ml-0 md:ml-[280px] pb-24 md:pb-8`}
-            style={{ width: '100%', maxWidth: '100vw' }}>
-      
-      {/* 🟦 CURVY TACTICAL CORNER BARS */}
-      <div className="absolute top-0 left-0 w-6 h-6 border-t-2 border-l-2 border-indigo-500/50 rounded-tl-2xl"></div>
-      <div className="absolute top-0 right-0 w-6 h-6 border-t-2 border-r-2 border-indigo-500/50 rounded-tr-2xl"></div>
-      <div className="absolute bottom-0 left-0 w-6 h-6 border-b-2 border-l-2 border-indigo-500/50 rounded-bl-2xl"></div>
-      <div className="absolute bottom-0 right-0 w-6 h-6 border-b-2 border-r-2 border-indigo-500/50 rounded-br-2xl"></div>
-
-      {/* 🚨 ADAPTIVE GRID CONTINUITY */}
-      <div className={`absolute inset-0 pointer-events-none opacity-[0.04] ${isDark ? '' : 'invert'}`} 
-           style={{ backgroundImage: 'linear-gradient(to right, #ffffff 1px, transparent 1px), linear-gradient(to bottom, #ffffff 1px, transparent 1px)', backgroundSize: '40px 40px' }}></div>
-
-      {/* MAIN CONTAINER */}
-      <div className="max-w-7xl mx-auto px-6 md:px-10 flex flex-col gap-10 relative z-10 w-full">
+    <footer className="w-full relative z-20 border-t border-black/5 dark:border-white/5 bg-slate-50/60 dark:bg-[#080c1a]/60 backdrop-blur-xl mt-auto">
+      {/* 🚀 REDUCED PADDING: Changed from py-10 to py-6 for a much shorter profile */}
+      <div className="w-full max-w-7xl mx-auto px-6 md:px-8 py-6 md:py-8">
         
-        {/* ============================== */}
-        {/* TOP SECTION: CENTERED BRAND & LINKS */}
-        {/* ============================== */}
-        <div className="flex flex-col items-center justify-center w-full gap-6">
+        {/* TOP GRID */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 md:gap-6 mb-6">
           
-          <div className="flex flex-col items-center space-y-3 hover:scale-110 transition-transform duration-300 cursor-pointer p-2 overflow-visible">
-            <div className="w-10 h-10 shrink-0 overflow-visible">
-               <img src="/logo.png" alt="Logo" className="w-full h-full object-contain drop-shadow-lg" />
-            </div>
-            <div className="text-center">
-              <h3 className={`text-xl font-black tracking-tighter ${theme.brandText}`}>XIST INTELLIGENCE</h3>
-              <div className="flex items-center justify-center gap-2 mt-1">
-                  <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse border border-emerald-400/50"></div>
-                  <span className={`text-[10px] font-black uppercase tracking-[0.2em] ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>SYSTEMS ONLINE</span>
-              </div>
-            </div>
-          </div>
-
-          <div className="flex flex-wrap gap-4 md:gap-8 justify-center items-center mt-2">
-            <a href="https://github.com/ShozabRizvi/xist-ai-clean" target="_blank" rel="noreferrer" 
-               className={`flex items-center gap-1.5 px-2 py-1 text-[10px] font-black uppercase tracking-widest transition-all duration-300 hover:scale-110 ${theme.textSecondary} hover:text-indigo-500`}>
-              <CodeBracketIcon className="w-4 h-4 shrink-0" /> Source Code
-            </a>
-            
-            {team.map((m) => (
-              <a key={m.name} href={m.url} target="_blank" rel="noreferrer" 
-                 className={`flex items-center gap-1.5 px-2 py-1 text-[10px] font-black uppercase tracking-widest transition-all duration-300 hover:scale-110 ${theme.textSecondary} hover:text-blue-500`}>
-                <UserCircleIcon className="w-4 h-4 shrink-0" /> {m.name}
-              </a>
-            ))}
-          </div>
-
-        </div>
-
-        {/* ============================================================ */}
-        {/* ✅ FIXED BOTTOM SECTION: Center-Aligned & No Clipping         */}
-        {/* ============================================================ */}
-        <div className={`flex flex-col-reverse md:flex-row items-center justify-between w-full gap-4 pt-10 pb-6 border-t ${theme.border} overflow-visible`}>
-          
-          {/* ✅ FIXED: Two-Line Copyright with Safe-Zone Padding */}
-          <div className="px-4 py-4 overflow-visible">
-            <div className={`text-[9px] font-black uppercase tracking-widest transition-all duration-300 hover:scale-110 cursor-default inline-block ${theme.textSecondary} hover:text-indigo-400 leading-relaxed`}>
-              © {currentYear} &nbsp; &nbsp; XIST AI <br /> 
-              ALL RIGHTS RESERVED.
-            </div>
-          </div>
-          
-          {/* Built With Section - Centered with safe-zone padding */}
-          <div className="px-4 py-2 overflow-visible text-center">
-            <div className={`flex items-center justify-center gap-2 text-[9px] font-black uppercase tracking-widest transition-all duration-300 hover:scale-110 cursor-default inline-block ${theme.textSecondary} hover:text-rose-400`}>
-              <span className="flex items-center gap-2">
-                BUILT WITH <HeartIcon className="w-3.5 h-3.5 text-rose-500 fill-rose-500 animate-pulse shrink-0" /> FOR DIGITAL SOVEREIGNTY
+          <div className="col-span-1 md:col-span-1 flex flex-col items-start pr-4">
+            <div className="flex items-center gap-3 mb-3">
+              <img src="/logo.png" alt="Xist Logo" className="w-6 h-6 object-contain drop-shadow-md" />
+              <span className="text-base font-black tracking-[0.2em] uppercase text-slate-900 dark:text-white">
+                XIST AI
               </span>
             </div>
+            <p className="text-[9px] md:text-[10px] leading-relaxed font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">
+              Forensic Intelligence & Digital Sovereignty. Built to protect users and businesses from advanced digital threats.
+            </p>
           </div>
 
+          <div>
+            <h3 className="text-[9px] font-black uppercase tracking-[0.2em] mb-3 text-slate-900 dark:text-white">Application</h3>
+            {/* 🚀 REDUCED SPACING: Changed space-y-3 to space-y-2 */}
+            <ul className="space-y-2">
+              {productLinks.map((link) => (
+                <li key={link.id}>
+                  <button onClick={() => setCurrentSection(link.id)} className="text-[10px] font-bold uppercase tracking-widest text-slate-500 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">
+                    {link.label}
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          <div>
+            <h3 className="text-[9px] font-black uppercase tracking-[0.2em] mb-3 text-slate-900 dark:text-white">Resources</h3>
+            <ul className="space-y-2">
+              {resourceLinks.map((link) => (
+                <li key={link.id}>
+                  <button onClick={() => setCurrentSection(link.id)} className="text-[10px] font-bold uppercase tracking-widest text-slate-500 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">
+                    {link.label}
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          <div>
+            <h3 className="text-[9px] font-black uppercase tracking-[0.2em] mb-3 text-slate-900 dark:text-white">Company</h3>
+            <ul className="space-y-2">
+              {companyLinks.map((link) => (
+                <li key={link.id}>
+                  <button onClick={() => setCurrentSection(link.id)} className="text-[10px] font-bold uppercase tracking-widest text-slate-500 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">
+                    {link.label}
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
+
+        {/* BOTTOM ROW */}
+        <div className="pt-4 border-t border-black/5 dark:border-white/5 flex flex-col md:flex-row justify-between items-center gap-4">
+          <p className="text-[9px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500">
+            © {currentYear} XIST AI. ALL RIGHTS RESERVED.
+          </p>
+          
+          <div className="flex items-center gap-6">
+            <button onClick={() => setCurrentSection('privacy')} className="text-[9px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">
+              Privacy Policy
+            </button>
+            <button onClick={() => setCurrentSection('terms')} className="text-[9px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">
+              Terms of Service
+            </button>
+          </div>
         </div>
 
       </div>

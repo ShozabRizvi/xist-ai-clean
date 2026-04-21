@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { createClient } from '@supabase/supabase-js';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
-  QrCodeIcon, SunIcon, MoonIcon, UserCircleIcon, XMarkIcon, Bars3Icon, ArrowRightEndOnRectangleIcon, ClockIcon, UserGroupIcon
+  QrCodeIcon, SunIcon, MoonIcon, UserCircleIcon, XMarkIcon, Bars3Icon, ArrowRightEndOnRectangleIcon, ClockIcon 
 } from '@heroicons/react/24/outline';
 import { useResponsive } from '../../hooks/useResponsive';
 import { AVATAR_OPTIONS } from '../Sections/SettingsSection';
@@ -19,12 +19,11 @@ const TacticalAvatar = ({ url, tacticalId }) => {
   const tacticalOption = AVATAR_OPTIONS?.find(a => a.id === tacticalId);
   if (tacticalOption) {
     const Icon = tacticalOption.icon;
-    return <Icon className="w-5 h-5 text-indigo-400" />;
+    return <Icon className="w-5 h-5 text-indigo-500 dark:text-indigo-400" />;
   }
-  return <UserCircleIcon className="w-5 h-5 text-indigo-400" />;
+  return <UserCircleIcon className="w-5 h-5 text-indigo-500 dark:text-indigo-400" />;
 };
 
-// ✅ ADDED "login" PROP BACK
 const TopNavigation = ({ user, identity, theme, setTheme, currentSection, setCurrentSection, setMobileMenuOpen, login }) => {
   const { screenSize } = useResponsive();
   const [showQRPopup, setShowQRPopup] = useState(false);
@@ -40,23 +39,16 @@ const TopNavigation = ({ user, identity, theme, setTheme, currentSection, setCur
   // 🌎 GLOBAL SCANS & PT RESET TIME LOGIC
   // ==========================================
   useEffect(() => {
-    // 1. CALCULATE PACIFIC TIME (PT) MIDNIGHTS (Flawless Timezone Math)
     const calculatePTMidnights = () => {
       const now = new Date();
-      
-      // Get current date/time in Los Angeles
       const ptString = now.toLocaleString('en-US', { timeZone: 'America/Los_Angeles' });
       const localOfPt = new Date(ptString);
-      
-      // Find the exact millisecond difference between Local and PT
       const diff = now.getTime() - localOfPt.getTime();
       
-      // Create absolute timestamp for LAST Midnight PT
       const lastMidnightLocal = new Date(localOfPt);
       lastMidnightLocal.setHours(0, 0, 0, 0);
       const lastMidnightPT = new Date(lastMidnightLocal.getTime() + diff);
       
-      // Create absolute timestamp for NEXT Midnight PT
       const nextMidnightLocal = new Date(localOfPt);
       nextMidnightLocal.setHours(24, 0, 0, 0);
       const nextMidnightPT = new Date(nextMidnightLocal.getTime() + diff);
@@ -66,7 +58,6 @@ const TopNavigation = ({ user, identity, theme, setTheme, currentSection, setCur
 
     const { lastMidnightPT, nextMidnightPT } = calculatePTMidnights();
 
-    // 2. SET THE LOCAL RESET TIME DISPLAY
     try {
       const timeString = nextMidnightPT.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
       setLocalResetTime(`${timeString} Local Time`);
@@ -74,29 +65,28 @@ const TopNavigation = ({ user, identity, theme, setTheme, currentSection, setCur
       setLocalResetTime("12:00 AM (PT)");
     }
 
-    // 3. FETCH GLOBAL SCANS (Total scans in the world since last PT Midnight)
     const fetchGlobalScans = async () => {
       const { count, error } = await supabase
         .from('user_history')
         .select('*', { count: 'exact', head: true })
-        .gte('created_at', lastMidnightPT.toISOString()); // 🌎 GLOBAL: Removed the user_id filter!
+        .gte('created_at', lastMidnightPT.toISOString()); 
       
       if (!error) setLiveScans(count || 0);
     };
 
     fetchGlobalScans();
 
-    // 4. GLOBAL REALTIME SYNC: Update instantly when ANY user in the world scans
     const uniqueChannelName = `global_scans_${Math.random().toString(36).substring(2, 10)}`;
     const channel = supabase
       .channel(uniqueChannelName)
       .on('postgres_changes', 
-          { event: 'INSERT', schema: 'public', table: 'user_history' }, // 🌎 GLOBAL: Removed the user_id filter!
+          { event: 'INSERT', schema: 'public', table: 'user_history' }, 
           () => fetchGlobalScans()
       ).subscribe();
 
     return () => supabase.removeChannel(channel);
-  }, []); // Runs once on mount, no longer depends on user.id
+  }, []); 
+
   const navigationItems = [
     { id: 'home', label: 'Home' },
     { id: 'verify', label: 'Verify' },
@@ -130,57 +120,57 @@ const TopNavigation = ({ user, identity, theme, setTheme, currentSection, setCur
   return (
     <>
       {showQRPopup && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[60] flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-gray-900 rounded-2xl p-6 max-w-sm w-full shadow-2xl border dark:border-slate-800">
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-md z-[100] flex items-center justify-center p-4" onClick={() => setShowQRPopup(false)}>
+          <div className="glass-card p-8 rounded-[2.5rem] max-w-sm w-full shadow-2xl relative border border-black/10 dark:border-white/10" onClick={e => e.stopPropagation()}>
             <div className="flex justify-between items-center mb-6">
-              <h3 className="text-xl font-bold text-gray-900 dark:text-white">Share Xist AI</h3>
-              <button onClick={() => setShowQRPopup(false)} className="p-2 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-full transition-colors">
-                <XMarkIcon className="w-5 h-5 text-gray-500" />
+              <h3 className="text-xl font-black text-slate-900 dark:text-white uppercase tracking-widest">Share Xist AI</h3>
+              <button onClick={() => setShowQRPopup(false)} className="p-2 hover:bg-black/5 dark:hover:bg-white/5 rounded-full transition-colors">
+                <XMarkIcon className="w-5 h-5 text-slate-500" />
               </button>
             </div>
             <div className="text-center">
-              <div className="bg-white p-4 rounded-xl mx-auto mb-4 w-48 h-48 flex items-center justify-center border">
-                <img src="/qrcode2.png" alt="QR Code" className="w-full h-full rounded-lg" onError={(e) => { e.target.style.display = 'none'; }} />
+              <div className="bg-white p-4 rounded-[2rem] mx-auto mb-6 w-48 h-48 flex items-center justify-center shadow-inner">
+                <img src="/qrcode2.png" alt="QR Code" className="w-full h-full rounded-xl object-contain" onError={(e) => { e.target.style.display = 'none'; }} />
               </div>
-              <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">Scan to access Xist AI</p>
+              <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">Scan to access the platform</p>
             </div>
           </div>
         </div>
       )}
 
-      {/* NAV BAR */}
-      <nav className="bg-gradient-to-r from-indigo-900 to-purple-900 border-b border-indigo-800 sticky top-0 z-50 backdrop-blur-md overflow-visible">
-        <div className="max-w-7xl mx-auto px-4 overflow-visible">
+      {/* 🚀 PREMIUM GLASS NAV BAR */}
+      <nav className="sticky top-0 z-50 bg-slate-50/80 dark:bg-[#080c1a]/80 backdrop-blur-2xl border-b border-black/5 dark:border-white/5 transition-colors duration-500 overflow-visible">
+        <div className="max-w-[90rem] mx-auto px-4 overflow-visible">
           
           <div className="relative flex items-center justify-between h-16 overflow-visible">
             
-            {/* LEFT: Brand & Menu */}
+            {/* LEFT: Brand & Mobile Menu Toggle */}
             <div className="flex items-center gap-3 shrink-0">
                <button 
                  onClick={(e) => { e.stopPropagation(); setMobileMenuOpen(true); }} 
-                 className="lg:hidden p-1.5 text-gray-300 hover:bg-indigo-800 rounded-md transition-colors"
+                 className="lg:hidden p-2 text-slate-600 dark:text-slate-300 hover:bg-black/5 dark:hover:bg-white/5 rounded-full transition-colors"
                >
                  <Bars3Icon className="w-6 h-6" />
                </button>
 
-               <div className="flex items-center gap-2 cursor-pointer hover:scale-105 transition-transform duration-300" onClick={() => setCurrentSection('home')}>
+               <div className="flex items-center gap-3 cursor-pointer hover:opacity-80 transition-opacity duration-300 ml-1" onClick={() => setCurrentSection('home')}>
                   <img src="/logo.png" alt="Logo" className="w-7 h-7 sm:w-8 sm:h-8 object-contain" />
-                  <h1 className="hidden min-[360px]:block text-sm sm:text-lg font-black text-white tracking-tight">Xist AI</h1>
+                  <h1 className="hidden min-[360px]:block text-sm sm:text-lg font-black text-slate-900 dark:text-white tracking-widest uppercase">Xist AI</h1>
                </div>
             </div>
 
             {/* CENTER: DESKTOP ONLY NAVIGATION LINKS */}
-            <div className="hidden lg:flex absolute left-1/2 -translate-x-1/2 items-center gap-8 justify-center shrink-0">
+            <div className="hidden lg:flex absolute left-1/2 -translate-x-1/2 items-center gap-2 xl:gap-6 justify-center shrink-0 h-full">
               {navigationItems.map((item) => {
                 const isActive = currentSection === item.id;
                 return (
                   <button
                     key={item.id}
                     onClick={() => setCurrentSection(item.id)}
-                    className={`relative py-2 text-xs uppercase tracking-widest transition-all duration-300 hover:scale-105 ${
+                    className={`relative px-3 py-2 h-full flex items-center text-[10px] xl:text-[11px] uppercase tracking-widest transition-all duration-300 font-black ${
                       isActive 
-                        ? 'text-white font-black drop-shadow-[0_0_8px_rgba(255,255,255,0.3)] scale-105' 
-                        : 'text-indigo-200/60 font-bold hover:text-indigo-100'
+                        ? 'text-indigo-600 dark:text-indigo-400' 
+                        : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'
                     }`}
                   >
                     {item.label}
@@ -189,7 +179,7 @@ const TopNavigation = ({ user, identity, theme, setTheme, currentSection, setCur
                     {isActive && (
                       <motion.div
                         layoutId="active-nav-indicator"
-                        className="absolute -bottom-1.5 left-0 right-0 h-[3px] bg-indigo-300 rounded-full shadow-[0_0_10px_rgba(165,180,252,0.8)]"
+                        className="absolute bottom-0 left-0 right-0 h-[3px] bg-indigo-500 rounded-t-full shadow-[0_-2px_10px_rgba(99,102,241,0.5)]"
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         transition={{ duration: 0.3 }}
@@ -201,54 +191,54 @@ const TopNavigation = ({ user, identity, theme, setTheme, currentSection, setCur
             </div>
 
             {/* RIGHT: Action Hub */}
-            <div className="flex items-center gap-2 sm:gap-4 shrink-0 overflow-visible">
+            <div className="flex items-center gap-1 sm:gap-2 shrink-0 overflow-visible">
               
               {/* SCANS BUTTON */}
               {user && (
                 <div 
-                  className="relative flex items-center justify-center h-16 cursor-pointer px-2 hover:scale-105 transition-transform duration-300"
+                  className={`relative flex items-center justify-center h-9 px-4 rounded-full cursor-pointer transition-all duration-300 mr-2 ${showScanDetails ? 'bg-indigo-50 dark:bg-indigo-500/10' : 'hover:bg-black/5 dark:hover:bg-white/5'}`}
                   onMouseEnter={() => setShowScanDetails(true)}
                   onMouseLeave={() => setShowScanDetails(false)}
                   onClick={() => setShowScanDetails(!showScanDetails)}
                 >
-                  <span className={`text-[10px] sm:text-xs font-black uppercase tracking-widest transition-colors ${showScanDetails ? 'text-indigo-300' : 'text-white'}`}>
-                    SCANS
+                  <span className={`text-[10px] font-black uppercase tracking-widest transition-colors ${showScanDetails ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-600 dark:text-slate-300'}`}>
+                    Scans
                   </span>
                 </div>
               )}
 
               {/* QR and Theme Buttons */}
-              <button onClick={() => setShowQRPopup(true)} className="p-1.5 rounded-full hover:bg-white/10 hover:scale-105 transition-all">
-                <QrCodeIcon className="w-5 h-5 text-indigo-100" />
+              <button onClick={() => setShowQRPopup(true)} className="p-2 rounded-full text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-black/5 dark:hover:bg-white/5 transition-all hidden sm:block">
+                <QrCodeIcon className="w-5 h-5" />
               </button>
               
-              <button onClick={toggleTheme} className="p-1.5 rounded-full hover:bg-white/10 hover:scale-105 transition-all">
-                {theme === 'dark' ? <SunIcon className="w-5 h-5 text-indigo-100" /> : <MoonIcon className="w-5 h-5 text-indigo-100" />}
+              <button onClick={toggleTheme} className="p-2 rounded-full text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-black/5 dark:hover:bg-white/5 transition-all">
+                {theme === 'dark' ? <SunIcon className="w-5 h-5" /> : <MoonIcon className="w-5 h-5" />}
               </button>
 
-              {/* PERFECT CIRCULAR PROFILE PICTURE (WHEN LOGGED IN) */}
+              {/* PROFILE PICTURE (WHEN LOGGED IN) */}
               {user && (
-                <div className="flex items-center pl-1 sm:pl-2 ml-1 border-l border-indigo-500/30">
+                <div className="flex items-center pl-2 ml-1 border-l border-black/10 dark:border-white/10">
                   <button 
                     onClick={handleProfileClick} 
-                    className="w-8 h-8 sm:w-9 sm:h-9 rounded-full border-2 border-indigo-400/50 flex items-center justify-center overflow-hidden hover:border-indigo-300 hover:scale-105 transition-all bg-slate-900 shrink-0"
+                    className="w-8 h-8 sm:w-9 sm:h-9 rounded-full border-2 border-indigo-500/30 flex items-center justify-center overflow-hidden hover:border-indigo-500 hover:scale-105 transition-all bg-slate-100 dark:bg-slate-800 shrink-0"
                   >
                     <TacticalAvatar url={user?.photoURL} tacticalId={identity?.avatar} />
                   </button>
                 </div>
               )}
 
-             {/* SIGN IN BUTTON (PREMIUM GLASS STYLE) */}
+             {/* SIGN IN BUTTON (WHEN LOGGED OUT) */}
               {!user && (
-                <div className="flex items-center pl-1 sm:pl-2 ml-1 border-l border-indigo-500/30">
+                <div className="flex items-center pl-2 ml-1 border-l border-black/10 dark:border-white/10">
                   <button 
                     onClick={login} 
-                    className="flex items-center gap-2 px-5 py-2 rounded-full bg-white/10 hover:bg-white/20 text-white border border-white/30 backdrop-blur-md transition-all duration-300 hover:scale-105 active:scale-95 group shadow-lg"
+                    className="flex items-center gap-2 px-5 py-2 rounded-full bg-indigo-600 hover:bg-indigo-500 text-white transition-all duration-300 hover:scale-105 active:scale-95 group shadow-lg shadow-indigo-500/20"
                   >
-                    <span className="text-[10px] sm:text-xs font-black uppercase tracking-[0.15em]">
+                    <span className="text-[10px] font-black uppercase tracking-widest">
                       Sign In
                     </span>
-                    <ArrowRightEndOnRectangleIcon className="w-4 h-4 text-indigo-300 group-hover:text-white transition-colors stroke-2" />
+                    <ArrowRightEndOnRectangleIcon className="w-4 h-4 text-indigo-200 group-hover:text-white transition-colors" />
                   </button>
                 </div>
               )}
@@ -258,7 +248,7 @@ const TopNavigation = ({ user, identity, theme, setTheme, currentSection, setCur
         </div>
       </nav>
 
-      {/* MODERN GLASS-CARD SCAN DROPDOWN */}
+      {/* 🚀 MODERN GLASS-CARD SCAN DROPDOWN */}
       <AnimatePresence>
         {showScanDetails && user && (
           <motion.div 
@@ -268,51 +258,44 @@ const TopNavigation = ({ user, identity, theme, setTheme, currentSection, setCur
             transition={{ duration: 0.2, ease: "easeOut" }}
             onMouseEnter={() => setShowScanDetails(true)} 
             onMouseLeave={() => setShowScanDetails(false)}
-            // 'fixed' positioning ensures it floats above the nav strip without cutting off
-            className={`fixed top-[70px] right-4 sm:right-8 lg:right-[12%] p-1 rounded-[1.5rem] shadow-[0_20px_50px_rgba(0,0,0,0.3)] z-[999999] overflow-hidden backdrop-blur-xl border ${
-              theme === 'dark' 
-                ? 'bg-slate-900/80 border-white/10' 
-                : 'bg-white/80 border-slate-200'
-            }`}
+            className="fixed top-[70px] right-4 sm:right-8 lg:right-[12%] p-1.5 rounded-[2rem] shadow-[0_20px_50px_rgba(0,0,0,0.15)] z-[999999] overflow-hidden glass-card border border-black/5 dark:border-white/10"
           >
-            {/* Interior Content Container */}
-            <div className="px-5 py-4 min-w-[240px]">
-              <div className="flex items-center justify-between mb-3">
-                <span className={`text-[10px] font-black uppercase tracking-[0.15em] ${theme === 'dark' ? 'text-slate-500' : 'text-slate-400'}`}>
+            <div className="px-6 py-5 min-w-[260px] bg-slate-100/50 dark:bg-slate-900/50 rounded-[1.5rem]">
+              <div className="flex items-center justify-between mb-4">
+                <span className="text-[10px] font-black uppercase tracking-[0.15em] text-slate-500">
                   Global API Limit
                 </span>
-                <div className={`px-2 py-0.5 rounded-full text-[10px] font-bold border ${
+                <div className={`px-2.5 py-1 rounded-md text-[9px] font-black tracking-widest uppercase border ${
                   scansRemaining <= 5 
-                    ? 'bg-rose-500/10 border-rose-500/20 text-rose-400' 
-                    : 'bg-indigo-500/10 border-indigo-500/20 text-indigo-400'
+                    ? 'bg-rose-500/10 border-rose-500/20 text-rose-500 dark:text-rose-400' 
+                    : 'bg-indigo-500/10 border-indigo-500/20 text-indigo-600 dark:text-indigo-400'
                 }`}>
                   {scansRemaining} Global Left
                 </div>
               </div>
 
-              {/* Progress Bar (Visual indicator of scans used) */}
-              <div className="w-full h-1.5 bg-slate-800/50 rounded-full mb-4 overflow-hidden">
+              <div className="w-full h-1.5 bg-slate-200 dark:bg-slate-800/50 rounded-full mb-5 overflow-hidden border border-black/5 dark:border-white/5">
                 <motion.div 
                   initial={{ width: 0 }}
                   animate={{ width: `${(scansRemaining / 20) * 100}%` }}
-                  className={`h-full rounded-full ${scansRemaining <= 5 ? 'bg-rose-500' : 'bg-indigo-500'}`}
+                  className={`h-full rounded-full shadow-[0_0_10px_currentColor] ${scansRemaining <= 5 ? 'bg-rose-500' : 'bg-indigo-500'}`}
                 />
               </div>
 
               <div className="flex items-center justify-between gap-6">
                 <div className="flex flex-col">
-                  <span className={`text-xl font-black ${theme === 'dark' ? 'text-white' : 'text-slate-900'}`}>
-                    {scansRemaining}<span className="text-sm font-medium opacity-40 ml-1">/ 20</span>
+                  <span className="text-2xl font-black text-slate-900 dark:text-white">
+                    {scansRemaining}<span className="text-sm font-bold opacity-30 ml-1">/ 20</span>
                   </span>
-                  <span className="text-[9px] font-bold text-slate-500 uppercase tracking-tight">Total Scans</span>
+                  <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest mt-1">Total Scans</span>
                 </div>
                 
                 <div className="text-right flex flex-col items-end">
-                   <div className="flex items-center gap-1 text-indigo-400">
-                      <ClockIcon className="w-3 h-3" />
-                      <span className="text-[10px] font-black uppercase tracking-wider">Reset</span>
+                   <div className="flex items-center gap-1.5 text-indigo-500 dark:text-indigo-400">
+                      <ClockIcon className="w-4 h-4" />
+                      <span className="text-[10px] font-black uppercase tracking-widest">Reset</span>
                    </div>
-                   <span className="text-[10px] font-bold text-slate-500 mt-0.5">{localResetTime}</span>
+                   <span className="text-[10px] font-bold text-slate-500 mt-1">{localResetTime}</span>
                 </div>
               </div>
             </div>

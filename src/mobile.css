@@ -1,405 +1,47 @@
 /* ===========================================
-   📱 XIST AI - ANDROID NATIVE THEME (MATERIAL 3)
+   📱 XIST AI - MOBILE UX REFINEMENTS
    =========================================== */
 
-:root {
-  --md-sys-color-background: #F8FAFC;
-  --md-sys-color-surface: #FFFFFF;
-  --md-sys-color-surface-container: #F1F5F9;
-  --md-sys-color-on-surface: #0F172A;
-  --md-sys-color-on-surface-variant: #64748B;
-  
-  --md-sys-color-primary: #4F46E5;
-  --md-sys-color-on-primary: #FFFFFF;
-  --md-sys-color-primary-container: #E0E7FF;
-  --md-sys-color-on-primary-container: #312E81;
-  
-  --md-sys-color-error: #E11D48;
-  --md-sys-color-success: #10B981;
-  --md-sys-color-warning: #F59E0B;
-
-  --md-sys-typescale-font: 'Roboto', system-ui, -apple-system, sans-serif;
-  
-  --md-elevation-1: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-  --md-elevation-2: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-  --md-elevation-3: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-}
-
-/* 🌗 VS Code & Global Dark Mode Fix */
-.dark, .dark body, .dark .cyberpunk-terminal {
-  --md-sys-color-background: #0F172A;
-  --md-sys-color-surface: #1E293B;
-  --md-sys-color-surface-container: #0B1120;
-  --md-sys-color-on-surface: #F8FAFC;
-  --md-sys-color-on-surface-variant: #94A3B8;
-  
-  --md-sys-color-primary: #6366F1;
-  --md-sys-color-primary-container: #3730A3;
-  --md-sys-color-on-primary-container: #E0E7FF;
-  
-  background-color: var(--md-sys-color-background) !important;
-  color: var(--md-sys-color-on-surface) !important;
-}
-
-/* ===========================================
-   🩹 SCROLL & BASE UX FIXES
-   =========================================== */
 * {
   -webkit-tap-highlight-color: transparent;
-  font-family: var(--md-sys-typescale-font);
 }
 
 html, body {
-  overflow-y: auto !important; /* UNLOCKS SCROLLING */
-  overflow-x: hidden !important; /* ✅ FIX: Prevents horizontal overflow from locking vertical scroll */
-  height: auto !important;
-  min-height: 100% !important;
-  overscroll-behavior-y: none;
-  background-color: var(--md-sys-color-background);
-  color: var(--md-sys-color-on-surface);
+  overscroll-behavior-y: none; /* Stops the pull-to-refresh bounce */
   -webkit-overflow-scrolling: touch;
 }
 
-/* ===========================================
-   1. APP SCAFFOLDING
-   =========================================== */
-.cyberpunk-terminal, .protection-section, .analytics-section {
-  background: var(--md-sys-color-background) !important;
-  color: var(--md-sys-color-on-surface) !important;
-  min-height: 100vh;
-}
+@media (max-width: 768px) {
+  /* Prevent Input Zoom on iOS Safari */
+  input, textarea, select {
+    font-size: 16px !important; 
+  }
 
-/* Remove Matrix Animations */
-.cyberpunk-terminal::before, .matrix-bg, .terminal-scan-line {
-  display: none !important;
-}
+  /* Protect Profile Pictures and Icons from being squished */
+  .rounded-full, img, svg {
+    flex-shrink: 0 !important;
+  }
 
-.terminal-content, .protection-content, .analytics-section {
-  padding-bottom: 120px !important; /* Prevents Bottom Nav Overlap */
-  padding-top: 12px !important;
-}
+  /* Prevent text cutoff on mobile buttons */
+  button, [role="button"] {
+    white-space: normal !important;
+    word-break: break-word !important;
+  }
 
-/* ===========================================
-   2. MATERIAL 3 BOTTOM NAVIGATION
-   =========================================== */
-.mobile-bottom-nav {
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  background: var(--md-sys-color-surface) !important;
-  border-top: 1px solid var(--md-sys-color-surface-container) !important;
-  z-index: 1000;
-  padding: 8px 8px calc(8px + env(safe-area-inset-bottom, 0px)) !important;
-  box-shadow: 0 -1px 3px rgba(0,0,0,0.05) !important;
+  /* Dynamic Height for Mobile Browsers */
+  .h-screen { height: 100dvh !important; }
+  .min-h-screen { min-height: 100dvh !important; }
 }
-
-/* ✅ FIX: Force Dark Mode Adaptivity on Bottom Nav if variables fail in preview */
-.dark .mobile-bottom-nav {
-  background: var(--md-sys-color-surface) !important;
-  border-top-color: var(--md-sys-color-surface-container) !important;
-}
-
-.nav-grid {
-  display: flex;
-  justify-content: space-around;
-  align-items: center;
-}
-
-.nav-item {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 4px 0 !important;
-  border: none !important;
-  background: transparent !important;
-  box-shadow: none !important;
-  min-width: 64px;
-}
-
-.nav-icon {
-  width: 24px !important;
-  height: 24px !important;
-  padding: 4px 16px !important;
-  border-radius: 16px;
-  transition: all 0.2s ease;
-  color: var(--md-sys-color-on-surface-variant) !important;
-  margin-bottom: 4px !important;
-  box-sizing: content-box !important; /* ✅ FIX: Prevents the padding from squishing the SVG to 0px */
-}
-
-.nav-item.active .nav-icon {
-  background: var(--md-sys-color-primary-container) !important;
-  color: var(--md-sys-color-on-primary-container) !important;
-}
-
-.nav-label {
-  font-size: 11px !important;
-  font-weight: 500 !important;
-  color: var(--md-sys-color-on-surface-variant) !important;
-}
-
-.nav-item.active .nav-label {
-  color: var(--md-sys-color-on-surface) !important;
-  font-weight: 600 !important;
-}
-
-/* ===========================================
-   3. ADAPTIVE CARDS
-   =========================================== */
-.terminal-panel, 
-.protection-content-section, 
-.analytics-stat-card, 
-.chart-panel,
-.analysis-history-item,
-.activity-item {
-  background: var(--md-sys-color-surface) !important;
-  border-radius: 20px !important;
-  border: 1px solid var(--md-sys-color-surface-container) !important;
-  box-shadow: var(--md-elevation-1) !important;
-  margin: 8px 12px 16px 12px !important; 
-  padding: 16px !important; 
-  width: auto !important; 
-}
-
-.terminal-panel::before, .protection-content-section::before {
-  display: none !important; 
-}
-
-/* Fix Heading Clipping */
-.terminal-panel-title, .chart-title, .protection-section-title {
-  color: var(--md-sys-color-on-surface) !important;
-  font-size: 16px !important;
-  font-weight: 600 !important;
-  text-transform: none !important;
-  white-space: normal !important; /* Allows wrap on small screens */
-  overflow: visible !important;
-  line-height: 1.4 !important;
-}
-.terminal-panel-title::before { display: none !important; }
 
 /* Global Text Truncation Fix */
-p {
-  text-overflow: ellipsis;
-}
-
-/* ===========================================
-   4. CHAT & BADGES
-   =========================================== */
-.ai-message-bubble {
-  max-width: 80% !important;
-  font-size: 14px !important;
-  line-height: 1.4 !important;
-  padding: 12px 16px !important;
-  margin-bottom: 8px !important;
-  border-radius: 18px !important;
-}
-
-.ai-message-bubble.user {
-  background: var(--md-sys-color-primary) !important;
-  color: var(--md-sys-color-on-primary) !important;
-  border-radius: 18px 18px 4px 18px !important;
-}
-
-.ai-message-bubble.assistant {
-  background: var(--md-sys-color-surface) !important;
-  color: var(--md-sys-color-on-surface) !important;
-  border: 1px solid var(--md-sys-color-surface-container) !important;
-  border-radius: 18px 18px 18px 4px !important;
-}
-
-.threat-badge {
-  padding: 4px 10px !important;
-  font-size: 11px !important;
-  font-weight: 600 !important;
-  border-radius: 8px !important;
-  display: inline-block !important;
-  width: fit-content !important;
-}
-.threat-badge.critical { background: #FFE4E6 !important; color: #E11D48 !important; }
-.threat-badge.safe { background: #D1FAE5 !important; color: #059669 !important; }
-.dark .threat-badge.critical { background: rgba(225, 29, 72, 0.2) !important; color: #FDA4AF !important; }
-.dark .threat-badge.safe { background: rgba(16, 185, 129, 0.2) !important; color: #6EE7B7 !important; }
-
-/* ===========================================
-   5. BUTTONS & INPUTS
-   =========================================== */
-.terminal-btn, .protection-category-btn {
-  background: var(--md-sys-color-surface) !important;
-  border: 1px solid var(--md-sys-color-surface-container) !important;
-  border-radius: 100px !important;
-  color: var(--md-sys-color-on-surface) !important;
-  text-transform: none !important;
-  font-weight: 500 !important;
-  min-height: 48px !important;
-}
-
-.terminal-btn:active {
-  background: var(--md-sys-color-surface-container) !important;
-  transform: scale(0.98) !important;
-}
-
-.terminal-btn.active {
-  background: var(--md-sys-color-primary) !important;
-  color: var(--md-sys-color-on-primary) !important;
-  border: none !important;
-}
-
-.terminal-input, .ai-input-field {
-  background: var(--md-sys-color-surface-container) !important;
-  border: none !important;
-  border-bottom: 2px solid var(--md-sys-color-on-surface-variant) !important;
-  border-radius: 8px 8px 0 0 !important;
-  color: var(--md-sys-color-on-surface) !important;
-  padding: 16px !important;
-}
-
-.terminal-input:focus {
-  border-bottom-color: var(--md-sys-color-primary) !important;
-  outline: none !important;
-}
-
-/* ===========================================
-   6. RESPONSIVE GRID
-   =========================================== */
-@media (max-width: 768px) {
-  .protection-categories-grid, .analytics-stats-grid {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr) !important;
-    gap: 12px !important;
-    padding: 0 12px !important;
-  }
-  .protection-category-btn, .analytics-stat-card {
-    margin: 0 !important;
-    width: 100% !important;
-  }
-}
-@media (max-width: 480px) {
-  .analytics-stats-grid { grid-template-columns: 1fr !important; }
-}
-
-/* ===========================================
-   🔓 TOTAL VIEWPORT UNLOCK
-   =========================================== */
-html, body {
-  overflow-y: auto !important;
-  height: auto !important;
-  min-height: 100% !important;
-}
-
-#root, .app {
-  display: block !important; /* Prevents flex-height collapse locking the scroll */
-  height: auto !important;
-  min-height: 100vh !important;
-  overflow: visible !important;
-}
-
-main {
-  overflow: visible !important;
-  height: auto !important;
-}
-
-/* Force specific section wrappers to expand with content */
-.cyberpunk-terminal, .protection-section, .analytics-section {
-  height: auto !important;
-  max-height: none !important;
-  overflow-y: visible !important;
-}
-/* ===========================================
-   👆 SINGLE-FINGER SCROLL UNLOCK
-   =========================================== */
-* {
-  touch-action: auto !important; /* Un-hijacks the screen touch */
-}
-
-html, body, #root, .app, main {
-  overscroll-behavior: auto !important; /* Restores normal mobile scroll physics */
-  -webkit-overflow-scrolling: touch !important;
-}
-
-/* ===========================================
-   ⌨️ INVISIBLE INPUT TEXT FIX
-   =========================================== */
-.terminal-input, .ai-input-field, input, textarea {
-  color: var(--md-sys-color-on-surface) !important;
-  -webkit-text-fill-color: var(--md-sys-color-on-surface) !important; /* Forces mobile to render the ink */
-  background-color: var(--md-sys-color-surface-container) !important;
-  opacity: 1 !important;
-  line-height: normal !important;
-}
-
-/* ===========================================
-   💊 1. FIX: PREVENT 3-LETTER CUT-OFF ON FILTERS
-   =========================================== */
-.protection-tab, .filter-btn, button, .category-btn, [role="tab"] {
-  flex-shrink: 0 !important; /* Never squish the button */
-  white-space: nowrap !important; /* Keep the word on one line */
-  text-overflow: clip !important; /* Disable the aggressive '...' cutoff */
-  min-width: max-content !important; /* Force the box to fit the whole word */
-}
-
-/* ===========================================
-   🔍 2. FIX: PREVENT TINY ICONS IN INPUTS
-   =========================================== */
-.terminal-input-container svg, 
-.ai-input-field-wrapper svg,
-.search-input-wrapper svg {
-  min-width: 20px !important;
-  min-height: 20px !important;
-  flex-shrink: 0 !important; 
-}
-
-/* ===========================================
-   📌 3. FIX: UNBREAKABLE STICKY BOTTOM NAV
-   =========================================== */
-.mobile-bottom-nav {
-  position: fixed !important;
-  bottom: 0 !important;
-  left: 0 !important;
-  right: 0 !important;
-  z-index: 99999 !important; /* Maximum priority layer */
-  transform: translateZ(0) !important; /* Breaks out of scroll locks */
-}
-
-/* ===========================================
-   PRECISE MOBILE OVERFLOW FIXES (UPDATED)
-   =========================================== */
-
-/* 1. Protect Profile Pictures and Icons from being squished */
-.rounded-full, img, svg {
-  flex-shrink: 0 !important;
-}
-
-/* 2. Fix ONLY the specific buttons that were overflowing (Parse, Quiz, Categories) */
-.protection-tab, .filter-btn, .category-btn, .terminal-btn, [role="tab"] {
-  white-space: normal !important;
-  height: auto !important;
-  min-height: 44px !important;
-  padding: 8px 12px !important;
-  word-break: break-word !important;
-  line-height: 1.2 !important;
-}
-
-/* 3. Fix Long Strings Cutting Off in specific titles (Helpline, Matrix, Support) */
-.terminal-panel-title, .protection-section-title, .threat-matrix-title, h1, h2, h3 {
+h1, h2, h3, h4, h5, p {
   white-space: normal !important;
   word-wrap: break-word !important;
   overflow-wrap: break-word !important;
-  min-width: 0 !important;
 }
 
-/* 4. Fix Helpline Grid & Academy layout properly */
-.helpline-grid, .category-grid {
-  display: grid !important;
-  grid-template-columns: repeat(2, 1fr) !important; /* Forces 2 neat columns instead of overflowing */
-  gap: 12px !important;
-  width: 100% !important;
-}
-
-/* 5. Safe Scroll Unlock for iOS/Android */
-html, body {
-  overflow-x: clip !important; /* 'clip' is safer than 'hidden' for mobile scroll locks */
-  overflow-y: auto !important;
-  touch-action: pan-y !important;
+/* ⌨️ INVISIBLE INPUT TEXT FIX (Forces ink to render on mobile) */
+input, textarea {
+  -webkit-text-fill-color: currentcolor !important;
+  opacity: 1 !important;
 }

@@ -4,7 +4,6 @@ import {
   ShieldCheckIcon, UserGroupIcon, CpuChipIcon, BellAlertIcon,
   BookOpenIcon, TrophyIcon
 } from '@heroicons/react/24/outline';
-import Card from '../UI/Card';
 import LoadingSpinner from '../UI/LoadingSpinner';
 import { createClient } from '@supabase/supabase-js';
 
@@ -14,22 +13,35 @@ const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 const HomeSection = ({ user, setCurrentSection, theme }) => {
   const [isLoading, setIsLoading] = useState(true);
-  const [globalStats, setGlobalStats] = useState({ totalScans: 0, activeUsers: 1, accuracyRate: 94 });
+  const [globalStats, setGlobalStats] = useState({ totalScans: 0, activeUsers: 1, avgSystemConfidence: 0 });
   const [briefing, setBriefing] = useState([]);
 
+  // 🚀 REAL-TIME DATABASE FETCHING (NO HARDCODING)
   const fetchGlobalStats = async () => {
     try {
+      // 1. Get Total Scans (Community + Private)
       const { count: publicCount } = await supabase.from('community_threats').select('*', { count: 'exact', head: true });
       const { count: privateCount } = await supabase.from('user_history').select('*', { count: 'exact', head: true });
       const totalScans = (publicCount || 0) + (privateCount || 0);
 
+      // 2. Get Unique Active Users
       const { data: activeNodes } = await supabase.from('user_history').select('user_id');
       const uniqueUsers = activeNodes ? new Set(activeNodes.map(item => item.user_id)).size : 1;
+
+      // 3. Calculate Real-Time System Confidence (Average of all scan scores)
+      const { data: allScans } = await supabase.from('user_history').select('score');
+      let avgScore = 0;
+      if (allScans && allScans.length > 0) {
+        const sum = allScans.reduce((acc, curr) => acc + (curr.score || 100), 0);
+        avgScore = Math.round(sum / allScans.length);
+      } else {
+        avgScore = 98; // Fallback only if database is completely empty
+      }
 
       setGlobalStats({
         totalScans,
         activeUsers: uniqueUsers || 1,
-        accuracyRate: 94
+        avgSystemConfidence: avgScore
       });
     } catch (err) {
       console.error(err);
@@ -74,7 +86,7 @@ const HomeSection = ({ user, setCurrentSection, theme }) => {
     };
     init();
 
-    // Listen for global feed updates
+    // Listen for real-time global feed updates
     const communityChannel = supabase.channel('public_threats')
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'community_threats' }, fetchGlobalStats).subscribe();
 
@@ -91,113 +103,98 @@ const HomeSection = ({ user, setCurrentSection, theme }) => {
     };
   }, [user]);
 
-  if (isLoading) return <div className="h-96 flex items-center justify-center"><LoadingSpinner size="lg" text="Loading Dashboard..." /></div>;
+  if (isLoading) return <div className="h-96 flex items-center justify-center"><LoadingSpinner size="lg" text="Loading..." /></div>;
 
   return (
-    <div className="space-y-8 max-w-7xl mx-auto">
+    <div className="space-y-12 max-w-6xl mx-auto py-8">
       
-      {/* HERO BANNER - Preserved Animations, Simplified Text */}
+      {/* 🚀 1. HERO BANNER: CLARTHA STYLE */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="relative overflow-hidden bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 text-white text-center p-8 md:p-12 rounded-2xl border border-white/5 shadow-2xl"
+        transition={{ duration: 0.6, ease: "easeOut" }}
+        /* To change color of this Hero, edit `.glass-card` in index.css */
+        className="relative overflow-hidden glass-card rounded-[2.5rem] p-10 md:p-16 text-center border-t border-l border-white/20 shadow-2xl flex flex-col items-center justify-center"
       >
-        {/* Corner Accents */}
-        <div className="absolute inset-0 pointer-events-none">
-          <div className="absolute top-4 left-4 w-8 h-8 border-t-2 border-l-2 border-indigo-400/50 rounded-tl-lg animate-pulse"></div>
-          <div className="absolute top-4 right-4 w-8 h-8 border-t-2 border-r-2 border-indigo-400/50 rounded-tr-lg animate-pulse"></div>
-          <div className="absolute bottom-4 left-4 w-8 h-8 border-b-2 border-l-2 border-indigo-400/50 rounded-bl-lg animate-pulse"></div>
-          <div className="absolute bottom-4 right-4 w-8 h-8 border-b-2 border-r-2 border-indigo-400/50 rounded-br-lg animate-pulse"></div>
-        </div>
-
-        {/* Ambient Glows */}
-        <div className="absolute inset-0 pointer-events-none overflow-hidden">
-          <motion.div 
-            animate={{ opacity: [0.05, 0.12, 0.05] }}
-            transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
-            className="absolute top-1/4 left-1/4 w-64 h-64 md:w-96 md:h-96 bg-cyan-500/10 rounded-full blur-[120px]"
-          />
-          <motion.div 
-            animate={{ opacity: [0.05, 0.12, 0.05] }}
-            transition={{ duration: 10, repeat: Infinity, ease: "easeInOut", delay: 2 }}
-            className="absolute bottom-0 right-1/4 w-64 h-64 md:w-96 md:h-96 bg-purple-500/10 rounded-full blur-[120px]"
-          />
-        </div>
-        
-        <div className="relative z-10">
-          <div className="relative w-32 h-32 mx-auto mb-6 flex items-center justify-center">
-            {/* Grid Background behind logo */}
-            <motion.div 
-              className="absolute inset-0 opacity-20 pointer-events-none rounded-2xl" 
-              animate={{ backgroundPosition: ["0px 0px", "20px 20px"], opacity: [0.15, 0.25, 0.15] }}
-              transition={{ backgroundPosition: { duration: 8, repeat: Infinity, ease: "linear" }, opacity: { duration: 4, repeat: Infinity, ease: "easeInOut" } }}
-              style={{ backgroundImage: 'linear-gradient(#4f46e5 1px, transparent 1px), linear-gradient(90deg, #4f46e5 1px, transparent 1px)', backgroundSize: '10px 10px' }}
-            />
-
-            <motion.div
-              initial={{ scale: 0 }}
-              animate={{ scale: 1, y: [0, -5, 0] }}
-              transition={{ scale: { type: "spring", stiffness: 260, damping: 20 }, y: { duration: 4, repeat: Infinity, ease: "easeInOut" } }}
-              className="relative z-10 w-20 h-20 flex items-center justify-center drop-shadow-[0_0_10px_rgba(99,102,241,0.4)]"
-            >
-              <img
-                src="/logo.png"
-                alt="Xist AI"
-                className="w-full h-full object-contain"
-                onError={(e) => { e.target.style.display = 'none'; e.target.nextElementSibling.style.display = 'flex'; }}
-              />
-            </motion.div>
-          </div>
+        <div className="relative z-10 w-full max-w-4xl mx-auto flex flex-col items-center">
           
-          <h1 className="text-4xl md:text-6xl font-bold mb-4 bg-clip-text text-transparent bg-gradient-to-r from-white via-cyan-200 to-purple-200">
-            {user ? `Welcome back, ${user.displayName?.split(' ')[0] || 'User'}!` : 'Welcome to Xist AI'}
-          </h1>
+          {/* Logo Animation (No internal grids anymore!) */}
+          <motion.div
+            initial={{ scale: 0 }}
+            animate={{ scale: 1, y: [0, -5, 0] }}
+            transition={{ scale: { type: "spring", stiffness: 260, damping: 20 }, y: { duration: 4, repeat: Infinity, ease: "easeInOut" } }}
+            className="w-16 h-16 md:w-20 md:h-20 mb-8 drop-shadow-2xl"
+          >
+            <img src="/logo.png" alt="Xist AI" className="w-full h-full object-contain" />
+          </motion.div>
           
-          <p className="text-xl md:text-2xl opacity-95 mb-8 font-light text-cyan-100">
-            Verifying the truth in a digital world.
+          {/* User Greeting */}
+          <p className="text-sm md:text-base font-bold uppercase tracking-[0.2em] opacity-60 mb-4">
+             {user ? `Welcome back, ${user.displayName?.split(' ')[0] || 'User'}` : 'System Initialized'}
           </p>
 
-          <div className="flex flex-wrap items-center justify-center gap-6 text-sm text-gray-300">
-            <span className="flex items-center">
-              <div className="w-2 h-2 bg-green-400 rounded-full mr-2 animate-pulse"></div>
-              <ShieldCheckIcon className="w-4 h-4 mr-1" />
-              {globalStats.totalScans.toLocaleString()} Total Scans
-            </span>
-            <span className="flex items-center">
-              <div className="w-2 h-2 bg-blue-400 rounded-full mr-2 animate-pulse"></div>
-              <UserGroupIcon className="w-4 h-4 mr-1" />
-              {globalStats.activeUsers} Active Users
-            </span>
-            {globalStats.accuracyRate > 0 && (
-              <span className="flex items-center">
-                <div className="w-2 h-2 bg-purple-400 rounded-full mr-2 animate-pulse"></div>
-                <CpuChipIcon className="w-4 h-4 mr-1" />
-                {globalStats.accuracyRate}% Accuracy
-              </span>
-            )}
+          {/* 🚀 THE HIGH-CONTRAST CLARTHA HIGHLIGHT HEADER */}
+          <h1 className="text-4xl md:text-6xl lg:text-7xl font-extrabold mb-6 leading-tight tracking-tight text-slate-900 dark:text-white">
+            Your Network Doesn't Need More Tools. <br/>
+            <span className="text-brand-highlight">It Needs Intelligence.</span>
+          </h1>
+          
+          <p className="text-lg md:text-xl opacity-70 font-medium max-w-2xl mx-auto mb-12 leading-relaxed">
+            Forensic Intelligence & Digital Sovereignty. Built to protect users and businesses from advanced digital threats.
+          </p>
+
+          {/* REAL-TIME STATS HUD */}
+          <div className="flex flex-wrap items-center justify-center gap-4 md:gap-8">
+            <div className="flex items-center px-4 py-2 rounded-full bg-black/5 dark:bg-white/5 border border-black/5 dark:border-white/10 backdrop-blur-sm">
+              <div className="w-2 h-2 bg-indigo-500 rounded-full mr-3 animate-pulse shadow-[0_0_8px_rgba(99,102,241,0.8)]"></div>
+              <ShieldCheckIcon className="w-4 h-4 mr-2 opacity-70" />
+              <span className="text-sm font-bold">{globalStats.totalScans.toLocaleString()} Total Scans</span>
+            </div>
+            
+            <div className="flex items-center px-4 py-2 rounded-full bg-black/5 dark:bg-white/5 border border-black/5 dark:border-white/10 backdrop-blur-sm">
+              <div className="w-2 h-2 bg-purple-500 rounded-full mr-3 animate-pulse shadow-[0_0_8px_rgba(168,85,247,0.8)]"></div>
+              <UserGroupIcon className="w-4 h-4 mr-2 opacity-70" />
+              <span className="text-sm font-bold">{globalStats.activeUsers} Active Nodes</span>
+            </div>
+
+            <div className="flex items-center px-4 py-2 rounded-full bg-black/5 dark:bg-white/5 border border-black/5 dark:border-white/10 backdrop-blur-sm">
+              <div className="w-2 h-2 bg-cyan-500 rounded-full mr-3 animate-pulse shadow-[0_0_8px_rgba(6,182,212,0.8)]"></div>
+              <CpuChipIcon className="w-4 h-4 mr-2 opacity-70" />
+              <span className="text-sm font-bold">{globalStats.avgSystemConfidence}% Avg Confidence</span>
+            </div>
           </div>
         </div>
       </motion.div>
 
-      {/* BRIEFING SECTION (Moved up, Quick Actions removed) */}
-      <div className="space-y-4 pt-4">
-         <h2 className="text-xl font-bold flex items-center gap-2 dark:text-white">
-           <BellAlertIcon className="w-5 h-5 text-indigo-500" /> Action Items
+      {/* 🚀 2. BRIEFING SECTION (Workspace Cards) */}
+      <div className="space-y-6">
+         <h2 className="text-sm font-bold uppercase tracking-[0.2em] opacity-60 ml-2">
+           Action Items
          </h2>
-         <div className="grid md:grid-cols-2 gap-4">
-           {briefing.map((insight) => (
-              <Card key={insight.id} className="p-5 bg-white dark:bg-slate-900 border-none shadow-sm hover:shadow-md transition-shadow">
-                 <div className="flex gap-4">
-                    <insight.icon className="w-6 h-6 text-indigo-500" />
-                    <div>
-                       <h4 className="font-bold dark:text-white">{insight.title}</h4>
-                       <p className="text-sm text-slate-500 dark:text-slate-400 mt-1 mb-3">{insight.description}</p>
-                       <button onClick={insight.actionHandler} className="text-xs font-bold text-indigo-500 uppercase tracking-widest hover:text-indigo-600 transition-colors">
-                         {insight.action} →
-                       </button>
+         <div className="grid md:grid-cols-2 gap-6">
+           {briefing.map((insight, idx) => (
+              <motion.div 
+                 key={insight.id}
+                 initial={{ opacity: 0, y: 20 }}
+                 animate={{ opacity: 1, y: 0 }}
+                 transition={{ delay: 0.2 + (idx * 0.1) }}
+                 /* To change color of these Cards, edit `.glass-card` in index.css */
+                 className="glass-card rounded-[2rem] p-8 transition-all duration-300 hover:-translate-y-2 hover:shadow-2xl cursor-pointer group"
+                 onClick={insight.actionHandler}
+              >
+                 <div className="flex gap-6 items-start">
+                    <div className="p-4 rounded-2xl bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 group-hover:scale-110 transition-transform duration-300">
+                       <insight.icon className="w-8 h-8 text-indigo-600 dark:text-indigo-400" />
+                    </div>
+                    <div className="flex-1">
+                       <h4 className="text-xl font-bold mb-2 text-slate-900 dark:text-white">{insight.title}</h4>
+                       <p className="text-sm opacity-70 mb-5 leading-relaxed">{insight.description}</p>
+                       <div className="inline-flex items-center text-xs font-bold uppercase tracking-widest text-indigo-600 dark:text-indigo-400 group-hover:text-indigo-800 dark:group-hover:text-indigo-300 transition-colors">
+                         {insight.action} <span className="ml-2 transition-transform group-hover:translate-x-2">→</span>
+                       </div>
                     </div>
                  </div>
-              </Card>
+              </motion.div>
            ))}
          </div>
       </div>

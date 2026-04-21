@@ -79,3 +79,6 @@ ui-debug.log
 !.env.example # Allow an example file to show other devs what keys are needed
 
 -e "\n# 2026 Security Updates\n.env.*\n.firebase/\n.supabase/\nfirebase-debug.log" 
+
+
+config.js

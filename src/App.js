@@ -8,7 +8,6 @@ import { useTranslation } from 'react-i18next';
 // Layout Components
 import TopNavigation from './components/Layout/TopNavigation';
 import DesktopSidebar from './components/Layout/DesktopSidebar';
-import MobileBottomNav from './components/Layout/MobileBottomNav';
 import SectionRouter from './components/Sections/SectionRouter';
 import LoadingSpinner from './components/UI/LoadingSpinner';
 import ErrorBoundary from './components/Common/ErrorBoundary';
@@ -27,7 +26,7 @@ import { NotificationProvider } from './components/UI/NotificationToast';
 // ✅ SUPABASE CONNECTION
 import { supabase } from './lib/supabase';
 
-const APP_VERSION = process.env.REACT_APP_BUILD_TIME || '1.1.0'; // 🚀 Bumped to 1.1.0 to trigger the cache wipe
+const APP_VERSION = process.env.REACT_APP_BUILD_TIME || '1.1.0';
 
 const checkForUpdates = () => {
   const currentVersion = localStorage.getItem('xist_app_version');
@@ -50,8 +49,87 @@ const checkForUpdates = () => {
   }
 };
 
+// ==========================================
+// 🚀 NEW: FORENSIC HUD TARGETING GRIDS
+// ==========================================
+const GlobalCornerGrids = () => {
+  const [hasAnimated, setHasAnimated] = useState(true);
+
+  useEffect(() => {
+    const played = sessionStorage.getItem('xist_grid_animated');
+    if (!played) {
+      setHasAnimated(false);
+      sessionStorage.setItem('xist_grid_animated', 'true');
+    }
+  }, []);
+
+  const spacing = 32;
+  const center = 128;
+  const size = 256;
+
+  // 🚀 FIX: Dropped strokeWidth to 0.5 for an ultra-fine, delicate glass etching
+  const lines = [
+    { step: 0, opacity: 0.4, length: 1.0, strokeWidth: 1 },   // Center
+    { step: 1, opacity: 0.25, length: 0.75, strokeWidth: 1 }, // 1st Outer
+    { step: 2, opacity: 0.1, length: 0.5, strokeWidth: 1 },   // 2nd Outer
+    { step: 3, opacity: 0.04, length: 0.25, strokeWidth: 1 }, // 3rd Outer
+  ];
+
+  const renderHUD = () => (
+    <svg width="100%" height="100%" viewBox="0 0 256 256" className={!hasAnimated ? 'hud-container' : 'opacity-40'}>
+      <defs>
+        <radialGradient id="hud-fade" cx="50%" cy="50%" r="50%">
+          <stop offset="50%" stopColor="white" stopOpacity="1" />
+          <stop offset="100%" stopColor="white" stopOpacity="0" />
+        </radialGradient>
+      </defs>
+
+      <g mask="url(#hud-fade)">
+        {lines.map((line, i) => {
+          const offset = line.step * spacing;
+          const lengthPx = size * line.length;
+          const start = center - (lengthPx / 2);
+          const end = center + (lengthPx / 2);
+          const animStyle = !hasAnimated ? { animationDelay: `${line.step * 0.15}s` } : { strokeDashoffset: 0 };
+
+          return (
+            <g key={i} className="text-indigo-600 dark:text-white/80">
+              
+              {/* 🚀 FIX: Vertical Lines have their opacity reduced by another 50% so they are barely visible */}
+              <g opacity={line.opacity * 0.5}>
+                <line x1={center + offset} y1={start} x2={center + offset} y2={end} stroke="currentColor" strokeWidth={line.strokeWidth} className={!hasAnimated ? "hud-line" : ""} style={animStyle} />
+                {line.step > 0 && <line x1={center - offset} y1={start} x2={center - offset} y2={end} stroke="currentColor" strokeWidth={line.strokeWidth} className={!hasAnimated ? "hud-line" : ""} style={animStyle} />}
+              </g>
+
+              {/* Horizontal Lines (Keep standard opacity) */}
+              <g opacity={line.opacity}>
+                <line x1={start} y1={center + offset} x2={end} y2={center + offset} stroke="currentColor" strokeWidth={line.strokeWidth} className={!hasAnimated ? "hud-line" : ""} style={animStyle} />
+                {line.step > 0 && <line x1={start} y1={center - offset} x2={end} y2={center - offset} stroke="currentColor" strokeWidth={line.strokeWidth} className={!hasAnimated ? "hud-line" : ""} style={animStyle} />}
+              </g>
+              
+            </g>
+          );
+        })}
+      </g>
+    </svg>
+  );
+
+  return (
+    <>
+      <div className="fixed top-16 right-4 w-64 h-64 pointer-events-none z-0 overflow-visible">
+        {renderHUD()}
+      </div>
+      <div className="fixed bottom-0 left-0 w-64 h-64 pointer-events-none z-0 overflow-visible">
+        {renderHUD()}
+      </div>
+    </>
+  );
+};
+
+// ==========================================
+// MAIN APP COMPONENT
+// ==========================================
 const App = () => {
-  // Auth and user management
   const { user, userStats, loading, login, logout, updateUserStats } = useAuth();
   const { screenSize } = useResponsive();
   const { i18n } = useTranslation();
@@ -64,10 +142,7 @@ const App = () => {
   // ✅ REAL-TIME OPERATOR STATISTICS ENGINE
   // ==========================================
   const [operatorStats, setOperatorStats] = useState({
-    totalScans: 0,
-    threatsFound: 0,
-    communityShares: 0,
-    trustScore: 100
+    totalScans: 0, threatsFound: 0, communityShares: 0, trustScore: 100
   });
 
   useEffect(() => {
@@ -76,27 +151,10 @@ const App = () => {
       if (!currentUserId) return; 
 
       try {
-        // 1. Total Scans (Count all rows in user_history)
-        const { count: totalScans } = await supabase
-          .from('user_history')
-          .select('*', { count: 'exact', head: true })
-          .eq('user_id', currentUserId);
+        const { count: totalScans } = await supabase.from('user_history').select('*', { count: 'exact', head: true }).eq('user_id', currentUserId);
+        const { count: threatsFound } = await supabase.from('user_history').select('*', { count: 'exact', head: true }).eq('user_id', currentUserId).lt('score', 70); 
+        const { count: communityShares } = await supabase.from('community_threats').select('*', { count: 'exact', head: true }).eq('user_id', currentUserId);
 
-        // 2. Threats Found (Count scans where AI score was < 70)
-        const { count: threatsFound } = await supabase
-          .from('user_history')
-          .select('*', { count: 'exact', head: true })
-          .eq('user_id', currentUserId)
-          .lt('score', 70); 
-
-        // 3. Intel Shared (Count all posts in community_threats)
-        const { count: communityShares } = await supabase
-          .from('community_threats')
-          .select('*', { count: 'exact', head: true })
-          .eq('user_id', currentUserId);
-
-        // 4. Trust Score Algorithm 
-        // Starts at 100%. Drops to 85% after first scan. Earns +2% per intel shared. Max 99%.
         let calculatedTrust = 100; 
         if (totalScans > 0) {
            calculatedTrust = Math.min(99, 85 + ((communityShares || 0) * 2));
@@ -115,7 +173,6 @@ const App = () => {
 
     fetchOperatorStats();
 
-    // 📡 LIVE SYNC: Instantly updates stats when user scans or shares!
     const currentUserId = user?.id || user?.uid;
     if (currentUserId) {
       const channel = supabase
@@ -127,8 +184,8 @@ const App = () => {
     }
   }, [user]);
 
-  // Merge the standard auth stats with our live database stats
   const activeUserStats = { ...userStats, ...operatorStats };
+
   // ==========================================
   // GLOBAL SETTINGS & IDENTITY STATE
   // ==========================================
@@ -138,15 +195,11 @@ const App = () => {
     
     return {
       theme: localStorage.getItem('xist-theme') || 'system',
-      fontSize: 'medium',
-      language: 'en',
-      security: { sessionTimeout: 'never' }, // ✅ DEFAULTS ADDED
+      fontSize: 'medium', language: 'en',
+      security: { sessionTimeout: 'never' },
       privacy: { anonymousSharing: true },
       forensics: { strictMode: false },
-      identity: parsedIdentity || {
-        alias: user?.displayName || 'Unknown Node', 
-        avatar: 'ghost' 
-      }
+      identity: parsedIdentity || { alias: user?.displayName || 'Unknown Node', avatar: 'ghost' }
     };
   });
 
@@ -154,16 +207,14 @@ const App = () => {
   // 🛡️ AUTO-LOCK SECURITY ENGINE
   // ==========================================
   useEffect(() => {
-    // Stop if user is not logged in, or if timeout is set to 'never'
     if (!user || !globalSettings.security || globalSettings.security.sessionTimeout === 'never') return;
 
     let timeoutId;
     const timeoutMinutes = parseInt(globalSettings.security.sessionTimeout);
-    const timeoutMs = timeoutMinutes * 60 * 1000; // Minutes to Milliseconds
+    const timeoutMs = timeoutMinutes * 60 * 1000;
 
     const resetTimer = () => {
       clearTimeout(timeoutId);
-      // Start the countdown
       timeoutId = setTimeout(() => {
         if (logout) {
           logout();
@@ -172,16 +223,14 @@ const App = () => {
       }, timeoutMs);
     };
 
-    // Listen for ANY user activity to reset the clock
     window.addEventListener('mousemove', resetTimer);
     window.addEventListener('keypress', resetTimer);
     window.addEventListener('click', resetTimer);
     window.addEventListener('scroll', resetTimer);
     window.addEventListener('touchstart', resetTimer);
 
-    resetTimer(); // Start the clock when the component loads
+    resetTimer(); 
 
-    // Cleanup listeners if the component unmounts
     return () => {
       clearTimeout(timeoutId);
       window.removeEventListener('mousemove', resetTimer);
@@ -192,43 +241,23 @@ const App = () => {
     };
   }, [user, globalSettings.security?.sessionTimeout, logout]);
 
- // Calculates the correct theme immediately before the first frame renders
   const [theme, setTheme] = useState(() => {
     const savedTheme = globalSettings.theme;
-    if (savedTheme === 'system') {
-      return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-    }
+    if (savedTheme === 'system') return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
     return savedTheme;
   });
   
-  // Instantly apply it to the HTML tag to prevent the black/white glitch
-  if (theme === 'dark') {
-    document.documentElement.classList.add('dark');
-  } else {
-    document.documentElement.classList.remove('dark');
-  }
+  if (theme === 'dark') document.documentElement.classList.add('dark');
+  else document.documentElement.classList.remove('dark');
 
-  // Unified function to update settings globally
   const updateGlobalSettings = (newSettings) => {
     setGlobalSettings(prev => {
-      const updated = {
-        ...prev,
-        ...newSettings,
-        identity: newSettings.identity || prev.identity
-      };
-      
-      if (newSettings.identity) {
-        localStorage.setItem('xist_operator_identity', JSON.stringify(newSettings.identity));
-      }
+      const updated = { ...prev, ...newSettings, identity: newSettings.identity || prev.identity };
+      if (newSettings.identity) localStorage.setItem('xist_operator_identity', JSON.stringify(newSettings.identity));
       return updated;
     });
-    
     if (newSettings.theme) setTheme(newSettings.theme);
-    
-    // ✅ ADD THIS TO SWAP THE ENTIRE WEBSITE'S LANGUAGE INSTANTLY
-    if (newSettings.language && i18n.changeLanguage) {
-      i18n.changeLanguage(newSettings.language);
-    }
+    if (newSettings.language && i18n.changeLanguage) i18n.changeLanguage(newSettings.language);
   };
 
   // ==========================================
@@ -244,64 +273,63 @@ const App = () => {
   const [isMobile, setIsMobile] = useState(false);
   const [isTablet, setIsTablet] = useState(false);
 
+  // 🚀 FETCH UNLIMITED HISTORY FROM SUPABASE ON LOGIN
+  useEffect(() => {
+    const fetchFullHistory = async () => {
+      const currentUserId = user?.id || user?.uid;
+      if (!currentUserId) return;
+      
+      try {
+        const { data, error } = await supabase
+          .from('user_history')
+          .select('*')
+          .eq('user_id', currentUserId)
+          .order('created_at', { ascending: false });
+
+        if (data && !error) {
+          setAnalysisHistory(data);
+        }
+      } catch (err) {
+        console.error("Error fetching unlimited history:", err);
+      }
+    };
+    
+    fetchFullHistory();
+  }, [user]);
+
   const handleAnalysisComplete = useCallback((analysisData) => {
     setAnalysisHistory(prev => [
-      {
-        ...analysisData,
-        analysisId: `analysis_${Date.now()}`,
-        timestamp: new Date().toISOString()
-      },
-      ...prev.slice(0, 49) // Keep last 50 analyses
+      { ...analysisData, analysisId: `analysis_${Date.now()}`, created_at: new Date().toISOString() },
+      ...prev
     ]);
     setAnalysisResult(analysisData);
   }, []);
 
-  // Theme Management Effect
   useEffect(() => {
     const root = document.documentElement;
     const body = document.body;
-    
-    // Clear both initially
-    root.classList.remove('dark');
-    body.classList.remove('dark');
-
+    root.classList.remove('dark'); body.classList.remove('dark');
     if (theme === 'dark') {
-      root.classList.add('dark');
-      body.classList.add('dark');
-      body.style.backgroundColor = '#0f172a';
+      root.classList.add('dark'); body.classList.add('dark');
     } else if (theme === 'light') {
-      body.style.backgroundColor = '#f8fafc';
+      // Backgrounds handled natively by new CSS rules
     } else {
       if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
-        root.classList.add('dark');
-        body.classList.add('dark');
-        body.style.backgroundColor = '#0f172a';
-      } else {
-        body.style.backgroundColor = '#f8fafc';
+        root.classList.add('dark'); body.classList.add('dark');
       }
     }
     localStorage.setItem('xist-theme', theme);
   }, [theme]);
 
-  // Font Size Effect
   useEffect(() => {
     const root = document.documentElement;
     switch (globalSettings.fontSize) {
-      case 'small':
-        root.style.setProperty('--app-font-size', '14px');
-        root.style.setProperty('--app-font-scale', '0.875');
-        break;
-      case 'large':
-        root.style.setProperty('--app-font-size', '18px');
-        root.style.setProperty('--app-font-scale', '1.125');
-        break;
-      default:
-        root.style.setProperty('--app-font-size', '16px');
-        root.style.setProperty('--app-font-scale', '1');
+      case 'small': root.style.setProperty('--app-font-size', '14px'); root.style.setProperty('--app-font-scale', '0.875'); break;
+      case 'large': root.style.setProperty('--app-font-size', '18px'); root.style.setProperty('--app-font-scale', '1.125'); break;
+      default: root.style.setProperty('--app-font-size', '16px'); root.style.setProperty('--app-font-scale', '1');
     }
   }, [globalSettings.fontSize]);
 
-  // Device Detection Effect
   useEffect(() => {
     const checkDevice = () => {
       const width = window.innerWidth;
@@ -314,16 +342,12 @@ const App = () => {
     return () => window.removeEventListener('resize', checkDevice);
   }, []);
 
-  // Scroll Behavior
   useEffect(() => {
     document.documentElement.scrollTop = 0;
     document.body.scrollTop = 0;
-    setTimeout(() => {
-      window.scrollTo({ top: 0, left: 0, behavior: 'smooth' });
-    }, 50);
+    setTimeout(() => window.scrollTo({ top: 0, left: 0, behavior: 'smooth' }), 50);
   }, [currentSection]);
 
-// ✅ FIX: Lock background scrolling when mobile menu is open
   useEffect(() => {
     if (mobileMenuOpen) {
       document.body.style.overflow = 'hidden';
@@ -332,25 +356,19 @@ const App = () => {
       document.body.style.overflow = '';
       document.body.style.touchAction = '';
     }
-    return () => {
-      document.body.style.overflow = '';
-      document.body.style.touchAction = '';
-    };
+    return () => { document.body.style.overflow = ''; document.body.style.touchAction = ''; };
   }, [mobileMenuOpen]);
 
   const handleUpdateUserStats = async (newStats) => {
     try {
-      if (updateUserStats) {
-        updateUserStats({ ...userStats, ...newStats });
-      }
-    } catch (error) {
-      console.error('Failed to update user stats:', error);
-    }
+      if (updateUserStats) updateUserStats({ ...userStats, ...newStats });
+    } catch (error) { console.error('Failed to update stats:', error); }
   };
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-slate-900 flex items-center justify-center">
+      // 🚀 FIX: Removed hardcoded background so global theme shows through
+      <div className="min-h-screen flex items-center justify-center">
         <LoadingSpinner size="large" />
       </div>
     );
@@ -359,94 +377,63 @@ const App = () => {
   return (
     <ErrorBoundary>
       <NotificationProvider>
-        <div className={`app min-h-screen transition-colors duration-300 ${theme === 'dark' ? 'dark bg-slate-900' : 'bg-slate-50'}`}>
+        {/* Removed inline bg colors to let index.css take over natively */}
+        <div className={`app min-h-[100dvh] flex flex-col transition-colors duration-300 ${theme === 'dark' ? 'dark' : ''}`}>
+          
           {isMobile && (
-  <div className={`fixed inset-0 z-[100] lg:hidden transition-opacity duration-300 ${mobileMenuOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}>
-    {/* Backdrop */}
-    <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setMobileMenuOpen(false)} />
-    
-    {/* Menu Content */}
-    <div className={`absolute top-0 left-0 w-72 h-[100dvh] bg-slate-900 shadow-2xl transition-transform duration-300 transform overflow-y-auto overscroll-contain pb-24 ${mobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}`}>
-       <DesktopSidebar 
-                  user={user} /* ✅ FIX: Added user data so the mobile stats can load! */
-                  isMobile={true}
-                  identity={globalSettings.identity}
-                  currentSection={currentSection}
-                  setCurrentSection={(section) => {
-                    setCurrentSection(section);
-                    setMobileMenuOpen(false); 
-                  }}
-                  setCollapsed={() => setMobileMenuOpen(false)}
-               />
-    </div>
-  </div>
-)}
+            <div className={`fixed inset-0 z-[100] lg:hidden transition-opacity duration-300 ${mobileMenuOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}>
+              <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setMobileMenuOpen(false)} />
+              <div className={`absolute top-0 left-0 w-72 h-[100dvh] bg-[#1A1525] shadow-2xl transition-transform duration-300 transform overflow-y-auto overscroll-contain pb-10 ${mobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+                 <DesktopSidebar 
+                    user={user} isMobile={true} identity={globalSettings.identity} currentSection={currentSection}
+                    setCurrentSection={(section) => { setCurrentSection(section); setMobileMenuOpen(false); }}
+                    setCollapsed={() => setMobileMenuOpen(false)}
+                    analysisHistory={analysisHistory} 
+                 />
+              </div>
+            </div>
+          )}
+
           <TopNavigation
-            user={user}
-            identity={globalSettings.identity} // ✅ Passed Identity Prop
-            userStats={activeUserStats}
-            currentSection={currentSection}
-            setCurrentSection={setCurrentSection}
-            mobileMenuOpen={mobileMenuOpen}
-            setMobileMenuOpen={setMobileMenuOpen}
-            login={login}
-            logout={logout}
-            theme={theme}
-            setTheme={setTheme}
-            isMobile={isMobile}
-            setShowVoiceControl={setShowVoiceControl}
-            showVoiceControl={showVoiceControl}
+            user={user} identity={globalSettings.identity} userStats={activeUserStats} currentSection={currentSection} setCurrentSection={setCurrentSection}
+            mobileMenuOpen={mobileMenuOpen} setMobileMenuOpen={setMobileMenuOpen} login={login} logout={logout}
+            theme={theme} setTheme={setTheme} isMobile={isMobile} setShowVoiceControl={setShowVoiceControl} showVoiceControl={showVoiceControl}
           />
 
-          <div className="flex relative">
+          <div className="flex flex-1 relative overflow-hidden">
             {!isMobile && (
               <DesktopSidebar
-                user={user}
-                identity={globalSettings.identity} // ✅ Passed Identity Prop
-                userStats={activeUserStats}
-                currentSection={currentSection}
-                setCurrentSection={setCurrentSection}
-                collapsed={sidebarCollapsed}
-                setCollapsed={setSidebarCollapsed}
-                theme={theme}
+                user={user} identity={globalSettings.identity} userStats={activeUserStats} currentSection={currentSection} setCurrentSection={setCurrentSection}
+                collapsed={sidebarCollapsed} setCollapsed={setSidebarCollapsed} theme={theme}
+                analysisHistory={analysisHistory} 
               />
             )}
 
-            {/* ✅ FIX 1: Removed pb-32. Added flex & flex-col so the footer is naturally pushed to the bottom */}
-            <main className={`flex-1 flex flex-col min-h-[calc(100dvh-64px)] transition-all duration-300 
-              ${!isMobile && !sidebarCollapsed ? 'ml-64' : !isMobile ? 'ml-16' : 'ml-0'}`}
+            {/* Replace the <main> tag declaration with this: */}
+            <main className={`flex-1 flex flex-col transition-all duration-300 h-full w-full
+              ${!isMobile && !sidebarCollapsed ? 'ml-[240px]' : !isMobile ? 'ml-[72px]' : 'ml-0'}`}
               style={{ overflow: 'visible' }}>
               
-              {/* ✅ FIX 2: Added flex-1 here so the main content expands and pushes the footer down */}
-              <div className="flex-1 container mx-auto px-2 sm:px-4 py-6">
+              {/* 🚀 INJECTED GLOBAL ANIMATED GRIDS HERE */}
+              <GlobalCornerGrids />
+              
+              <div className={`flex-1 w-full relative z-10 ${currentSection === 'verify' ? 'h-[calc(100dvh-64px)] overflow-hidden' : 'container mx-auto px-2 sm:px-4 py-6'}`}>
                 <SectionRouter
-                  currentSection={currentSection}
-                  setCurrentSection={setCurrentSection}
-                  user={user}
-                  userStats={activeUserStats}
-                  updateUserStats={handleUpdateUserStats}
-                  analysisHistory={analysisHistory}
-                  analysisResult={analysisResult}
-                  onAnalysisComplete={handleAnalysisComplete}
-                  globalSettings={globalSettings}
-                  onGlobalSettingsChange={updateGlobalSettings}
-                  theme={theme}
-                  setTheme={setTheme}
-                  isMobile={isMobile}
-                  isTablet={isTablet}
-                  logout={logout}
-                  login={login}
+                  currentSection={currentSection} setCurrentSection={setCurrentSection} user={user} userStats={activeUserStats}
+                  updateUserStats={handleUpdateUserStats} analysisHistory={analysisHistory} analysisResult={analysisResult}
+                  onAnalysisComplete={handleAnalysisComplete} globalSettings={globalSettings} onGlobalSettingsChange={updateGlobalSettings}
+                  theme={theme} setTheme={setTheme} isMobile={isMobile} isTablet={isTablet} logout={logout} login={login}
                 />
-             </div>
-             
-              {/* ✅ FIX 3: This adds exactly 72px of space below the footer. Your Mobile Bottom Nav is about 72px tall, meaning it will perfectly cover this empty space, making the Footer sit EXACTLY on top of the nav bar! */}
-              <div className={isMobile ? "pb-[72px]" : "pb-4"}> 
-                 <Footer currentSection={currentSection} setCurrentSection={setCurrentSection} theme={theme} />
               </div>
+              
+              {currentSection !== 'verify' && (
+                <div className="w-full mt-auto relative z-10" style={{ maxWidth: '100%', margin: 0 }}> 
+                   <Footer currentSection={currentSection} setCurrentSection={setCurrentSection} theme={theme} />
+                </div>
+              )}
+
             </main>
           </div>
-
-          {isMobile && <MobileBottomNav currentSection={currentSection} setCurrentSection={setCurrentSection} user={user} theme={theme} />}
           
           {showVoiceControl && (
             <VoiceControlPanel isOpen={showVoiceControl} onClose={() => setShowVoiceControl(false)} onSectionChange={setCurrentSection} theme={theme} user={user} />
@@ -457,35 +444,16 @@ const App = () => {
             toastOptions={{
               duration: 4000,
               style: {
-                // Glassmorphism Styles
-                background: theme === 'dark' ? 'rgba(30, 41, 59, 0.7)' : 'rgba(255, 255, 255, 0.8)',
-                backdropFilter: 'blur(12px)',
-                WebkitBackdropFilter: 'blur(12px)',
+                background: theme === 'dark' ? 'rgba(26, 21, 37, 0.8)' : 'rgba(255, 255, 255, 0.9)',
+                backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)',
                 color: theme === 'dark' ? '#f1f5f9' : '#0f172a',
                 border: `1px solid ${theme === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)'}`,
-                
-                // Modern Shape & Typography
-                fontSize: '13px',
-                fontWeight: '700',
-                borderRadius: '16px',
-                padding: '12px 20px',
-                letterSpacing: '0.025em',
-                boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.2), 0 10px 10px -5px rgba(0, 0, 0, 0.1)',
+                fontSize: '13px', fontWeight: '700', borderRadius: '16px', padding: '12px 20px',
+                letterSpacing: '0.025em', boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.2), 0 10px 10px -5px rgba(0, 0, 0, 0.1)',
                 maxWidth: '350px'
               },
-              // Premium icons styling
-              success: {
-                iconTheme: {
-                  primary: '#10b981',
-                  secondary: '#fff',
-                },
-              },
-              error: {
-                iconTheme: {
-                  primary: '#ef4444',
-                  secondary: '#fff',
-                },
-              },
+              success: { iconTheme: { primary: '#10b981', secondary: '#fff', }, },
+              error: { iconTheme: { primary: '#ef4444', secondary: '#fff', }, },
             }}
           />
         </div>
