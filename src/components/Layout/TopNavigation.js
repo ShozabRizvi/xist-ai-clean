@@ -208,7 +208,7 @@ const TopNavigation = ({ user, identity, theme, setTheme, currentSection, setCur
               )}
 
               {/* QR and Theme Buttons */}
-              <button onClick={() => setShowQRPopup(true)} className="p-2 rounded-full text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-black/5 dark:hover:bg-white/5 transition-all hidden sm:block">
+              <button onClick={() => setShowQRPopup(true)} className="p-2 rounded-full text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-black/5 dark:hover:bg-white/5 transition-all">
                 <QrCodeIcon className="w-5 h-5" />
               </button>
               

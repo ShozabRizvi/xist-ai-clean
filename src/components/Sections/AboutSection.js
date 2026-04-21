@@ -183,7 +183,12 @@ const AboutSection = () => {
           <motion.div 
             onHoverStart={() => { if (typeof window !== 'undefined' && window.innerWidth >= 768) setIsStackExpanded(true); }}
             onHoverEnd={() => { if (typeof window !== 'undefined' && window.innerWidth >= 768) { setIsStackExpanded(false); setActiveCard(null); } }}
-            onClick={() => { if (typeof window !== 'undefined' && window.innerWidth < 768) { if (isStackExpanded && activeCard !== null) setActiveCard(null); else setIsStackExpanded(!isStackExpanded); } }}
+            onClick={() => { 
+              if (typeof window !== 'undefined' && window.innerWidth < 768) { 
+                if (isStackExpanded) { setIsStackExpanded(false); setActiveCard(null); } 
+                else setIsStackExpanded(true); 
+              } 
+            }}
             className="relative flex justify-center items-center h-[900px] md:h-[500px] w-full max-w-5xl mx-auto cursor-pointer"
           >
             {teamMembers.map((member, index) => (
@@ -192,7 +197,14 @@ const AboutSection = () => {
                 animate={ !isStackExpanded ? "compressed" : activeCard === null ? "expanded" : activeCard === index ? "focusedActive" : "focusedInactive" }
                 onHoverStart={() => { if (typeof window !== 'undefined' && window.innerWidth >= 768 && isStackExpanded) { setActiveCard(index); } }}
                 onHoverEnd={() => { if (typeof window !== 'undefined' && window.innerWidth >= 768) { setActiveCard(null); } }}
-                onClick={(e) => { if (!isStackExpanded) return; e.stopPropagation(); if (typeof window !== 'undefined' && window.innerWidth < 768) { setActiveCard(activeCard === index ? null : index); } }}
+                onClick={(e) => { 
+                  if (typeof window !== 'undefined' && window.innerWidth < 768) { 
+                    if (!isStackExpanded) return; 
+                    e.stopPropagation(); 
+                    if (activeCard === index) { setActiveCard(null); setIsStackExpanded(false); } 
+                    else setActiveCard(index); 
+                  } 
+                }}
                 className={`absolute w-[90%] md:w-[320px] p-6 md:p-8 rounded-[2rem] glass-card group transition-colors shadow-2xl ${activeCard === index ? 'border-indigo-500/80 shadow-[0_0_40px_rgba(99,102,241,0.3)]' : ''}`}
                 style={{ transformOrigin: 'center center' }}
               >
