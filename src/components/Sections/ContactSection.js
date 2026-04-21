@@ -59,7 +59,11 @@ const ContactSection = () => {
     try {
       const response = await fetch("https://formspree.io/f/mbdanbww", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { 
+          "Content-Type": "application/json",
+          // 🚀 FIX: This explicitly tells Formspree to skip the CAPTCHA HTML page
+          "Accept": "application/json" 
+        },
         body: JSON.stringify(formData),
       });
 

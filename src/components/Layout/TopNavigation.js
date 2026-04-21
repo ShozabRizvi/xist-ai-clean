@@ -138,24 +138,25 @@ const TopNavigation = ({ user, identity, theme, setTheme, currentSection, setCur
         </div>
       )}
 
-      {/* 🚀 PREMIUM GLASS NAV BAR */}
-      <nav className="sticky top-0 z-50 bg-slate-50/80 dark:bg-[#080c1a]/80 backdrop-blur-2xl border-b border-black/5 dark:border-white/5 transition-colors duration-500 overflow-visible">
-        <div className="max-w-[90rem] mx-auto px-4 overflow-visible">
+      {/* 🚀 STATIC FLOATING NAV BAR (Scrolls away normally) */}
+      <nav className="relative z-50 bg-transparent transition-colors duration-500 pt-2 md:pt-4 w-full max-w-full overflow-hidden sm:overflow-visible">
+        <div className="max-w-[90rem] mx-auto px-2 sm:px-4 w-full">
           
-          <div className="relative flex items-center justify-between h-16 overflow-visible">
+          <div className="relative flex items-center justify-between h-14 sm:h-16 w-full">
             
             {/* LEFT: Brand & Mobile Menu Toggle */}
-            <div className="flex items-center gap-3 shrink-0">
+            <div className="flex items-center gap-1 sm:gap-3 shrink-0">
                <button 
                  onClick={(e) => { e.stopPropagation(); setMobileMenuOpen(true); }} 
-                 className="lg:hidden p-2 text-slate-600 dark:text-slate-300 hover:bg-black/5 dark:hover:bg-white/5 rounded-full transition-colors"
+                 className="lg:hidden p-1.5 sm:p-2 text-slate-600 dark:text-slate-300 hover:bg-black/5 dark:hover:bg-white/5 rounded-full transition-colors"
                >
-                 <Bars3Icon className="w-6 h-6" />
+                 <Bars3Icon className="w-5 h-5 sm:w-6 sm:h-6" />
                </button>
 
-               <div className="flex items-center gap-3 cursor-pointer hover:opacity-80 transition-opacity duration-300 ml-1" onClick={() => setCurrentSection('home')}>
-                  <img src="/logo.png" alt="Logo" className="w-7 h-7 sm:w-8 sm:h-8 object-contain" />
-                  <h1 className="hidden min-[360px]:block text-sm sm:text-lg font-black text-slate-900 dark:text-white tracking-widest uppercase">Xist AI</h1>
+               <div className="flex items-center gap-2 sm:gap-3 cursor-pointer hover:opacity-80 transition-opacity duration-300 ml-1" onClick={() => setCurrentSection('home')}>
+                  <img src="/logo.png" alt="Logo" className="w-6 h-6 sm:w-8 sm:h-8 object-contain shrink-0" />
+                  {/* Hidden on mobile completely to save space for icons */}
+                  <h1 className="hidden sm:block text-lg font-black text-slate-900 dark:text-white tracking-widest uppercase">Xist AI</h1>
                </div>
             </div>
 
@@ -191,37 +192,40 @@ const TopNavigation = ({ user, identity, theme, setTheme, currentSection, setCur
             </div>
 
             {/* RIGHT: Action Hub */}
-            <div className="flex items-center gap-1 sm:gap-2 shrink-0 overflow-visible">
+            <div className="flex items-center gap-0.5 sm:gap-2 shrink-0">
               
               {/* SCANS BUTTON */}
               {user && (
                 <div 
-                  className={`relative flex items-center justify-center h-9 px-4 rounded-full cursor-pointer transition-all duration-300 mr-2 ${showScanDetails ? 'bg-indigo-50 dark:bg-indigo-500/10' : 'hover:bg-black/5 dark:hover:bg-white/5'}`}
+                  className={`relative flex items-center justify-center h-8 sm:h-9 px-2.5 sm:px-4 rounded-full cursor-pointer transition-all duration-300 mr-0 sm:mr-2 ${showScanDetails ? 'bg-indigo-50 dark:bg-indigo-500/10' : 'hover:bg-black/5 dark:hover:bg-white/5'}`}
                   onMouseEnter={() => setShowScanDetails(true)}
                   onMouseLeave={() => setShowScanDetails(false)}
                   onClick={() => setShowScanDetails(!showScanDetails)}
                 >
-                  <span className={`text-[10px] font-black uppercase tracking-widest transition-colors ${showScanDetails ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-600 dark:text-slate-300'}`}>
+                  <span className={`text-[9px] sm:text-[10px] font-black uppercase tracking-widest transition-colors ${showScanDetails ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-600 dark:text-slate-300'}`}>
                     Scans
                   </span>
                 </div>
               )}
 
               {/* QR and Theme Buttons */}
-              <button onClick={() => setShowQRPopup(true)} className="p-2 rounded-full text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-black/5 dark:hover:bg-white/5 transition-all">
-                <QrCodeIcon className="w-5 h-5" />
+              <button onClick={() => setShowQRPopup(true)} className="p-1.5 sm:p-2 rounded-full text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-black/5 dark:hover:bg-white/5 transition-all hidden sm:block">
+                <QrCodeIcon className="w-4 h-4 sm:w-5 sm:h-5" />
               </button>
               
-              <button onClick={toggleTheme} className="p-2 rounded-full text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-black/5 dark:hover:bg-white/5 transition-all">
-                {theme === 'dark' ? <SunIcon className="w-5 h-5" /> : <MoonIcon className="w-5 h-5" />}
+              <button onClick={toggleTheme} className="p-1.5 sm:p-2 rounded-full text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-black/5 dark:hover:bg-white/5 transition-all shrink-0">
+                {theme === 'dark' ? <SunIcon className="w-4 h-4 sm:w-5 sm:h-5" /> : <MoonIcon className="w-4 h-4 sm:w-5 sm:h-5" />}
               </button>
+
+              {/* DIVIDER */}
+              <div className="h-6 w-px bg-black/10 dark:bg-white/10 mx-1 sm:mx-2 shrink-0"></div>
 
               {/* PROFILE PICTURE (WHEN LOGGED IN) */}
               {user && (
-                <div className="flex items-center pl-2 ml-1 border-l border-black/10 dark:border-white/10">
+                <div className="flex items-center shrink-0">
                   <button 
                     onClick={handleProfileClick} 
-                    className="w-8 h-8 sm:w-9 sm:h-9 rounded-full border-2 border-indigo-500/30 flex items-center justify-center overflow-hidden hover:border-indigo-500 hover:scale-105 transition-all bg-slate-100 dark:bg-slate-800 shrink-0"
+                    className="w-7 h-7 sm:w-9 sm:h-9 rounded-full border-2 border-indigo-500/30 flex items-center justify-center overflow-hidden hover:border-indigo-500 hover:scale-105 transition-all bg-slate-100 dark:bg-slate-800 shrink-0 shadow-sm"
                   >
                     <TacticalAvatar url={user?.photoURL} tacticalId={identity?.avatar} />
                   </button>
@@ -230,15 +234,16 @@ const TopNavigation = ({ user, identity, theme, setTheme, currentSection, setCur
 
              {/* SIGN IN BUTTON (WHEN LOGGED OUT) */}
               {!user && (
-                <div className="flex items-center pl-2 ml-1 border-l border-black/10 dark:border-white/10">
+                <div className="flex items-center shrink-0">
+                  {/* 🚀 REDESIGNED COMPACT GLASSMORPHIC BUTTON */}
                   <button 
                     onClick={login} 
-                    className="flex items-center gap-2 px-5 py-2 rounded-full bg-indigo-600 hover:bg-indigo-500 text-white transition-all duration-300 hover:scale-105 active:scale-95 group shadow-lg shadow-indigo-500/20"
+                    className="flex items-center gap-1.5 px-3 sm:px-5 py-1.5 sm:py-2 rounded-full border border-indigo-500/30 bg-indigo-500/10 hover:bg-indigo-500 hover:text-white text-indigo-600 dark:text-indigo-400 transition-all duration-300 shadow-[0_0_15px_rgba(99,102,241,0.1)] hover:shadow-[0_0_20px_rgba(99,102,241,0.3)] shrink-0 group active:scale-95"
                   >
-                    <span className="text-[10px] font-black uppercase tracking-widest">
+                    <span className="text-[9px] sm:text-[10px] font-black uppercase tracking-widest whitespace-nowrap">
                       Sign In
                     </span>
-                    <ArrowRightEndOnRectangleIcon className="w-4 h-4 text-indigo-200 group-hover:text-white transition-colors" />
+                    <ArrowRightEndOnRectangleIcon className="w-3.5 h-3.5 sm:w-4 sm:h-4 transition-transform group-hover:translate-x-0.5" />
                   </button>
                 </div>
               )}
@@ -258,9 +263,9 @@ const TopNavigation = ({ user, identity, theme, setTheme, currentSection, setCur
             transition={{ duration: 0.2, ease: "easeOut" }}
             onMouseEnter={() => setShowScanDetails(true)} 
             onMouseLeave={() => setShowScanDetails(false)}
-            className="fixed top-[70px] right-4 sm:right-8 lg:right-[12%] p-1.5 rounded-[2rem] shadow-[0_20px_50px_rgba(0,0,0,0.15)] z-[999999] overflow-hidden glass-card border border-black/5 dark:border-white/10"
+            className="fixed top-[60px] sm:top-[70px] right-2 sm:right-8 lg:right-[12%] p-1.5 rounded-[2rem] shadow-[0_20px_50px_rgba(0,0,0,0.15)] z-[999999] overflow-hidden glass-card border border-black/5 dark:border-white/10"
           >
-            <div className="px-6 py-5 min-w-[260px] bg-slate-100/50 dark:bg-slate-900/50 rounded-[1.5rem]">
+            <div className="px-5 sm:px-6 py-4 sm:py-5 w-[calc(100vw-16px)] sm:w-auto min-w-[260px] max-w-[320px] bg-slate-100/50 dark:bg-slate-900/50 rounded-[1.5rem]">
               <div className="flex items-center justify-between mb-4">
                 <span className="text-[10px] font-black uppercase tracking-[0.15em] text-slate-500">
                   Global API Limit
