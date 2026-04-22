@@ -84,8 +84,9 @@ const Footer = ({ setCurrentSection }) => {
         </div>
 
         {/* BOTTOM ROW */}
-        <div className="pt-4 border-t border-black/5 dark:border-white/5 flex flex-col md:flex-row justify-between items-center gap-4">
-          <p className="text-[9px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500">
+        {/* 🚀 Changed to flex-col-reverse so links appear above copyright on mobile */}
+        <div className="pt-4 border-t border-black/5 dark:border-white/5 flex flex-col-reverse md:flex-row justify-between items-center gap-4">
+          <p className="text-[9px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500 text-center md:text-left mt-2 md:mt-0">
             © {currentYear} XIST AI. ALL RIGHTS RESERVED.
           </p>
           
