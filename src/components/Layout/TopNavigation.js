@@ -206,12 +206,18 @@ const TopNavigation = ({ user, identity, theme, setTheme, currentSection, setCur
                 </div>
               )}
 
-              {/* QR and Theme Buttons */}
-              <button onClick={() => setShowQRPopup(true)} className="p-1.5 sm:p-2 rounded-full text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-black/5 dark:hover:bg-white/5 transition-all hidden sm:block">
+              {/* 🚀 QR AND THEME BUTTONS (BOTH VISIBLE ON MOBILE) */}
+              <button 
+                onClick={() => setShowQRPopup(true)} 
+                className="p-1.5 sm:p-2 rounded-full text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-black/5 dark:hover:bg-white/5 transition-all shrink-0"
+              >
                 <QrCodeIcon className="w-4 h-4 sm:w-5 sm:h-5" />
               </button>
               
-              <button onClick={toggleTheme} className="p-1.5 sm:p-2 rounded-full text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-black/5 dark:hover:bg-white/5 transition-all shrink-0">
+              <button 
+                onClick={toggleTheme} 
+                className="p-1.5 sm:p-2 rounded-full text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-black/5 dark:hover:bg-white/5 transition-all shrink-0"
+              >
                 {theme === 'dark' ? <SunIcon className="w-4 h-4 sm:w-5 sm:h-5" /> : <MoonIcon className="w-4 h-4 sm:w-5 sm:h-5" />}
               </button>
 
@@ -239,7 +245,7 @@ const TopNavigation = ({ user, identity, theme, setTheme, currentSection, setCur
                     className="flex items-center gap-1.5 px-3 sm:px-5 py-1.5 sm:py-2 rounded-full border border-indigo-500/30 bg-indigo-500/10 hover:bg-indigo-500 hover:text-white text-indigo-600 dark:text-indigo-400 transition-all duration-300 shadow-[0_0_15px_rgba(99,102,241,0.1)] hover:shadow-[0_0_20px_rgba(99,102,241,0.3)] shrink-0 group active:scale-95"
                   >
                     <span className="text-[9px] sm:text-[10px] font-black uppercase tracking-widest whitespace-nowrap">
-                      Sign In
+                      Sign Up/Log In
                     </span>
                     <ArrowRightEndOnRectangleIcon className="w-3.5 h-3.5 sm:w-4 sm:h-4 transition-transform group-hover:translate-x-0.5" />
                   </button>

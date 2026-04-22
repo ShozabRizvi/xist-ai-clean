@@ -117,7 +117,6 @@ const useAuthLogic = () => {
         
         toast.dismiss(); 
         toast.success('New Account Created', {
-          icon: <UserPlusIcon className="w-5 h-5 text-emerald-500" />,
         });
       } else {
         await updateDoc(userRef, { lastLoginAt: new Date() });
@@ -125,7 +124,6 @@ const useAuthLogic = () => {
         // 🚀 DISMISS OLD & SHOW NEW
         toast.dismiss();
         toast.success('Welcome Back', {
-          icon: <ShieldCheckIcon className="w-5 h-5 text-indigo-500" />,
         });
       }
     } catch (error) {
