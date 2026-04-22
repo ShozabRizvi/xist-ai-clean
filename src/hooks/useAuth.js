@@ -8,6 +8,12 @@ import {
 import { doc, setDoc, getDoc, updateDoc } from 'firebase/firestore';
 import { auth, db } from '../config/firebase';
 import toast from 'react-hot-toast';
+import { 
+  UserPlusIcon, 
+  ArrowRightEndOnRectangleIcon, 
+  ShieldCheckIcon, 
+  ExclamationTriangleIcon 
+} from '@heroicons/react/24/outline';
 
 const AuthContext = createContext();
 
@@ -86,48 +92,64 @@ const useAuthLogic = () => {
       const userRef = doc(db, 'users', firebaseUser.uid);
       const userSnap = await getDoc(userRef);
 
+      // 🚀 NEW LOGIC: Check if document exists to differentiate status
       if (!userSnap.exists()) {
         await setDoc(userRef, {
-          uid: firebaseUser.uid, email: firebaseUser.email,
+          uid: firebaseUser.uid, 
+          email: firebaseUser.email,
           name: firebaseUser.displayName, 
           alias: firebaseUser.displayName, 
           avatar: 'ghost',
           photoURL: firebaseUser.photoURL,
-          totalAnalyses: 0, threatsStopped: 0, communityPoints: 0,
-          badges: [], streak: 0, level: 1, reputation: 'Newcomer',
-          dailyActivity: [], securityScore: 95,
-          createdAt: new Date(), lastLoginAt: new Date(),
+          totalAnalyses: 0, 
+          threatsStopped: 0, 
+          communityPoints: 0,
+          badges: [], 
+          streak: 0, 
+          level: 1, 
+          reputation: 'Newcomer',
+          dailyActivity: [], 
+          securityScore: 95,
+          createdAt: new Date(), 
+          lastLoginAt: new Date(),
         });
         setOperatorIdentity({ alias: firebaseUser.displayName, avatar: 'ghost' });
-        toast.success('🎉 Node Activated!');
+        
+        toast.dismiss(); 
+        toast.success('New Account Created', {
+          icon: <UserPlusIcon className="w-5 h-5 text-emerald-500" />,
+        });
       } else {
         await updateDoc(userRef, { lastLoginAt: new Date() });
+        
+        // 🚀 DISMISS OLD & SHOW NEW
+        toast.dismiss();
+        toast.success('Welcome Back', {
+          icon: <ShieldCheckIcon className="w-5 h-5 text-indigo-500" />,
+        });
       }
     } catch (error) {
       console.error('User sync failed:', error);
+      toast.error('❌ Sync failed.', {
+        icon: <ExclamationTriangleIcon className="w-5 h-5 text-rose-500" />,
+      });
     }
   };
 
-  // ✅ 2. THE PURE POPUP LOGIN FUNCTION
   const login = async () => {
-    setIsRedirecting(true); // Triggers loading UI while popup is active
+    setIsRedirecting(true);
     try {
-      // Clear any ghost sessions before initiating
       if (auth.currentUser) await signOut(auth);
       
       console.log('🌍 Initiating Secure Popup Handshake...');
-      
-      // Awaits the popup directly. No useEffect listener needed!
       const result = await signInWithPopup(auth, googleProvider);
       
       if (result?.user) {
-        console.log('✅ SUCCESS! User authenticated:', result.user.email);
+        // handleUserCreation now handles the specific toast messages internally
         await handleUserCreation(result.user);
       }
       
     } catch (error) {
-      console.error('Login error:', error);
-      // Ignores the error if the user just closed the popup manually
       if (error.code !== 'auth/popup-closed-by-user') {
         toast.error(`❌ Auth Failed: ${error.code}`);
       }
@@ -139,7 +161,9 @@ const useAuthLogic = () => {
   const logout = async () => {
     try {
       await signOut(auth);
-      toast.success('👋 Node Disconnected.');
+      toast.success('👋 Node Disconnected.', {
+        icon: <ArrowRightEndOnRectangleIcon className="w-5 h-5 text-slate-500" />,
+      });
     } catch (error) {
       toast.error('❌ Disconnect failed.');
     }

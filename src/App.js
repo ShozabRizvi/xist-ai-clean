@@ -439,23 +439,32 @@ const App = () => {
             <VoiceControlPanel isOpen={showVoiceControl} onClose={() => setShowVoiceControl(false)} onSectionChange={setCurrentSection} theme={theme} user={user} />
           )}
 
-         <Toaster
-            position="top-right"
-            toastOptions={{
-              duration: 4000,
-              style: {
-                background: theme === 'dark' ? 'rgba(26, 21, 37, 0.8)' : 'rgba(255, 255, 255, 0.9)',
-                backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)',
-                color: theme === 'dark' ? '#f1f5f9' : '#0f172a',
-                border: `1px solid ${theme === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)'}`,
-                fontSize: '13px', fontWeight: '700', borderRadius: '16px', padding: '12px 20px',
-                letterSpacing: '0.025em', boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.2), 0 10px 10px -5px rgba(0, 0, 0, 0.1)',
-                maxWidth: '350px'
-              },
-              success: { iconTheme: { primary: '#10b981', secondary: '#fff', }, },
-              error: { iconTheme: { primary: '#ef4444', secondary: '#fff', }, },
-            }}
-          />
+        <Toaster
+  position="top-right"
+  // 🚀 ONE NOTIFICATION AT A TIME: gutter={0} helps prevent stacking gaps
+  gutter={0} 
+  containerStyle={{ top: 80, right: 20 }}
+  toastOptions={{
+    // 🚀 5 SECOND DURATION: Time before it auto-dismisses
+    duration: 5000,
+    style: {
+      background: theme === 'dark' ? 'rgba(26, 21, 37, 0.8)' : 'rgba(255, 255, 255, 0.9)',
+      backdropFilter: 'blur(12px)', 
+      WebkitBackdropFilter: 'blur(12px)',
+      color: theme === 'dark' ? '#f1f5f9' : '#0f172a',
+      border: `1px solid ${theme === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)'}`,
+      fontSize: '13px', 
+      fontWeight: '700', 
+      borderRadius: '16px', 
+      padding: '12px 20px',
+      letterSpacing: '0.025em', 
+      boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.2), 0 10px 10px -5px rgba(0, 0, 0, 0.1)',
+      maxWidth: '350px'
+    },
+    success: { iconTheme: { primary: '#10b981', secondary: '#fff' } },
+    error: { iconTheme: { primary: '#ef4444', secondary: '#fff' } },
+  }}
+/>
         </div>
       </NotificationProvider>
     </ErrorBoundary>

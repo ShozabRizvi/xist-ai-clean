@@ -176,13 +176,14 @@ const ContactSection = () => {
                   {showTopicDropdown && (
                     <motion.div 
                       initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}
-                      className="absolute top-full left-0 right-0 mt-2 p-2 rounded-2xl shadow-2xl z-50 glass-card border border-black/10 dark:border-white/10"
+                      // 🚀 FIX: Replaced 'glass-card' with a 95% solid background to block text bleed-through
+                      className="absolute top-full left-0 right-0 mt-2 p-2 rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.3)] z-50 bg-white/95 dark:bg-slate-900/95 backdrop-blur-2xl border border-black/10 dark:border-white/10"
                     >
                       {CONTACT_CATEGORIES.map(c => (
                         <button 
                           key={c.id} type="button" 
                           onClick={() => { setFormData({...formData, category: c.id}); setShowTopicDropdown(false); }}
-                          className={`w-full text-left px-4 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${formData.category === c.id ? 'bg-indigo-600 text-white shadow-lg' : 'text-slate-600 dark:text-slate-400 hover:bg-black/5 dark:hover:bg-white/5'}`}
+                          className={`w-full text-left px-4 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${formData.category === c.id ? 'bg-indigo-600 text-white shadow-lg' : 'text-slate-700 dark:text-slate-300 hover:bg-black/5 dark:hover:bg-white/10'}`}
                         >
                           {c.label}
                         </button>
