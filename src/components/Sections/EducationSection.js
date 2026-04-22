@@ -266,7 +266,7 @@ const EducationSection = () => {
 
   const containerVariants = { hidden: { opacity: 0 }, visible: { opacity: 1, transition: { staggerChildren: 0.1 } } };
 
-  return (
+return (
     // 🚀 FIX: Removed the hardcoded double margin (`marginLeft: 280px`). The App.js `main` wrapper already handles this!
     <motion.div 
       initial="hidden" 
@@ -275,6 +275,10 @@ const EducationSection = () => {
       className="w-full min-h-screen relative overflow-visible"
     >
       
+      {/* 🌐 DYNAMIC GRID BACKGROUND OVERLAY */}
+      <div className="absolute inset-0 pointer-events-none opacity-[0.03] dark:invert-0 invert z-0" 
+           style={{ backgroundImage: 'linear-gradient(to right, currentColor 1px, transparent 1px), linear-gradient(to bottom, currentColor 1px, transparent 1px)', backgroundSize: '40px 40px' }}></div>
+
       {/* ========================================= */}
       {/* 🚀 HERO HEADER (CLARTHA ACADEMY STYLE)  */}
       {/* ========================================= */}

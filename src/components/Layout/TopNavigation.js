@@ -144,19 +144,17 @@ const TopNavigation = ({ user, identity, theme, setTheme, currentSection, setCur
           
           <div className="relative flex items-center justify-between h-14 sm:h-16 w-full">
             
-            {/* LEFT: Brand & Mobile Menu Toggle */}
-            <div className="flex items-center gap-1 sm:gap-3 shrink-0">
+            {/* LEFT: Mobile Menu & Mobile Logo ONLY (Acts as an invisible spacer on desktop to balance layout) */}
+            <div className="flex items-center gap-1 sm:gap-3 shrink-0 lg:invisible">
                <button 
                  onClick={(e) => { e.stopPropagation(); setMobileMenuOpen(true); }} 
-                 className="lg:hidden p-1.5 sm:p-2 text-slate-600 dark:text-slate-300 hover:bg-black/5 dark:hover:bg-white/5 rounded-full transition-colors"
+                 className="p-1.5 sm:p-2 text-slate-600 dark:text-slate-300 hover:bg-black/5 dark:hover:bg-white/5 rounded-full transition-colors"
                >
                  <Bars3Icon className="w-5 h-5 sm:w-6 sm:h-6" />
                </button>
 
                <div className="flex items-center gap-2 sm:gap-3 cursor-pointer hover:opacity-80 transition-opacity duration-300 ml-1" onClick={() => setCurrentSection('home')}>
                   <img src="/logo.png" alt="Logo" className="w-6 h-6 sm:w-8 sm:h-8 object-contain shrink-0" />
-                  {/* Hidden on mobile completely to save space for icons */}
-                  <h1 className="hidden sm:block text-lg font-black text-slate-900 dark:text-white tracking-widest uppercase">Xist AI</h1>
                </div>
             </div>
 

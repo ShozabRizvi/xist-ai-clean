@@ -348,6 +348,10 @@ export default function CommunitySection({ user, theme: globalTheme }) {
     // 🚀 FIX: Removed hardcoded md:ml-[280px]. App.js entirely controls the layout wrapper!
     <div className="w-full min-h-screen relative overflow-visible" style={{ marginTop: '64px' }}>
 
+      {/* 🌐 DYNAMIC GRID BACKGROUND OVERLAY */}
+      <div className="absolute inset-0 pointer-events-none opacity-[0.03] dark:invert-0 invert z-0" 
+           style={{ backgroundImage: 'linear-gradient(to right, currentColor 1px, transparent 1px), linear-gradient(to bottom, currentColor 1px, transparent 1px)', backgroundSize: '40px 40px' }}></div>
+
       {/* HERO HEADER */}
       <div className="sticky top-0 z-30 px-4 py-8 md:py-12 transition-all overflow-hidden bg-transparent">
         <div className="max-w-4xl mx-auto flex flex-col items-center justify-center relative z-10">
