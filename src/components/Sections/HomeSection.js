@@ -106,90 +106,93 @@ const HomeSection = ({ user, setCurrentSection, theme }) => {
   if (isLoading) return <div className="h-96 flex items-center justify-center"><LoadingSpinner size="lg" text="Loading..." /></div>;
 
   return (
-    <div className="space-y-12 max-w-6xl mx-auto py-8">
+    // 🚀 COMPACT: Reduced outer spacing to py-4 md:py-6, space-y-6 md:space-y-8
+    <div className="space-y-6 md:space-y-8 max-w-5xl mx-auto py-4 md:py-6 px-4 sm:px-6">
       
       {/* 🚀 1. HERO BANNER: CLARTHA STYLE */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6, ease: "easeOut" }}
-        /* To change color of this Hero, edit `.glass-card` in index.css */
-        className="relative overflow-hidden glass-card rounded-[2.5rem] p-10 md:p-16 text-center border-t border-l border-white/20 shadow-2xl flex flex-col items-center justify-center"
+        /* 🚀 COMPACT: Changed padding from p-16 to p-10 (desktop) and p-10 to p-6 (mobile) */
+        className="relative overflow-hidden glass-card rounded-[2rem] md:rounded-[2.5rem] p-6 md:p-10 text-center border-t border-l border-white/20 shadow-2xl flex flex-col items-center justify-center"
       >
         <div className="relative z-10 w-full max-w-4xl mx-auto flex flex-col items-center">
           
-          {/* Logo Animation (No internal grids anymore!) */}
           <motion.div
             initial={{ scale: 0 }}
             animate={{ scale: 1, y: [0, -5, 0] }}
             transition={{ scale: { type: "spring", stiffness: 260, damping: 20 }, y: { duration: 4, repeat: Infinity, ease: "easeInOut" } }}
-            className="w-16 h-16 md:w-20 md:h-20 mb-8 drop-shadow-2xl"
+            /* 🚀 COMPACT: Smaller logo margin and size */
+            className="w-12 h-12 md:w-16 md:h-16 mb-4 md:mb-6 drop-shadow-2xl"
           >
             <img src="/logo.png" alt="Xist AI" className="w-full h-full object-contain" />
           </motion.div>
           
           {/* User Greeting */}
-          <p className="text-sm md:text-base font-bold uppercase tracking-[0.2em] opacity-60 mb-4">
+          <p className="text-[10px] md:text-xs font-bold uppercase tracking-[0.2em] opacity-60 mb-2 md:mb-3">
              {user ? `Welcome back, ${user.displayName?.split(' ')[0] || 'User'}` : 'System Initialized'}
           </p>
 
-          {/* 🚀 THE HIGH-CONTRAST CLARTHA HIGHLIGHT HEADER */}
-          <h1 className="text-4xl md:text-6xl lg:text-7xl font-extrabold mb-6 leading-tight tracking-tight text-slate-900 dark:text-white">
+          {/* 🚀 COMPACT: Shrunk huge text sizes down to text-3xl for mobile and text-5xl/6xl for desktop */}
+          <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-extrabold mb-3 md:mb-5 leading-tight tracking-tight text-slate-950 dark:text-white">
             Your Network Doesn't Need More Tools. <br/>
             <span className="text-brand-highlight">It Needs Intelligence.</span>
           </h1>
           
-          <p className="text-lg md:text-xl opacity-70 font-medium max-w-2xl mx-auto mb-12 leading-relaxed">
+          {/* 🚀 COMPACT: Adjusted subtitle sizing and bottom margin */}
+          <p className="text-sm sm:text-base md:text-lg opacity-70 font-medium max-w-2xl mx-auto mb-6 md:mb-8 leading-relaxed">
             Forensic Intelligence & Digital Sovereignty. Built to protect users and businesses from advanced digital threats.
           </p>
 
           {/* REAL-TIME STATS HUD */}
-          <div className="flex flex-wrap items-center justify-center gap-4 md:gap-8">
-            <div className="flex items-center px-4 py-2 rounded-full bg-black/5 dark:bg-white/5 border border-black/5 dark:border-white/10 backdrop-blur-sm">
-              <div className="w-2 h-2 bg-indigo-500 rounded-full mr-3 animate-pulse shadow-[0_0_8px_rgba(99,102,241,0.8)]"></div>
+          {/* 🚀 COMPACT: Changed layout to flex-col on mobile so pills don't squish side-by-side */}
+          <div className="flex flex-col sm:flex-row flex-wrap items-center justify-center gap-3 md:gap-6 w-full">
+            <div className="flex items-center justify-center w-full sm:w-auto px-4 py-2.5 rounded-full bg-black/5 dark:bg-white/5 border border-black/5 dark:border-white/10 backdrop-blur-sm">
+              <div className="w-2 h-2 bg-indigo-500 rounded-full mr-2 animate-pulse shadow-[0_0_8px_rgba(99,102,241,0.8)]"></div>
               <ShieldCheckIcon className="w-4 h-4 mr-2 opacity-70" />
-              <span className="text-sm font-bold">{globalStats.totalScans.toLocaleString()} Total Scans</span>
+              <span className="text-[11px] md:text-sm font-bold">{globalStats.totalScans.toLocaleString()} Total Scans</span>
             </div>
             
-            <div className="flex items-center px-4 py-2 rounded-full bg-black/5 dark:bg-white/5 border border-black/5 dark:border-white/10 backdrop-blur-sm">
-              <div className="w-2 h-2 bg-purple-500 rounded-full mr-3 animate-pulse shadow-[0_0_8px_rgba(168,85,247,0.8)]"></div>
+            <div className="flex items-center justify-center w-full sm:w-auto px-4 py-2.5 rounded-full bg-black/5 dark:bg-white/5 border border-black/5 dark:border-white/10 backdrop-blur-sm">
+              <div className="w-2 h-2 bg-purple-500 rounded-full mr-2 animate-pulse shadow-[0_0_8px_rgba(168,85,247,0.8)]"></div>
               <UserGroupIcon className="w-4 h-4 mr-2 opacity-70" />
-              <span className="text-sm font-bold">{globalStats.activeUsers} Active Nodes</span>
+              <span className="text-[11px] md:text-sm font-bold">{globalStats.activeUsers} Active Nodes</span>
             </div>
 
-            <div className="flex items-center px-4 py-2 rounded-full bg-black/5 dark:bg-white/5 border border-black/5 dark:border-white/10 backdrop-blur-sm">
-              <div className="w-2 h-2 bg-cyan-500 rounded-full mr-3 animate-pulse shadow-[0_0_8px_rgba(6,182,212,0.8)]"></div>
+            <div className="flex items-center justify-center w-full sm:w-auto px-4 py-2.5 rounded-full bg-black/5 dark:bg-white/5 border border-black/5 dark:border-white/10 backdrop-blur-sm">
+              <div className="w-2 h-2 bg-cyan-500 rounded-full mr-2 animate-pulse shadow-[0_0_8px_rgba(6,182,212,0.8)]"></div>
               <CpuChipIcon className="w-4 h-4 mr-2 opacity-70" />
-              <span className="text-sm font-bold">{globalStats.avgSystemConfidence}% Avg Confidence</span>
+              <span className="text-[11px] md:text-sm font-bold">{globalStats.avgSystemConfidence}% Avg Confidence</span>
             </div>
           </div>
         </div>
       </motion.div>
 
       {/* 🚀 2. BRIEFING SECTION (Workspace Cards) */}
-      <div className="space-y-6">
-         <h2 className="text-sm font-bold uppercase tracking-[0.2em] opacity-60 ml-2">
+      <div className="space-y-3 md:space-y-4">
+         <h2 className="text-[10px] md:text-xs font-bold uppercase tracking-[0.2em] opacity-60 ml-2">
            Action Items
          </h2>
-         <div className="grid md:grid-cols-2 gap-6">
+         <div className="grid md:grid-cols-2 gap-4 md:gap-5">
            {briefing.map((insight, idx) => (
               <motion.div 
                  key={insight.id}
                  initial={{ opacity: 0, y: 20 }}
                  animate={{ opacity: 1, y: 0 }}
                  transition={{ delay: 0.2 + (idx * 0.1) }}
-                 /* To change color of these Cards, edit `.glass-card` in index.css */
-                 className="glass-card rounded-[2rem] p-8 transition-all duration-300 hover:-translate-y-2 hover:shadow-2xl cursor-pointer group"
+                 /* 🚀 COMPACT: Smaller padding, rounded corners, and tighter gap on cards */
+                 className="glass-card rounded-[1.5rem] md:rounded-[2rem] p-5 md:p-6 transition-all duration-300 hover:-translate-y-2 hover:shadow-2xl cursor-pointer group"
                  onClick={insight.actionHandler}
               >
-                 <div className="flex gap-6 items-start">
-                    <div className="p-4 rounded-2xl bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 group-hover:scale-110 transition-transform duration-300">
-                       <insight.icon className="w-8 h-8 text-indigo-600 dark:text-indigo-400" />
+                 <div className="flex gap-4 md:gap-5 items-start">
+                    <div className="p-3 rounded-xl md:rounded-2xl bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 group-hover:scale-110 transition-transform duration-300">
+                       <insight.icon className="w-6 h-6 md:w-7 md:h-7 text-indigo-600 dark:text-indigo-400" />
                     </div>
                     <div className="flex-1">
-                       <h4 className="text-xl font-bold mb-2 text-slate-900 dark:text-white">{insight.title}</h4>
-                       <p className="text-sm opacity-70 mb-5 leading-relaxed">{insight.description}</p>
-                       <div className="inline-flex items-center text-xs font-bold uppercase tracking-widest text-indigo-600 dark:text-indigo-400 group-hover:text-indigo-800 dark:group-hover:text-indigo-300 transition-colors">
+                       <h4 className="text-lg md:text-xl font-bold mb-1 md:mb-1.5 text-slate-900 dark:text-white">{insight.title}</h4>
+                       <p className="text-xs md:text-sm opacity-70 mb-3 md:mb-4 leading-relaxed">{insight.description}</p>
+                       <div className="inline-flex items-center text-[10px] md:text-xs font-bold uppercase tracking-widest text-indigo-600 dark:text-indigo-400 group-hover:text-indigo-800 dark:group-hover:text-indigo-300 transition-colors">
                          {insight.action} <span className="ml-2 transition-transform group-hover:translate-x-2">→</span>
                        </div>
                     </div>

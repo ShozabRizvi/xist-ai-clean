@@ -164,10 +164,11 @@ export default function ApiDashboard({ user, themeMode = 'dark' }) {
         {/* HEADER */}
         <div className="text-center mb-4">
            <CodeBracketIcon className="w-12 h-12 text-indigo-500 mx-auto mb-4 opacity-80" />
-           <h1 className="text-4xl md:text-5xl lg:text-6xl font-black text-center mb-2 pb-4 tracking-tight text-slate-900 dark:text-white">
-              <span className="text-brand-highlight">{typingTitle}</span>
-              <span className="inline-block w-2.5 md:w-3 h-[0.8em] bg-indigo-500 dark:bg-indigo-400 ml-2 animate-pulse align-baseline" />
-           </h1>
+           {/* 🚀 RESIZED & COLOR UPGRADED: text-indigo-950 gives a premium deep professional look in light mode */}
+          <h1 className="text-3xl md:text-4xl lg:text-5xl font-black text-center mb-2 pb-4 leading-tight tracking-tight text-indigo-950 dark:text-white">
+            <span className="text-brand-highlight">{typingTitle}</span>
+            <motion.span animate={{ opacity: [0, 1, 0] }} transition={{ repeat: Infinity, duration: 0.9 }} className="inline-block w-2.5 md:w-3 h-[0.8em] bg-indigo-500 dark:bg-indigo-400 ml-2 align-baseline" />
+          </h1>
            <p className="text-sm md:text-base font-medium text-slate-600 dark:text-slate-400 max-w-2xl mx-auto flex items-center justify-center gap-2">
              Integrate Xist AI's forensic threat detection engine directly into your own apps.
            </p>

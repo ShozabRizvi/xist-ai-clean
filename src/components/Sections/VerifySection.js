@@ -166,7 +166,7 @@ const TypewriterTerminalText = ({ text, skipAnimation = false }) => {
 };
 
 export default function VerifySection({ user, onAnalysisComplete, analysisHistory = [] }) {
-  const typingTitle = useTypewriter("Xist AI", 80, 200);
+  const typingTitle = useTypewriter("Ask Xist AI", 80, 200);
   const inputRef = useRef(null); 
 
   const [mode, setMode] = useState('text');
@@ -336,7 +336,8 @@ export default function VerifySection({ user, onAnalysisComplete, analysisHistor
   };
 
   return (
-    <div className="w-full min-h-screen p-4 md:p-8 relative overflow-x-hidden text-slate-900 dark:text-slate-100" style={{ fontFamily: 'Inter, system-ui, sans-serif' }}>
+    // 🚀 Dynamic height: Prevents scrolling until analysis runs
+    <div className={`w-full p-4 md:p-8 relative overflow-x-hidden text-slate-900 dark:text-slate-100 ${running || summary ? 'min-h-screen' : 'min-h-[calc(100vh-100px)]'}`} style={{ fontFamily: 'Inter, system-ui, sans-serif' }}>
       
       <div className="absolute inset-0 pointer-events-none opacity-[0.03] invert dark:invert-0" style={{ backgroundImage: 'linear-gradient(to right, currentColor 1px, transparent 1px), linear-gradient(to bottom, currentColor 1px, transparent 1px)', backgroundSize: '40px 40px' }}></div>
 
@@ -355,9 +356,9 @@ export default function VerifySection({ user, onAnalysisComplete, analysisHistor
 
         <motion.div layout className={`flex flex-col lg:flex-row gap-8 items-stretch w-full`}>
           
-          {/* 🚀 THE INPUT TERMINAL */}
-          <motion.div layout ref={inputRef} className={`transition-all duration-700 ease-in-out ${running ? 'w-full lg:w-1/2' : 'w-full max-w-3xl mx-auto'}`}>
-            <div className={`p-2 md:p-3 rounded-[2.5rem] transition-all duration-300 shadow-2xl flex flex-col glass-card border
+          {/* 🚀 THE INPUT TERMINAL (Fixed to bottom on mobile only) */}
+          <motion.div layout ref={inputRef} className={`transition-all duration-700 ease-in-out ${running ? 'w-full lg:w-1/2' : 'w-full max-w-3xl mx-auto'} fixed bottom-0 left-0 right-0 p-4 z-50 md:relative md:p-0 md:z-auto`}>
+            <div className={`p-2 md:p-3 rounded-[2.5rem] transition-all duration-300 shadow-2xl flex flex-col glass-card border bg-slate-50/95 dark:bg-slate-900/95 md:bg-transparent md:dark:bg-transparent backdrop-blur-xl
                ${running ? 'border-indigo-500/50 shadow-indigo-500/20' : 'focus-within:border-indigo-500/50'}`}>
               
               <div className="relative w-full mb-2 transition-all flex-grow flex flex-col">
@@ -539,7 +540,8 @@ export default function VerifySection({ user, onAnalysisComplete, analysisHistor
         </AnimatePresence>
 
       </div>
-      <div className="h-24" />
+      {/* 🚀 Conditionally render spacer to PREVENT empty scrolling. Increased mobile height to clear the fixed input */}
+      {(running || summary) && <div className="h-40 md:h-24" />}
     </div>
   );
 }

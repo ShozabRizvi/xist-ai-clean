@@ -30,11 +30,11 @@ const DesktopSidebar = ({ currentSection, setCurrentSection, collapsed, setColla
       initial={false}
       animate={{ width: isMobile ? '100%' : (collapsed ? 72 : 240) }}
       transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-      // 🚀 PURE FLOATING LOOK: Removed all borders, shadows, and backgrounds on desktop
-      className={`desktop-panel-menu flex flex-col transition-colors duration-300 bg-transparent border-none shadow-none
+      // 🚀 FIX: Removed the "!" modifiers. Used pure bg-white to guarantee it blocks the dark shadow bleed-through.
+      className={`flex flex-col transition-colors duration-300 border-none shadow-none
         ${isMobile 
-            ? 'h-full relative z-50 bg-slate-50/90 dark:bg-[#080c1a]/90 backdrop-blur-2xl' 
-            : 'fixed top-0 bottom-0 left-0 z-40'
+            ? 'h-full relative z-50 bg-white dark:bg-[#080c1a]' 
+            : 'fixed top-0 bottom-0 left-0 z-40 bg-transparent'
         }
       `}
     >
@@ -79,7 +79,6 @@ const DesktopSidebar = ({ currentSection, setCurrentSection, collapsed, setColla
             </button>
           </div>
 
-          {/* 🚀 Removed the border-b here to maintain the pure floating look */}
           <div className="px-4 py-2 transition-colors duration-300 border-none">
             <button onClick={() => { setCurrentSection('verify'); sessionStorage.removeItem('xist_preload_input'); }} title="New Scan" className={`flex items-center transition-all duration-300 group relative flex-shrink-0 overflow-hidden shadow-sm ${(!isMobile && collapsed) ? 'w-12 h-12 rounded-full mx-auto justify-center p-0 bg-transparent shadow-none hover:bg-black/5 dark:hover:bg-white/5' : 'w-full h-12 rounded-[1.2rem] justify-start px-4 glass-card hover:border-indigo-500/50 hover:shadow-[0_0_15px_rgba(99,102,241,0.15)]'} text-slate-800 dark:text-white`}>
               <PlusIcon className={`flex-shrink-0 w-5 h-5 transition-colors ${!isMobile && collapsed ? 'text-slate-500 dark:text-slate-400 group-hover:text-indigo-500' : 'text-indigo-500 mr-3'}`} />
@@ -131,7 +130,7 @@ const DesktopSidebar = ({ currentSection, setCurrentSection, collapsed, setColla
 
       {(isScanMode && collapsed && !isMobile) && <div className="flex-1" />}
 
-      {/* 🚀 SETTINGS BUTTON (Removed border-t to make it float seamlessly) */}
+      {/* 🚀 SETTINGS BUTTON */}
       <div className="flex-shrink-0 w-full mt-auto p-4 transition-colors duration-300 border-none">
         <button onClick={() => setCurrentSection('settings')} title="Settings" className={`flex items-center transition-all duration-200 group relative flex-shrink-0 hover:bg-black/5 dark:hover:bg-white/5 ${(!isMobile && collapsed) ? 'w-10 h-10 rounded-full justify-center mx-auto p-0' : 'w-full rounded-xl justify-start p-3'} ${currentSection === 'settings' ? "bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20" : "text-slate-600 dark:text-slate-400 border border-transparent"}`}>
           <Cog6ToothIcon className={`flex-shrink-0 transition-colors w-5 h-5 ${currentSection === 'settings' ? 'text-indigo-500' : 'text-slate-400 group-hover:text-indigo-500 dark:text-slate-500 dark:group-hover:text-indigo-400'}`} />

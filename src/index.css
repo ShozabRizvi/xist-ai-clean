@@ -264,9 +264,11 @@ main > div {
   font-weight: inherit; /* Inherits the boldness of the heading */
 }
 
-/* Optional: A darker highlight for when the app is in Light Mode so it's readable */
+/* 🚀 FIX: Deep, professional dark gradient for Light Mode headings */
 body:not(.dark) .text-brand-highlight {
-  background: linear-gradient(90deg, #7A6A8D, #4A3A5D);
+  background: linear-gradient(90deg, #020617, #312e81); /* Very dark slate to deep indigo */
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
+  background-clip: text;
+  color: transparent;
 }

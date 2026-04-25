@@ -289,13 +289,10 @@ return (
           
           <AcademicCapIcon className="w-10 h-10 md:w-14 md:h-14 text-indigo-500 dark:text-indigo-400 mb-5 stroke-[1.5]" />
           
-          <h1 className="text-4xl md:text-5xl lg:text-6xl font-black text-center mb-2 pb-4 leading-normal tracking-tight text-slate-900 dark:text-white">
+          {/* 🚀 RESIZED & COLOR UPGRADED: text-indigo-950 gives a premium deep professional look in light mode */}
+          <h1 className="text-3xl md:text-4xl lg:text-5xl font-black text-center mb-2 pb-4 leading-tight tracking-tight text-indigo-950 dark:text-white">
             <span className="text-brand-highlight">{typingTitle}</span>
-            <motion.span 
-              animate={{ opacity: [0, 1, 0] }} 
-              transition={{ repeat: Infinity, duration: 0.9 }} 
-              className="inline-block w-2.5 md:w-3 h-[0.8em] bg-indigo-500 dark:bg-indigo-400 ml-2 align-baseline" 
-            />
+            <motion.span animate={{ opacity: [0, 1, 0] }} transition={{ repeat: Infinity, duration: 0.9 }} className="inline-block w-2.5 md:w-3 h-[0.8em] bg-indigo-500 dark:bg-indigo-400 ml-2 align-baseline" />
           </h1>
 
           <p className="text-[9px] md:text-[11px] font-mono font-bold uppercase tracking-[0.3em] md:tracking-[0.4em] text-slate-600 dark:text-slate-400 mb-8 md:mb-12 text-center px-4">

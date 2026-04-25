@@ -128,9 +128,10 @@ const AboutSection = () => {
         <motion.div variants={itemVariants} className="text-center space-y-6 pt-4">
           <InformationCircleIcon className="w-16 h-16 mx-auto text-indigo-500 dark:text-indigo-400 mb-4" />
           
-          <h1 className="text-4xl md:text-5xl lg:text-6xl font-black text-center mb-2 pb-4 leading-normal tracking-tight text-slate-900 dark:text-white">
+          {/* 🚀 FOOLPROOF DARK CONTRAST: text-black ensures it works on ANY Tailwind version */}
+          <h1 className="text-3xl md:text-4xl lg:text-5xl font-black text-center mb-2 pb-4 leading-tight tracking-tight text-black dark:text-white">
             <span className="text-brand-highlight">{typingTitle}</span>
-            <motion.span animate={{ opacity: [0, 1, 0] }} transition={{ repeat: Infinity, duration: 0.9 }} className="inline-block w-2.5 md:w-3 h-[0.8em] bg-indigo-500 dark:bg-indigo-400 ml-2 align-baseline" />
+            <motion.span animate={{ opacity: [0, 1, 0] }} transition={{ repeat: Infinity, duration: 0.9 }} className="inline-block w-2.5 md:w-3 h-[0.8em] bg-indigo-600 dark:bg-indigo-400 ml-2 align-baseline" />
           </h1>
           
           <p className="text-[10px] md:text-xs font-mono tracking-widest uppercase text-slate-500 dark:text-slate-400">
