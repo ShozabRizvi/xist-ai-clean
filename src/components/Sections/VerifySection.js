@@ -189,6 +189,28 @@ export default function VerifySection({ user, onAnalysisComplete, analysisHistor
 
   const abortControllerRef = useRef(null); 
 
+  // 🚀 FIX: The "Catcher" for the Re-Scan button
+  useEffect(() => {
+    const preloadData = sessionStorage.getItem('xist_preload_input');
+    if (preloadData) {
+      try {
+        const parsed = JSON.parse(preloadData);
+        setMode(parsed.mode || 'text');
+        
+        // Browsers wipe actual files from session storage, so we only auto-fill Text and URLs
+        if (parsed.mode === 'text' || parsed.mode === 'url') {
+           setInputValue(parsed.input || '');
+        } else {
+           toast("Please re-attach your file/audio to run a new forensic scan.", { icon: '📁' });
+        }
+      } catch (e) { 
+        console.error(e); 
+      }
+      // Clear it out so it doesn't get stuck in a loop
+      sessionStorage.removeItem('xist_preload_input');
+    }
+  }, []);
+
   useEffect(() => {
     const savedState = sessionStorage.getItem('xist_verify_state');
     if (savedState) {
