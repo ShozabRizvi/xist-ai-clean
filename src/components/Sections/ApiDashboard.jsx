@@ -108,19 +108,19 @@ export default function ApiDashboard({ user, themeMode = 'dark' }) {
     }
   };
 
-  // 3. Delete/Revoke Key
+  // 3. Delete Key
   const deleteKey = async () => {
-    if (!window.confirm("WARNING: Any applications using this API key will instantly break. Are you sure you want to revoke it?")) return;
+    if (!window.confirm("WARNING: Any applications using this API key will instantly break. Are you sure you want to delete it?")) return;
     
     const currentUserId = user?.id || user?.uid;
     const { error } = await supabase.from('api_keys').delete().eq('user_id', currentUserId);
     
     if (error) {
-      toast.error("Failed to revoke key.");
+      toast.error("Failed to delete key.");
     } else {
       setApiKeyData(null);
       setFreshKey(null);
-      toast.success("API Key Revoked.");
+      toast.success("API Key Deleted.");
     }
   };
 
@@ -228,9 +228,11 @@ export default function ApiDashboard({ user, themeMode = 'dark' }) {
           </div>
 
           {/* API KEY CARD */}
-          <div className="glass-card p-6 md:p-8 rounded-[2rem] flex flex-col justify-center shadow-xl">
+          {/* 🚀 FIX: Added 'h-fit' and changed to 'justify-start' so the card stops stretching to match the chart's massive height on desktop! */}
+          <div className="glass-card p-6 md:p-8 rounded-[2rem] flex flex-col justify-start shadow-xl overflow-hidden h-fit">
+            {/* 🚀 FIX: Simplified word from "Authentication Key" to "Your API Key" */}
             <h2 className="text-sm font-black uppercase tracking-widest mb-6 flex items-center gap-2 text-slate-900 dark:text-white">
-              <KeyIcon className="w-5 h-5 text-emerald-500" /> Authentication Key
+              <KeyIcon className="w-5 h-5 text-emerald-500" /> Your API Key
             </h2>
             
             {loading ? (
@@ -238,16 +240,18 @@ export default function ApiDashboard({ user, themeMode = 'dark' }) {
                 <div className="w-8 h-8 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
               </div>
             ) : apiKeyData ? (
-              <div>
+              <div className="w-full">
                 <p className="text-slate-500 text-xs font-black uppercase tracking-widest mb-3">Active Secret Key</p>
-                <div className="p-4 rounded-2xl font-mono text-sm tracking-wider flex items-center justify-between glass-input mb-5 border border-black/5 dark:border-white/5">
-                  <span className="opacity-80 font-bold text-slate-700 dark:text-slate-300">{maskKey(apiKeyData.key_string)}</span>
-                  <button onClick={() => copyToClipboard(apiKeyData.key_string)} className="text-indigo-600 dark:text-indigo-400 hover:text-indigo-500 transition-colors" title="Copy Full Key">
+                {/* 🚀 FIX: Added gap-3, truncate, and shrink-0 to perfectly contain the text on mobile */}
+                <div className="p-4 rounded-2xl font-mono text-sm tracking-wider flex items-center justify-between gap-3 glass-input mb-5 border border-black/5 dark:border-white/5 w-full">
+                  <span className="opacity-80 font-bold text-slate-700 dark:text-slate-300 truncate min-w-0 block">{maskKey(apiKeyData.key_string)}</span>
+                  <button onClick={() => copyToClipboard(apiKeyData.key_string)} className="shrink-0 text-indigo-600 dark:text-indigo-400 hover:text-indigo-500 transition-colors" title="Copy Full Key">
                     <ClipboardDocumentIcon className="w-5 h-5" />
                   </button>
                 </div>
+                {/* 🚀 FIX: Simplified word from "Revoke Key" to "Delete Key" */}
                 <button onClick={deleteKey} className="text-[10px] font-black uppercase tracking-widest px-4 py-2 rounded-lg bg-rose-500/10 text-rose-600 dark:text-rose-400 hover:bg-rose-500 hover:text-white flex items-center gap-1.5 transition-all w-max">
-                  <TrashIcon className="w-4 h-4" /> Revoke Key
+                  <TrashIcon className="w-4 h-4" /> Delete Key
                 </button>
               </div>
             ) : (
@@ -269,7 +273,8 @@ export default function ApiDashboard({ user, themeMode = 'dark' }) {
              </h3>
              <div className="space-y-5 text-sm font-medium leading-relaxed text-slate-700 dark:text-slate-300">
                 <div>
-                  <p className="font-black text-xs uppercase tracking-widest text-slate-900 dark:text-white mb-1">1. Authentication</p>
+                  {/* 🚀 FIX: Simplified from "Authentication" to "Connecting" */}
+                  <p className="font-black text-xs uppercase tracking-widest text-slate-900 dark:text-white mb-1">1. Connecting</p>
                   <p className="text-slate-500">Include your API key in the headers using <code className="glass-input px-1.5 py-0.5 rounded-md font-mono text-[11px] text-indigo-500 font-bold">X-Xist-API-Key</code>.</p>
                 </div>
                 <div>
