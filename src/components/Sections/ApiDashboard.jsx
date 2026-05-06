@@ -54,8 +54,10 @@ export default function ApiDashboard({ user, themeMode = 'dark' }) {
 
   // 🚀 LIVE USAGE DATA FROM SUPABASE
   const dailyLimit = 5; 
-  const currentDailyUsage = apiKeyData?.daily_count || 0; 
-  const currentPlan = "Basic"; // Mocked as basic until payment system is connected
+  // 🚀 DYNAMIC PLAN CHECK: If daily_count is negative (set by your webhook), they are Premium!
+  const isPremium = apiKeyData?.daily_count < 0;
+  const currentDailyUsage = isPremium ? 0 : (apiKeyData?.daily_count || 0); 
+  const currentPlan = isPremium ? "Premium Pro" : "Basic";
 
   // Live Chart Data (Today is 100% real, past days default to 0 until an api_logs table is created)
   const chartData = [
@@ -192,8 +194,17 @@ export default function ApiDashboard({ user, themeMode = 'dark' }) {
               </div>
               
               <div className="flex items-end gap-3 mb-6 text-slate-900 dark:text-white">
-                <span className="text-4xl font-black">{currentDailyUsage}</span>
-                <span className="text-slate-500 text-sm font-black tracking-widest uppercase mb-1">requests / {dailyLimit} limit</span>
+                {isPremium ? (
+                  <>
+                    <span className="text-4xl font-black text-indigo-600 dark:text-indigo-400">Unlimited</span>
+                    <span className="text-slate-500 text-sm font-black tracking-widest uppercase mb-1">Scans Available</span>
+                  </>
+                ) : (
+                  <>
+                    <span className="text-4xl font-black">{currentDailyUsage}</span>
+                    <span className="text-slate-500 text-sm font-black tracking-widest uppercase mb-1">requests / {dailyLimit} limit</span>
+                  </>
+                )}
               </div>
             </div>
             
@@ -438,9 +449,17 @@ export default function ApiDashboard({ user, themeMode = 'dark' }) {
                 ))}
               </ul>
               
-              {/* 🚀 FIX: Now correctly calls your handleUpgradeCheckout function */}
-              <button onClick={handleUpgradeCheckout} className="w-full py-4 rounded-2xl text-[10px] font-black uppercase tracking-widest bg-indigo-600 hover:bg-indigo-500 text-white transition-all shadow-lg hover:shadow-indigo-500/25 active:scale-95 flex justify-center items-center gap-2">
-                <span>Upgrade Access</span>
+              {/* 🚀 DYNAMIC BUTTON: Disables and changes text if they are already a Premium user */}
+              <button 
+                onClick={handleUpgradeCheckout} 
+                disabled={isPremium}
+                className={`w-full py-4 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all flex justify-center items-center gap-2 ${
+                  isPremium 
+                    ? 'glass-input text-emerald-500 border border-emerald-500/30 cursor-not-allowed shadow-[0_0_15px_rgba(16,185,129,0.15)]' 
+                    : 'bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg hover:shadow-indigo-500/25 active:scale-95'
+                }`}
+              >
+                {isPremium ? <><CheckCircleIcon className="w-4 h-4" /> Plan Activated</> : <span>Upgrade Access</span>}
               </button>
             </div>
           </div>
