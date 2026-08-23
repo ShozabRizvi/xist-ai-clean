@@ -138,7 +138,7 @@ export default function ApiDashboard({ user, themeMode = 'dark' }) {
 
   const handleUpgradeCheckout = () => {
     if (billingCycle === 'monthly') {
-      window.open('https://rzp.io/rzp/NcnHgEmB', '_blank'); 
+      window.open('https://rzp.io/rzp/jswxqVtx', '_blank'); 
     } else {
       window.open('https://rzp.io/rzp/NcnHgEmB', '_blank'); 
     }
