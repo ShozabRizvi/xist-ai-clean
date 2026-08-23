@@ -1,9 +1,14 @@
 {
   "manifest_version": 3,
-  "name": "Xist AI Scanner",
+  "name": "Xist AI - Forensic Threat Scanner",
   "version": "1.0",
+  "description": "Highlight any text or URL to instantly scan it for misinformation and scams.",
+  "permissions": ["activeTab", "scripting", "contextMenus"],
   "action": {
-    "default_popup": "popup.html"
+    "default_popup": "popup.html",
+    "default_icon": "logo.png"
   },
-  "permissions": ["activeTab"]
+  "host_permissions": [
+    "https://xist-ai-clean-1.onrender.com/*"
+  ]
 }
